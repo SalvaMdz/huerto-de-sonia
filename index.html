@@ -225,7 +225,6 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
 .prow button:disabled { opacity: .45; cursor: default; }
 .prow.done { background: #e4f6d4; }
 .prow.locked { opacity: .65; }
-.pgroup { font-size: .72rem; letter-spacing: .6px; text-transform: uppercase; color: var(--ink-soft); font-weight: 900; margin: 4px 2px -2px; }
 .creator { position: fixed; z-index: 10; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; pointer-events: none;
   padding: 0 16px calc(16px + env(safe-area-inset-bottom, 0px)); }
 .cbox { pointer-events: auto; width: min(440px, 100%); max-height: 56vh; max-height: 56dvh; overflow-y: auto; background: var(--cream); border: 3px solid var(--ink);
@@ -489,25 +488,25 @@ const GATES = [
   { id: 'gate8', name: 'Abrir las piscinas',          icon: '🏊', x: 0,     z: 43,   cost: 3000000, needs: 'gate7' },
 ];
 const UPGRADES = {
-  bag:       { name: 'Cesta',        icon: '🧺', x: 0,    z: 4.2,  max: 25, cost: l => Math.round(25 * 1.65 ** l) },
-  boots:     { name: 'Botas',        icon: '🥾', x: 2.1,  z: 4.2,  max: 12, cost: l => Math.round(30 * 1.85 ** l) },
-  sign:      { name: 'Precios',      icon: '🪧', x: 4.2,  z: 4.2,  max: 20, cost: l => Math.round(80 * 1.95 ** l) },
-  water:     { name: 'Regadera',     icon: '💧', x: 6.3,  z: 4.2,  max: 12, cost: l => Math.round(150 * 2.05 ** l) },
-  machine:   { name: 'Maquinaria',   icon: '⚙️', x: 8.4,  z: 4.2,  max: 12, cost: l => Math.round(400 * 2.25 ** l) },
-  workers:   { name: 'Entrenamiento', icon: '💪', x: 10.5, z: 4.2, max: 12, cost: l => Math.round(600 * 2.2 ** l) },
-  cashier:   { name: 'Cajera',       icon: '🧑‍💼', x: 0,    z: 6.6,  max: 1,  cost: () => 300 },
-  cashier2:  { name: 'Cajera 2',     icon: '🧑‍💼', x: 2.1,  z: 6.6,  max: 1,  cost: () => 900, needs: 'till2' },
-  helper:    { name: 'Ardilla',      icon: '🐿️', x: 4.2,  z: 6.6,  max: 12, cost: l => Math.round(200 * 2.1 ** l) },
-  carrier:   { name: 'Repartidor',   icon: '📦', x: 6.3,  z: 6.6,  max: 8,  cost: l => Math.round(900 * 2.4 ** l) },
-  tractor:   { name: 'Tractor',      icon: '🚜', x: 8.4,  z: 6.6,  max: 1,  cost: () => 6000 },
-  dog:       { name: 'Perro',        icon: '🐶', x: 10.5, z: 6.6,  max: 1,  cost: () => 2500 },
-  broom:     { name: 'Escoba',       icon: '🧹', x: 17.6, z: 6.6,  max: 6,  cost: l => Math.round(4000 * 1.9 ** l), area: 3 },
-  bin:       { name: 'Saco grande',  icon: '🗑️', x: 19.7, z: 6.6, max: 8,  cost: l => Math.round(3000 * 1.7 ** l), area: 3 },
-  belt:      { name: 'Cinta rápida', icon: '⏩', x: 21.8, z: 6.6, max: 5,  cost: l => Math.round(8000 * 2 ** l), area: 3, needs: 'recycler' },
-  compactor: { name: 'Compactadora', icon: '🗜️', x: 23.9, z: 6.6, max: 5,  cost: l => Math.round(12000 * 2.1 ** l), area: 3, needs: 'recycler' },
-  robots:    { name: 'Robot barrendero', icon: '🤖', x: 26.0, z: 6.6, max: 4, cost: l => Math.round(18000 * 2.2 ** l), area: 3, needs: 'recycler' },
-  rod:       { name: 'Caña',         icon: '🎣', x: -14.9, z: 5.2, max: 6,  cost: l => Math.round(2000 * 1.8 ** l), area: 4, needs: 'dock1' },
-  fisher:    { name: 'Pescador',     icon: '🧑‍🦰', x: -14.9, z: 2.9, max: 3, cost: l => Math.round(5000 * 2.5 ** l), area: 4, needs: 'dock1' },
+  bag:       { name: 'Cesta',        icon: '🧺', x: 1.5, z: 3.4,  max: 25, cost: l => Math.round(25 * 1.65 ** l) },
+  boots:     { name: 'Botas',        icon: '🥾', x: 4.5, z: 3.4,  max: 12, cost: l => Math.round(30 * 1.85 ** l) },
+  sign:      { name: 'Precios',      icon: '🪧', x: 7.5, z: 3.4,  max: 20, cost: l => Math.round(80 * 1.95 ** l) },
+  water:     { name: 'Regadera',     icon: '💧', x: 10, z: -31.5,  max: 12, cost: l => Math.round(150 * 2.05 ** l), area: 2 },
+  machine:   { name: 'Maquinaria',   icon: '⚙️', x: 7, z: -34.5,  max: 12, cost: l => Math.round(400 * 2.25 ** l), area: 2 },
+  workers:   { name: 'Entrenamiento', icon: '💪', x: 10.0, z: 8.9, max: 12, cost: l => Math.round(600 * 2.2 ** l) },
+  cashier:   { name: 'Cajera',       icon: '🧑‍💼', x: 1.5, z: 6.3,  max: 1,  cost: () => 300 },
+  cashier2:  { name: 'Cajera 2',     icon: '🧑‍💼', x: 4.5, z: 6.3,  max: 1,  cost: () => 900, needs: 'till2' },
+  helper:    { name: 'Ardilla',      icon: '🐿️', x: 10.0, z: 3.4,  max: 12, cost: l => Math.round(200 * 2.1 ** l) },
+  carrier:   { name: 'Repartidor',   icon: '📦', x: 7.5, z: 6.3,  max: 8,  cost: l => Math.round(900 * 2.4 ** l) },
+  tractor:   { name: 'Tractor',      icon: '🚜', x: 7, z: -31.5,  max: 1,  cost: () => 6000, area: 2 },
+  dog:       { name: 'Perro',        icon: '🐶', x: 10.0, z: 6.3,  max: 1,  cost: () => 2500 },
+  broom:     { name: 'Escoba',       icon: '🧹', x: 29.5, z: 9,  max: 6,  cost: l => Math.round(4000 * 1.9 ** l), area: 3 },
+  bin:       { name: 'Saco grande',  icon: '🗑️', x: 32.5, z: 9, max: 8,  cost: l => Math.round(3000 * 1.7 ** l), area: 3 },
+  belt:      { name: 'Cinta rápida', icon: '⏩', x: 29.5, z: 12, max: 5,  cost: l => Math.round(8000 * 2 ** l), area: 3, needs: 'recycler' },
+  compactor: { name: 'Compactadora', icon: '🗜️', x: 32.5, z: 12, max: 5,  cost: l => Math.round(12000 * 2.1 ** l), area: 3, needs: 'recycler' },
+  robots:    { name: 'Robot barrendero', icon: '🤖', x: 29.5, z: 15, max: 4, cost: l => Math.round(18000 * 2.2 ** l), area: 3, needs: 'recycler' },
+  rod:       { name: 'Caña',         icon: '🎣', x: -14.5, z: 3.5, max: 6,  cost: l => Math.round(2000 * 1.8 ** l), area: 4, needs: 'dock1' },
+  fisher:    { name: 'Pescador',     icon: '🧑‍🦰', x: -14.5, z: 6.5, max: 3, cost: l => Math.round(5000 * 2.5 ** l), area: 4, needs: 'dock1' },
   patrol:    { name: 'Policía',      icon: '👮', x: -9.6, z: 8.7, max: 3, cost: l => Math.round(15000 * 3 ** l), needs: 'police' },
   mechanic:  { name: 'Mecánico',     icon: '🔧', x: 21.5, z: 33,  max: 3, cost: l => Math.round(900000 * 2.6 ** l), area: 8 },
 };
@@ -558,8 +557,8 @@ const MAPS = [
 ];
 const mapOf = n => MAPS[n % MAPS.length];
 // The version goes up with every release; tools/build.py stamps the build date (while developing it says 'en pruebas')
-const GAME_VERSION = '19';
-const BUILD_DATE = '02/11/2026 16:30';
+const GAME_VERSION = '20';
+const BUILD_DATE = '02/11/2026 16:50';
 // The avatar creator: hair style, hair colour and skin tone are picked from these lists
 const AVATAR_HAIR = [
   { id: 'curly', name: 'Rizos largos' }, { id: 'long', name: 'Coletas' }, { id: 'bun', name: 'Moño' }, { id: 'short', name: 'Corto' }, { id: 'afro', name: 'Rizos cortos' },
@@ -607,13 +606,13 @@ const PROC_MAX = 30, ANIMAL_MAX = 20, SPACING = 0.74;
 // Sonia drops goods on the counter, customers take them, then pay at a till and leave banknotes.
 const SHOPS = [
   { id: 'farm',   name: 'Mercado',           icon: '🧺', area: 1, x: -5.4, z: 1.6,   awning: 0xd8402f, goods: ['tulip', 'wheat', 'pumpkin', 'bouquet', 'bread', 'pie'], spawn: { x: -6.75, z: 21.4 } },
-  { id: 'forest', name: 'Tienda del bosque', icon: '🌲', area: 2, x: -1.6, z: -38.4, awning: 0x3fa34d, goods: ['sunflower', 'strawberry', 'oil', 'jam', 'egg', 'milk'], spawn: { x: -3.15, z: -41.6 }, costs: [2500, 5000, 7000] },
-  { id: 'lake',   name: 'Pescadería',        icon: '🐟', area: 4, x: -23,  z: 9.6,   awning: 0x3f7fd0, goods: ['sardine', 'trout', 'crab', 'can'], spawn: { x: -24.55, z: 17.6 }, costs: [7000, 12000, 16000] },
-  { id: 'meadow', name: 'Mercado del prado', icon: '🍎', area: 3, x: 21.4, z: 9.8,   awning: 0xf5a524, goods: ['apple', 'juice', 'honey'], spawn: { x: 19.85, z: 17.6 }, costs: [20000, 35000, 45000] },
-  { id: 'barn',   name: 'Tienda de la granja', icon: '🐑', area: 6, x: -48, z: 9.6,  awning: 0x9a5a35, goods: ['corn', 'wool', 'cheese', 'truffle', 'jersey'], spawn: { x: -49.55, z: 17.6 }, costs: [40000, 80000, 100000] },
-  { id: 'lumber', name: 'Tienda de muebles',   icon: '🪑', area: 7, x: 44,  z: 9.6,  awning: 0x7a4e2d, goods: ['log', 'plank', 'furniture'], spawn: { x: 42.45, z: 17.6 }, costs: [100000, 200000, 250000] },
-  { id: 'fair',   name: 'Puesto de la feria',  icon: '🍿', area: 8, x: -3,  z: 25,   awning: 0xb0479a, goods: ['popcorn'], spawn: { x: -4.55, z: 22.6 }, costs: [300000, 600000, 800000] },
-  { id: 'beach',  name: 'Chiringuito',         icon: '🍹', area: 9, x: 15,  z: 56,   awning: 0x2fb5a0, goods: ['lemon', 'lemonade', 'icecream'], spawn: { x: 13.45, z: 64.6 }, costs: [800000, 1500000, 2000000] },
+  { id: 'forest', name: 'Tienda del bosque', icon: '🌲', area: 2, x: -1.6, z: -38.4, awning: 0x3fa34d, goods: ['sunflower', 'strawberry', 'oil', 'jam', 'egg', 'milk'], spawn: { x: -3.15, z: -41.6 }, costs: [2500, 5000, 7000], fame: [10, -34.5] },
+  { id: 'lake',   name: 'Pescadería',        icon: '🐟', area: 4, x: -23,  z: 9.6,   awning: 0x3f7fd0, goods: ['sardine', 'trout', 'crab', 'can'], spawn: { x: -24.55, z: 17.6 }, costs: [7000, 12000, 16000], fame: [-14.5, 9.5] },
+  { id: 'meadow', name: 'Mercado del prado', icon: '🍎', area: 3, x: 21.4, z: 9.8,   awning: 0xf5a524, goods: ['apple', 'juice', 'honey'], spawn: { x: 19.85, z: 17.6 }, costs: [20000, 35000, 45000], fame: [32.5, 15] },
+  { id: 'barn',   name: 'Tienda de la granja', icon: '🐑', area: 6, x: -48, z: 9.6,  awning: 0x9a5a35, goods: ['corn', 'wool', 'cheese', 'truffle', 'jersey'], spawn: { x: -49.55, z: 17.6 }, costs: [40000, 80000, 100000], fame: [-39, 8] },
+  { id: 'lumber', name: 'Tienda de muebles',   icon: '🪑', area: 7, x: 44,  z: 9.6,  awning: 0x7a4e2d, goods: ['log', 'plank', 'furniture'], spawn: { x: 42.45, z: 17.6 }, costs: [100000, 200000, 250000], fame: [40, 3] },
+  { id: 'fair',   name: 'Puesto de la feria',  icon: '🍿', area: 8, x: -3,  z: 25,   awning: 0xb0479a, goods: ['popcorn'], spawn: { x: -4.55, z: 22.6 }, costs: [300000, 600000, 800000], fame: [21.5, 36] },
+  { id: 'beach',  name: 'Chiringuito',         icon: '🍹', area: 9, x: 15,  z: 56,   awning: 0x2fb5a0, goods: ['lemon', 'lemonade', 'icecream'], spawn: { x: 13.45, z: 64.6 }, costs: [800000, 1500000, 2000000], fame: [22.5, 52] },
 ];
 SHOPS.forEach(s => {
   const suf = s.id === 'farm' ? '' : '_' + s.id;
@@ -623,7 +622,9 @@ SHOPS.forEach(s => {
   s.tills = [2.6, 4.8].map((d, i) => ({ id: i ? 'till2' + suf : null, x: s.x, z: s.z + d, zone: { x: s.x + 1.5, z: s.z + d, r: 1 }, pay: { x: s.x - 1.35, z: s.z + d }, staff: (i ? 'cashier2' : 'cashier') + suf }));
   if (!suf) return;
   UPGRADES['cashier' + suf] = { name: 'Cajera', icon: '🧑‍💼', x: s.x + 5, z: s.z + 2.6, max: 1, cost: () => s.costs[0], area: s.area, shop: s };
-  UPGRADES['cashier2' + suf] = { name: 'Cajera 2', icon: '🧑‍💼', x: s.x + 5, z: s.z + 4.8, max: 1, cost: () => s.costs[2], area: s.area, needs: 'till2' + suf, shop: s };
+  UPGRADES['cashier2' + suf] = { name: 'Cajera 2', icon: '🧑‍💼', x: s.x + 5, z: s.z + 5.6, max: 1, cost: () => s.costs[2], area: s.area, needs: 'till2' + suf, shop: s };
+  // Fame: this shop's own price upgrade, standing in the zone's corner of upgrades
+  UPGRADES['fame' + suf] = { name: 'Fama de la tienda', icon: '⭐', x: s.fame[0], z: s.fame[1], max: 5, cost: l => Math.round(s.costs[0] * 4 * 2.3 ** l), area: s.area, fame: s };
   SPECIAL.push({ id: 'till2' + suf, name: 'Segunda caja', icon: '🧾', x: s.x + 1.5, z: s.z + 4.8, cost: s.costs[1], area: s.area, shop: s });
 });
 const FARM = SHOPS[0], COUNTER_ZONE = FARM.counter, CASH = FARM.cash;
@@ -691,6 +692,8 @@ const FISH = ['sardine', 'trout', 'crab', 'can'], WOOD = ['log', 'plank', 'furni
 const mapPrice = k => { const b = THEME.bonus; if (!b) return 1; return b.kind === 'all' ? 1.5 : (b.kind === 'fish' && FISH.includes(k)) || (b.kind === 'wood' && WOOD.includes(k)) ? 3 : 1; };
 const townCount = () => TOWN.filter(t => isBuilt(t.id)).length;
 const houses = () => TOWN.filter(t => t.kind === 'house' && isBuilt(t.id)).length;
+// A shop's fame upgrade raises the price of everything it sells
+const fameOf = k => { const sh = shopFor(k); return 1 + .15 * ((sh && S.lv['fame_' + sh.id]) || 0); };
 const priceF = () => priceOf(S.lv.sign) * (isBuilt('townhall') ? 1.25 : 1) * (1 + .1 * (S.perks.price || 0));
 const fishersOn = () => ANIMALS.filter(a => a.dock && isBuilt(a.id)).slice(0, S.lv.fisher);
 const tillOpen = t => !t.id || isBuilt(t.id);
@@ -1977,8 +1980,7 @@ function makePad(id, x, z, kind, ref) {
   const pad = { id, x, z, kind, ref, g, fill, label, icon, lastP: -1 };
   pads.push(pad); return pad;
 }
-// Only the rides keep their own pad; every other upgrade is bought from the list in the workshop (see WORKSHOP below)
-Object.entries(UPGRADES).forEach(([id, u]) => { if (u.attr) makePad(id, u.x, u.z, 'upg', u); });
+Object.entries(UPGRADES).forEach(([id, u]) => makePad(id, u.x, u.z, 'upg', u));
 PATCHES.filter(p => p.cost).forEach(p => makePad('patch-' + p.id, p.x, p.z, 'patch', p));
 BUILDS.forEach(b => makePad(b.id, b.zx, b.zz, 'build', b));
 SELLS.filter(s => s.cost).forEach(s => makePad(s.id, s.x, s.z, 'sell', s));
@@ -1986,39 +1988,7 @@ GATES.forEach(g => makePad(g.id, g.x, g.z, 'gate', g));
 SPECIAL.forEach(s => makePad(s.id, s.x, s.z, 'special', s));
 TOWN.forEach(t => makePad(t.id, t.x, t.z, 'special', t));
 makePad('move', MOVE.x, MOVE.z, 'move', MOVE);
-/* ---------- Upgrade workshop ---------- */
-// One circle next to the market opens the list of upgrades. It replaced a cluster of pads so close together
-// that walking to one spent coins on its neighbours.
-const WORKSHOP = { x: 5.2, z: 5.7, r: 1, bx: 5.2, bz: 3.6 };
-{
-  const g = new T.Group();
-  const bench = mesh(new T.BoxGeometry(2.4, .85, .9), M.wood); bench.position.y = .42; g.add(bench);
-  const top = mesh(new T.BoxGeometry(2.6, .1, 1.05), M.woodDark); top.position.y = .9; g.add(top);
-  const board = mesh(new T.BoxGeometry(2.4, 1.3, .1), M.woodDark); board.position.set(0, 1.6, -.4); g.add(board);
-  [[-.7, 1.75], [0, 1.55], [.7, 1.8]].forEach(([x, y], i) => { const tool = mesh(new T.BoxGeometry(.12, .5, .05), i === 1 ? M.metal : M.red); tool.position.set(x, y, -.32); tool.rotation.z = (i - 1) * .4; g.add(tool); });
-  [-1.1, 1.1].forEach(x => { const post = mesh(new T.CylinderGeometry(.06, .06, 2.4, 6), M.woodDark); post.position.set(x, 1.2, -.4); g.add(post); });
-  for (let i = 0; i < 6; i++) { const a = mesh(new T.BoxGeometry(2.7 / 6, .08, 1.3), i % 2 ? M.white : mat(0x3f7fd0)); a.position.set(-1.35 + 2.7 / 12 + i * 2.7 / 6, 2.45, -.05); a.rotation.x = .2; g.add(a); }
-  const sign = iconSprite('🛠️', 1, '#3f7fd0'); sign.position.set(0, 2.8, 0); g.add(sign);
-  g.position.set(WORKSHOP.bx, 0, WORKSHOP.bz); g.scale.x = .9; scene.add(g);
-  WORKSHOP.disc = zoneDisc(WORKSHOP, 0x3f7fd0);
-}
-const WORKSHOP_TEXT = {
-  bag: 'Caben más cosas en la cesta', boots: 'Corres más rápido', sign: 'Precios más altos y vienen más clientes', water: 'Los cultivos crecen más rápido',
-  machine: 'Edificios y animales trabajan más rápido', workers: 'Ardillas, repartidores y robots van más rápido', cashier: 'Cobra sola en la caja 1 del mercado',
-  cashier2: 'Cobra en la caja 2 del mercado', helper: 'Una ardilla más cosecha por ti', carrier: 'Lleva lo de los edificios al mostrador', tractor: 'Cosechas mucho más de golpe',
-  dog: 'Te trae los billetes de las tiendas', broom: 'Limpias más espacio del prado', bin: 'Cabe más basura en el saco', belt: 'La cinta del reciclaje va más rápido',
-  compactor: 'Cada kilo reciclado vale más', robots: 'Un robot limpia el prado y el pueblo', rod: 'Pescas más rápido', fisher: 'Un pescador pesca solo en un muelle',
-  patrol: 'Otro policía patrulla las tiendas', mechanic: 'Arregla solo las atracciones averiadas',
-};
-const WORKSHOP_GROUPS = [
-  { name: '🧺 Granja', has: u => !u.shop && !u.area && u.needs !== 'police' }, { name: '🏘️ Pueblo', has: u => u.needs === 'police' },
-  { name: '🧹 Prado', has: u => u.area === 3 }, { name: '🎣 Lago', has: u => u.area === 4 && !u.shop }, { name: '🎡 Feria', has: u => u.area === 8 && !u.shop && !u.attr },
-  { name: '🧑‍💼 Cajeras de las tiendas', has: u => !!u.shop },
-];
-const workshopIds = () => Object.keys(UPGRADES).filter(id => !UPGRADES[id].attr);
-const workshopPad = id => ({ id, kind: 'upg', ref: UPGRADES[id], x: WORKSHOP.x, z: WORKSHOP.z });
-// Missions that point at an upgrade now point at the workshop
-const padById = id => pads.find(p => p.id === id) || (UPGRADES[id] ? WORKSHOP : undefined);
+const padById = id => pads.find(p => p.id === id);
 const AREA_GATE = { 2: 'gate', 3: 'gate3', 4: 'gate4', 6: 'gate5', 7: 'gate6', 8: 'gate7', 9: 'gate8' };
 const areaOpen = a => a === 1 || a === 5 || !!S[AREA_GATE[a]];
 const reachable = ref => areaOpen(ref.area || 1) && (ref.sector === undefined || sectorClean(ref.sector));
@@ -2097,7 +2067,7 @@ function completePad(pad) {
       belt: 'La cinta va más rápido', compactor: 'Cada kilo reciclado vale más', robots: 'Un robot barrendero limpia por ti',
       rod: 'Pescas más rápido', fisher: 'Un pescador pesca solo en un muelle',
       mechanic: 'El mecánico arregla solo las atracciones averiadas', patrol: 'Otro policía patrulla las tiendas',
-    }[pad.id] || (r.shop ? `La cajera ya cobra en ${r.shop.name}` : ''));
+    }[pad.id] || (r.fame ? `⭐ ${r.fame.name}: todo se vende un ${15 * S.lv[pad.id]}% más caro` : r.shop ? `La cajera ya cobra en ${r.shop.name}` : ''));
   } else if (kind === 'patch') {
     S.unlocked.push(r.id);
     plants.forEach(pl => { if (pl.patch === r) { pl.grow = 0; pl.dirty = true; } });
@@ -2382,7 +2352,7 @@ function updateCustomers(dt) {
       c.payT -= dt;
       if (c.payT <= 0) {
         const tip = isBuilt('cafe') ? 1.1 : 1;
-        const amount = Math.round(ITEMS[c.want].value * mapPrice(c.want) * c.got * priceF() * (1 + Math.random() * .2) * tip * mult() * (c.vip ? 3 : 1) * eventMult(c.want) * (c.type === 'critic' ? 2 : 1));
+        const amount = Math.round(ITEMS[c.want].value * mapPrice(c.want) * fameOf(c.want) * c.got * priceF() * (1 + Math.random() * .2) * tip * mult() * (c.vip ? 3 : 1) * eventMult(c.want) * (c.type === 'critic' ? 2 : 1));
         S.meta.streak = (S.meta.streak || 0) + 1; S.meta.bestStreak = Math.max(S.meta.bestStreak || 0, S.meta.streak);
         if (c.vip) S.meta.vips = (S.meta.vips || 0) + 1;
         if (c.type === 'critic') { S.meta.critics = (S.meta.critics || 0) + 1; toast('🧐 ¡Al crítico le ha encantado! Paga el doble y calma a todos'); }
@@ -2688,7 +2658,6 @@ function toScreen(x, y, z) { v3.set(x, y, z).project(camera); return { x: (v3.x 
 const floats = [];
 function burst(x, y, z, text, cls = '') { const n = mk('float ' + cls, text); floats.push({ n, x, y, z, t: 0 }); }
 const headTag = mk('headtag');
-const workshopTag = mk('blabel'); workshopTag.hidden = true;
 SHOPS.forEach(s => { s.counterTag = mk('blabel'); s.cashTag = mk('blabel money'); s.tills.forEach(t => { t.tag = mk('blabel'); t.tag.hidden = true; }); s.counterTag.hidden = s.cashTag.hidden = true; });
 const recTag = mk('blabel'), recHopTag = mk('blabel'), recCashTag = mk('blabel money');
 [recTag, recHopTag, recCashTag].forEach(t => { t.hidden = true; });
@@ -2907,7 +2876,7 @@ function sellAtVehicle(s) {
   const b = takeFromStack(() => true); if (!b) return false;
   const to = new T.Vector3(s.tx, 1.6, s.tz);
   flyTo(b, to, .32, () => {
-    const k = b.userData.item, v = Math.max(1, Math.round(ITEMS[k].value * mapPrice(k) * priceF() * s.rate * mult() * eventMult(k)));
+    const k = b.userData.item, v = Math.max(1, Math.round(ITEMS[k].value * mapPrice(k) * fameOf(k) * priceF() * s.rate * mult() * eventMult(k)));
     orderTake(k, to.x, to.z);
     S.sold[k] = (S.sold[k] || 0) + 1;
     addCoins(v); S.today.sales += v; burst(to.x + .3, to.y + .4, to.z, '+' + fmt(v)); sfx.coin(); flyCoins(to.x, to.y, to.z, 1);
@@ -2940,7 +2909,6 @@ function blocked(x, z) {
   if (isBuilt('recycler') && (box(REC.hopper.x, REC.hopper.z, .7, .7) || box(REC.beltX, (REC.beltZ0 + REC.gapZ1) / 2, .5, (REC.beltZ0 - REC.gapZ1) / 2) || box(REC.beltX, (REC.gapZ0 + REC.beltZ1) / 2, .5, (REC.gapZ0 - REC.beltZ1) / 2) || box(REC.plant.x, REC.plant.z, 1.1, 1.1))) return true;
   if (TOWN.some(t => isBuilt(t.id) && t.kind !== 'park' && box(t.x, t.z, t.hx || 1.4, t.hz || 1.3))) return true;
   if (ATTRS.some(a => S.lv[a.id] > 0 && box(a.x, a.z, a.w / 2, a.d / 2))) return true;
-  if (box(WORKSHOP.bx, WORKSHOP.bz, 1.2, .55)) return true;
   return PROCS.some(b => isBuilt(b.id) && box(b.x, b.z, 1.5, 1.6));
 }
 
@@ -3145,11 +3113,6 @@ function update(dt) {
     P.payT = .035; beep(500 + (paid / info.cost) * 600, .04, 'triangle', .03);
     if (S.paid[pad.id] >= info.cost) completePad(pad); else refreshWorld();
   }
-  // Workshop: stepping into its circle opens the upgrade list (once per visit)
-  const inWorkshop = near(WORKSHOP);
-  WORKSHOP.disc.fill.material.opacity = inWorkshop ? .6 : .3;
-  if (inWorkshop && !P.inWorkshop && $('panelOverlay').hidden) openPanel('workshop');
-  P.inWorkshop = inWorkshop;
   // Bank interest
   if (isBuilt('bank')) { bankT -= dt; if (bankT <= 0) { bankT = 30; const v = Math.min(Math.round(S.coins * .02), Math.round(20000 * fscale())); if (v > 0) { addCoins(v); burst(4.5, 3, 19.6, '🏦 +' + fmt(v)); } } }
 
@@ -3213,8 +3176,6 @@ function updateLabels(dt) {
     pad.label.classList.toggle('near', d < 2.8);
     place(pad.label, toScreen(pad.x, .1, pad.z));
   });
-  const dw = dist(WORKSHOP.x, WORKSHOP.z);
-  if (show(workshopTag, dw < 9)) { setHtml(workshopTag, dw < 4 ? '<b>🛠️ Taller de mejoras</b><span class="io">Entra en el círculo</span>' : '<b>🛠️ Mejoras</b>'); place(workshopTag, toScreen(WORKSHOP.bx, 3.3, WORKSHOP.bz)); }
   const cap = capOf(S.lv.bag), n = P.stack.length, sackCap = sackOf(S.lv.bin);
   place(headTag, toScreen(P.x, 1.9 + Math.min(n, 14) * .05, P.z));
   const parts = [];
@@ -3511,20 +3472,6 @@ function openPanel(kind) {
       const done = !!S.achv[a.id], p = Math.min(a.goal, a.prog());
       return `<div class="prow ${done ? 'done' : 'locked'}"><span class="pi">${done ? a.icon : '🔒'}</span><span class="pt2"><b>${a.name}</b>${a.text}<br><small>${done ? '¡Conseguido!' : `${fmt(p)}/${fmt(a.goal)} · premio ${fmt(Math.round(a.reward * fscale()))}`}</small></span></div>`;
     }).join('');
-  } else if (kind === 'workshop') {
-    title = '🛠️ Taller de mejoras'; sub = `Tienes ${fmt(S.coins)} monedas. Pulsa para comprar.`;
-    const ids = workshopIds();
-    rows = WORKSHOP_GROUPS.map(gr => {
-      const list = ids.filter(id => gr.has(UPGRADES[id])).map(id => {
-        const u = UPGRADES[id], l = S.lv[id], info = padInfo(workshopPad(id)), max = l >= u.max;
-        if (!max && !info.active) return '';
-        const left = info.cost - (S.paid[id] || 0), txt = WORKSHOP_TEXT[id] || (u.shop ? `Cobra sola en ${u.shop.name}` : '');
-        const lvl = u.max > 1 ? ` · Nv ${l}/${u.max}` : '';
-        const btn = max ? '<button disabled>Máx</button>' : `<button data-upg="${id}" ${S.coins < left ? 'disabled' : ''}>${fmt(left)}</button>`;
-        return `<div class="prow ${max ? 'done' : ''}"><span class="pi">${info.icon}</span><span class="pt2"><b>${info.name}${lvl}</b>${u.shop && !WORKSHOP_TEXT[id] ? `${u.shop.icon} ${u.shop.name}` : txt}</span>${btn}</div>`;
-      }).join('');
-      return list ? `<div class="pgroup">${gr.name}</div>${list}` : '';
-    }).join('');
   } else if (kind === 'skins') {
     title = `👗 Aspecto de ${who()}`; sub = 'Desbloqueas ropa nueva según avanzas. Lo que consigues es para siempre, aunque te mudes de granja.';
     rows = OUTFITS.map(o => {
@@ -3561,11 +3508,6 @@ $('panelList').addEventListener('click', e => {
     const p = PERKS.find(q => q.id === b.dataset.perk), l = S.perks[p.id] || 0, c = perkCost(l);
     if (l >= p.max || S.stars < c) return;
     S.stars -= c; S.perks[p.id] = l + 1; sfx.buy(); toast(`⭐ ${p.name}: nivel ${l + 1}`); save(); $('panelList')._h = ''; openPanel('stars');
-  } else if (b.dataset.upg) {
-    const pad = workshopPad(b.dataset.upg), info = padInfo(pad), left = info.cost - (S.paid[pad.id] || 0);
-    if (!info.active || S.coins < left) return;
-    S.coins -= left; $('coinsTxt').textContent = fmt(S.coins);
-    completePad(pad); $('panelList')._h = ''; openPanel('workshop');
   } else if (b.dataset.skin) {
     $('panelOverlay').hidden = true; wearSkin(OUTFITS.find(o => o.id === b.dataset.skin));
   } else if (b.dataset.skinad) {
