@@ -556,7 +556,9 @@ const MAPS = [
   { name: 'Isla Tropical',      icon: '🏝️', sky: 0x7fd0ff, grass: 0x6fcf5a, grassDark: 0x62c24e, pine: 0x2f9a45, pine2: 0x4fbf5a, hedge: 0x2f9a45, meadow: 0x9ac860, leaves: 0x3fbf5a, path: 0xf7eac0, water: 0x22d8c8, trees: 'palm',     weather: 'none',   bonus: { kind: 'all',     text: 'Todo se vende un 50% más caro' } },
 ];
 const mapOf = n => MAPS[n % MAPS.length];
-const GAME_VERSION = '15';
+// The version goes up with every release; tools/build.py stamps the build date (while developing it says 'en pruebas')
+const GAME_VERSION = '18';
+const BUILD_DATE = '02/11/2026 16:22';
 // The avatar creator: hair style, hair colour and skin tone are picked from these lists
 const AVATAR_HAIR = [
   { id: 'curly', name: 'Rizos largos' }, { id: 'long', name: 'Coletas' }, { id: 'bun', name: 'Moño' }, { id: 'short', name: 'Corto' }, { id: 'afro', name: 'Rizos cortos' },
@@ -700,7 +702,7 @@ const trashValue = () => 10 * (1 + .5 * S.lv.compactor);
   const mm = machineOf(S.lv.machine), fishers = fishersOn();
   PROCS.forEach(p => { if (!isBuilt(p.id)) return; const st = pstate(p.id); const n = Math.min(st.in, Math.floor(away * mm / p.time), PROC_MAX - st.out); st.in -= n; st.out += n; });
   ATTRS.forEach(a => { const lv = S.lv[a.id]; if (lv) S.tick[a.id] = Math.min(a.rate * lv * 2 ** (S.farm || 0) * 180, (S.tick[a.id] || 0) + away * a.rate * lv * 2 ** (S.farm || 0) * .25); });
-  ANIMALS.forEach(a => { if (!isBuilt(a.id) || (a.dock && !fishers.includes(a))) return; const st = pstate(a.id); st.out = Math.min(ANIMAL_MAX, st.out + Math.floor(away * mm / a.every)); });
+  ANIMALS.forEach(a => { if (!isBuilt(a.id) || (a.dock && !fishers.includes(a))) return; const st = pstate(a.id), before = st.out; st.out = Math.min(ANIMAL_MAX, st.out + Math.floor(away * mm / a.every)); if (a.dock) S.caught += st.out - before; });
   if (isBuilt('recycler')) { const n = Math.min(S.rec.queue, Math.floor(away * beltRate())); S.rec.queue -= n; S.rec.cash += Math.round(n * trashValue() * 2 ** (S.farm || 0)); S.recycled += n; }
 }
 
@@ -3051,7 +3053,8 @@ function update(dt) {
       if (st.in > 0 && Math.random() < dt * 1.5 && !builds[b.id].spin) { const c = b.x < 0 ? -1 : 1; puff(b.x + .4 * c, 3.1, b.z + .7 * c, 0xd0d0d0, 1, .2, 1.2); }
     } else {
       const producing = !b.dock || fishers.includes(b);
-      if (producing && st.out < ANIMAL_MAX) { st.t += dt * mm; if (st.t >= b.every) { st.t = 0; st.out++; } }
+      // Fish from the hired fishers count as caught too, so the fishing mission keeps going once one is hired
+      if (producing && st.out < ANIMAL_MAX) { st.t += dt * mm; if (st.t >= b.every) { st.t = 0; st.out++; if (b.dock) S.caught++; } }
       if (b.dock && producing) { const f = builds[b.id].g.userData.fisher; f.arm.rotation.x = -1 + Math.sin(performance.now() / 500) * .1; }
       builds[b.id].animals.forEach(a => {
         if (a.bee) { a.a += dt * a.s; a.bee.position.set(Math.cos(a.a) * a.r, a.h + Math.sin(a.a * 3) * .15, Math.sin(a.a) * a.r * .6); a.bee.rotation.y = -a.a; return; }
@@ -3686,7 +3689,7 @@ function frame(now) {
 const menu = $('menu');
 function renderStats() {
   const top = Object.entries(S.sold).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([k, v]) => `${ITEMS[k].icon} ${fmt(v)}`).join(' · ');
-  $('stats').innerHTML = `<b>Granja ${(S.farm || 0) + 1} · ${THEME.icon} ${THEME.name}</b>${THEME.bonus ? `<br>✨ ${THEME.bonus.text}` : ''}<br>Pueblo: <b>${townCount()}/${TOWN.length}</b> edificios<br>Ganado en esta granja: <b>${fmt(S.earned)}</b><br>Clientes atendidos: <b>${fmt(S.served)}</b> · enfadados: <b>${fmt(S.angry)}</b><br>${SHOPS.filter(sh => areaOpen(sh.area)).map(sh => `${sh.icon} ${fmt(S.servedBy[sh.id] || 0)}`).join(' · ')}<br>Enfado ahora: <b>${Math.round(S.mood || 0)}%</b><br>Peces: <b>${fmt(S.caught)}</b> · reciclado: <b>${fmt(S.recycled)} kg</b><br>Vendido: ${top || 'nada aún'}`;
+  $('stats').innerHTML = `<b>Granja ${(S.farm || 0) + 1} · ${THEME.icon} ${THEME.name}</b>${THEME.bonus ? `<br>✨ ${THEME.bonus.text}` : ''}<br>Pueblo: <b>${townCount()}/${TOWN.length}</b> edificios<br>Ganado en esta granja: <b>${fmt(S.earned)}</b><br>Clientes atendidos: <b>${fmt(S.served)}</b> · enfadados: <b>${fmt(S.angry)}</b><br>${SHOPS.filter(sh => areaOpen(sh.area)).map(sh => `${sh.icon} ${fmt(S.servedBy[sh.id] || 0)}`).join(' · ')}<br>Enfado ahora: <b>${Math.round(S.mood || 0)}%</b><br>Peces: <b>${fmt(S.caught)}</b> · reciclado: <b>${fmt(S.recycled)} kg</b><br>Vendido: ${top || 'nada aún'}<br><small>Versión ${GAME_VERSION} · ${BUILD_DATE}</small>`;
 }
 $('menuBtn').addEventListener('click', () => { menu.hidden = !menu.hidden; $('resetConfirm').hidden = true; renderStats(); });
 const soundLabel = () => { $('soundBtn').textContent = S.sound ? '🔊 Sonido: sí' : '🔈 Sonido: no'; };
@@ -3705,7 +3708,7 @@ function feedbackText() {
     + (fbRate ? `Nota: ${'★'.repeat(fbRate)}${'☆'.repeat(5 - fbRate)}\n` : '')
     + `\n${$('fbText').value.trim() || '(sin comentario)'}\n\n`
     + `— Progreso: ${who()} · granja ${(S.farm || 0) + 1} (${THEME.name}) · misión ${S.mission + 1}/${MISSIONS.length} · ${Math.floor(m / 60)} h ${m % 60} min jugados · día ${S.dayN || 1} · ${fmt(S.earned)} ganado\n`
-    + `— ${mobile ? 'Móvil' : 'Ordenador'} ${innerWidth}×${innerHeight} · versión ${GAME_VERSION}`;
+    + `— ${mobile ? 'Móvil' : 'Ordenador'} ${innerWidth}×${innerHeight} · versión ${GAME_VERSION} (${BUILD_DATE})`;
 }
 function openFeedback() { menu.hidden = true; $('feedbackOverlay').hidden = false; }
 $('feedbackBtn').addEventListener('click', openFeedback);
