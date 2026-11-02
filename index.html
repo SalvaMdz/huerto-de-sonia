@@ -557,8 +557,8 @@ const MAPS = [
 ];
 const mapOf = n => MAPS[n % MAPS.length];
 // The version goes up with every release; tools/build.py stamps the build date (while developing it says 'en pruebas')
-const GAME_VERSION = '20';
-const BUILD_DATE = '02/11/2026 16:50';
+const GAME_VERSION = '21';
+const BUILD_DATE = '02/11/2026 16:56';
 // The avatar creator: hair style, hair colour and skin tone are picked from these lists
 const AVATAR_HAIR = [
   { id: 'curly', name: 'Rizos largos' }, { id: 'long', name: 'Coletas' }, { id: 'bun', name: 'Moño' }, { id: 'short', name: 'Corto' }, { id: 'afro', name: 'Rizos cortos' },
@@ -700,6 +700,8 @@ const tillOpen = t => !t.id || isBuilt(t.id);
 const beltRate = () => (1 + .35 * S.lv.belt) / .45;
 const trashValue = () => 10 * (1 + .5 * S.lv.compactor);
 
+// Zones opened before they came full of rubbish start clean
+if (S.rubbleV !== 1) { S.rubble = S.rubble || {}; [[2, 'gate'], [4, 'gate4'], [6, 'gate5'], [7, 'gate6'], [8, 'gate7'], [9, 'gate8']].forEach(([a, g]) => { if (S[g]) S.rubble[a] = 'done'; }); S.rubbleV = 1; }
 // Work done while the game was closed (capped at 8 hours)
 {
   const away = Math.min(8 * 3600, Math.max(0, (Date.now() - (S.t || Date.now())) / 1000));
@@ -1240,7 +1242,7 @@ debris.cells = []; debris.sector = [0, 0, 0, 0]; debris.sectorDone = [0, 0, 0, 0
 const sectorPct = i => debris.sectorDone[i] / debris.sector[i];
 const sectorClean = i => sectorPct(i) >= .97;
 const meadowPct = () => debris.sectorDone.reduce((a, b) => a + b, 0) / debris.n;
-const saveCleared = () => { let s = ''; for (let i = 0; i < debris.n; i++) s += debris.cleared[i] ? '1' : '0'; S.cleared = s; };
+const saveCleared = () => { let s = ''; for (let i = 0; i < debris.n; i++) s += debris.cleared[i] ? '1' : '0'; S.cleared = s; if (typeof saveRubble === 'function') saveRubble(); };
 const sectorCenters = [0, 1, 2, 3].map(i => ({ x: i % 2 ? (MEADOW.midX + MEADOW.x1) / 2 : (MEADOW.x0 + MEADOW.midX) / 2, z: i < 2 ? (MEADOW.z0 + MEADOW.midZ) / 2 : (MEADOW.midZ + MEADOW.z1) / 2 }));
 const SECTOR_NAMES = ['Parcela de los manzanos', 'Parcela del lagar', 'Parcela de las abejas', 'Parcela del mercado'];
 const touchedDebris = new Set();
@@ -1325,6 +1327,84 @@ function updateBelt(dt) {
   }
   if (plantGear && (beltItems.length || S.rec.queue)) plantGear.rotation.z += dt * 4;
 }
+
+/* ---------- Rubbish in every newly opened zone ---------- */
+// Each zone after the farm opens full of weeds, stones and junk. Sonia sweeps it into her sack and empties it in the zone's
+// skip (or the recycling plant). Nothing can be built there until most of it is gone. The meadow keeps its own system above.
+const RUBBLE = [
+  { a: 2, name: 'el bosque',             x0: -11.2, x1: 11.2,  z0: -40.8, z1: -15,  n: 110, bin: { x: 3, z: -16.2 } },
+  { a: 4, name: 'el lago',               x0: -34,   x1: -13.2, z0: -12.8, z1: 16.8, n: 130, bin: { x: -15.2, z: -11.4 } },
+  { a: 6, name: 'la granja de animales', x0: -60.6, x1: -36.2, z0: -12.8, z1: 16.8, n: 220, bin: { x: -38.6, z: -1.6 } },
+  { a: 7, name: 'el aserradero',         x0: 36.2,  x1: 60.6,  z0: -12.8, z1: 16.8, n: 220, bin: { x: 38.6, z: -1.6 } },
+  { a: 8, name: 'la feria',              x0: -23.8, x1: 23.8,  z0: 23.6,  z1: 44,   n: 260, bin: { x: 6, z: 30 } },
+  { a: 9, name: 'las piscinas',          x0: -24,   x1: 24,    z0: 46,    z1: 63.8, n: 260, bin: { x: 6.5, z: 46.6 } },
+];
+const RUBBLE_CLEAN = .85;
+{
+  // Spots that must stay free: fields, buildings, pens, rides, shop squares, the lake and every pad
+  const spots = [...Object.values(UPGRADES), ...PATCHES, ...GATES, ...SPECIAL, ...TOWN, ...SELLS].map(p => [p.x, p.z]).concat(PROCS.map(p => [p.zx, p.zz]), ANIMALS.map(a => [a.zx, a.zz]));
+  const free = (x, z, bin) => !PATCHES.some(p => { const sp = p.spacing || SPACING; return Math.abs(x - p.x) < p.cols * sp / 2 + 1 && Math.abs(z - p.z) < p.rows * sp / 2 + 1; })
+    && !PROCS.some(b => Math.abs(x - b.x) < 2.2 && Math.abs(z - b.z) < 2.2) && !ANIMALS.some(a => Math.abs(x - a.x) < 3 && Math.abs(z - a.z) < 2.6)
+    && !ATTRS.some(a => Math.abs(x - a.x) < a.w / 2 + 1.6 && Math.abs(z - a.z) < a.d / 2 + 1.6)
+    && !SHOPS.some(s => (Math.abs(x - s.x) < 5.6 && z > s.z - 2.6 && z < s.z + 7) || (Math.abs(x - s.spawn.x) < 1.3 && (z - s.z) * (z - s.spawn.z) < 0))
+    && !SELLS.some(s => Math.abs(x - s.tx) < 1.4 && Math.abs(z - s.tz) < 2.5)
+    && ((x - LAKE.x) / (LAKE.rx + 1.6)) ** 2 + ((z - LAKE.z) / (LAKE.rz + 1.6)) ** 2 > 1
+    && !spots.some(([px, pz]) => (x - px) ** 2 + (z - pz) ** 2 < 1.1) && (x - bin.x) ** 2 + (z - bin.z) ** 2 > 3;
+  const binGeo = new T.BoxGeometry(1.3, .8, .8), lidGeo = new T.BoxGeometry(1.36, .1, .86);
+  RUBBLE.forEach((Z, zi) => {
+    // Always the same cells in the same order, so the saved list of swept cells keeps matching
+    let seed = 101 + zi * 977; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const all = [];
+    for (let x = Z.x0 + .4; x < Z.x1; x += .75) for (let z = Z.z0 + .4; z < Z.z1; z += .75) {
+      const cx = x + (rnd() - .5) * .3, cz = z + (rnd() - .5) * .3;
+      if (free(cx, cz, Z.bin)) all.push([cx, cz, rnd()]);
+    }
+    all.sort((p, q) => p[2] - q[2]);
+    const counts = [0, 0, 0, 0];
+    Z.cells = all.slice(0, Z.n).map(([x, z]) => { const roll = rnd(), type = roll < .38 ? 0 : roll < .66 ? 1 : roll < .84 ? 2 : 3; return { x, z, type, idx: counts[type]++, rot: rnd() * 6, s: .8 + rnd() * .5 }; });
+    Z.meshes = debris.types.map((t, i) => { const im = new T.InstancedMesh(t.geo, t.mat, Math.max(1, counts[i])); im.castShadow = true; scene.add(im); return im; });
+    Z.cleared = new Uint8Array(Z.cells.length);
+    const saved = (S.rubble || {})[Z.a];
+    Z.cells.forEach((c, i) => { if (saved === 'done' || (saved && saved[i] === '1')) Z.cleared[i] = 1; });
+    Z.left = Z.cells.length - Z.cleared.reduce((a, b) => a + b, 0);
+    Z.cells.forEach((c, i) => { dummy.position.set(c.x, 0, c.z); dummy.rotation.set(0, c.rot, 0); dummy.scale.setScalar(Z.cleared[i] ? 0 : c.s); dummy.updateMatrix(); Z.meshes[c.type].setMatrixAt(c.idx, dummy.matrix); });
+    Z.meshes.forEach(m => { m.instanceMatrix.needsUpdate = true; });
+    // The skip where the sack is emptied
+    const g = new T.Group();
+    const box = mesh(binGeo, mat(0x3f8f4a)); box.position.y = .45; g.add(box);
+    const lid = mesh(lidGeo, mat(0x2f6f3a)); lid.position.set(0, .9, -.1); lid.rotation.x = -.35; g.add(lid);
+    [-.45, .45].forEach(x => { const w = mesh(new T.CylinderGeometry(.09, .09, .06, 10), M.tire); w.rotation.z = Math.PI / 2; w.position.set(x, .09, .32); g.add(w); });
+    const sign = iconSprite('🗑️', .7, '#3f8f4a'); sign.position.y = 1.3; g.add(sign);
+    g.position.set(Z.bin.x, 0, Z.bin.z - 1.2); scene.add(g); Z.binMesh = g;
+    Z.zone = { x: Z.bin.x, z: Z.bin.z, r: .9 }; Z.disc = zoneDisc(Z.zone, 0x3f8f4a);
+  });
+}
+const rubbleZone = a => RUBBLE.find(Z => Z.a === a);
+const rubbleFrac = Z => 1 - Z.left / Z.cells.length;
+// A zone counts as clean once 85% of its rubbish is gone; zones without rubbish are always clean
+const zoneClean = a => { const Z = rubbleZone(a); return !Z || rubbleFrac(Z) >= RUBBLE_CLEAN; };
+const rubbleAt = (x, z) => RUBBLE.find(Z => Z.left > 0 && areaOpen(Z.a) && x > Z.x0 - .5 && x < Z.x1 + .5 && z > Z.z0 - .5 && z < Z.z1 + .5);
+function sweepRubble(Z, x, z, r, room) {
+  let got = 0;
+  const wasClean = zoneClean(Z.a);
+  for (let i = 0; i < Z.cells.length && got < room; i++) {
+    const c = Z.cells[i];
+    if (Z.cleared[i] || (c.x - x) ** 2 + (c.z - z) ** 2 > r * r) continue;
+    Z.cleared[i] = 1; Z.left--; got += debris.types[c.type].units;
+    dummy.position.set(c.x, 0, c.z); dummy.scale.setScalar(0); dummy.updateMatrix(); Z.meshes[c.type].setMatrixAt(c.idx, dummy.matrix); Z.meshes[c.type].instanceMatrix.needsUpdate = true;
+    if (Math.random() < .25) puff(c.x, .2, c.z, debris.types[c.type].mat.color.getHex(), 2, .6, 1.6);
+  }
+  if (!wasClean && zoneClean(Z.a)) { sfx.mission(); toast(`✨ ¡Has limpiado ${Z.name}! Ya puedes construir allí`); puff(x, 1, z, 0xf6c445, 18, 2, 4); refreshWorld(); }
+  return got;
+}
+// The nearest rubbish of a zone, for the guide arrow
+function rubbleTarget(a) {
+  const Z = rubbleZone(a); if (!Z) return null;
+  let best = null, bd = 1e9;
+  Z.cells.forEach((c, i) => { if (Z.cleared[i]) return; const d = (c.x - P.x) ** 2 + (c.z - P.z) ** 2; if (d < bd) { bd = d; best = c; } });
+  return best;
+}
+const saveRubble = () => { S.rubble = S.rubble || {}; RUBBLE.forEach(Z => { S.rubble[Z.a] = Z.left ? Array.from(Z.cleared).join('') : 'done'; }); };
 
 /* ---------- Lake ---------- */
 const lake = new T.Group();
@@ -1991,7 +2071,7 @@ makePad('move', MOVE.x, MOVE.z, 'move', MOVE);
 const padById = id => pads.find(p => p.id === id);
 const AREA_GATE = { 2: 'gate', 3: 'gate3', 4: 'gate4', 6: 'gate5', 7: 'gate6', 8: 'gate7', 9: 'gate8' };
 const areaOpen = a => a === 1 || a === 5 || !!S[AREA_GATE[a]];
-const reachable = ref => areaOpen(ref.area || 1) && (ref.sector === undefined || sectorClean(ref.sector));
+const reachable = ref => areaOpen(ref.area || 1) && zoneClean(ref.area || 1) && (ref.sector === undefined || sectorClean(ref.sector));
 let MOVE_AFTER = 999;
 function padInfoBase(pad) {
   const r = pad.ref;
@@ -1999,7 +2079,7 @@ function padInfoBase(pad) {
   if (pad.kind === 'upg') {
     const l = S.lv[pad.id];
     const name = pad.id === 'broom' ? BROOM_NAMES[Math.min(l + 1, BROOM_NAMES.length - 1)] : r.name;
-    return { active: l < r.max && areaOpen(r.area || 1) && (!r.needs || isBuilt(r.needs)), cost: r.cost(l), name, icon: r.icon, sub: r.max > 1 ? `Nv ${l + 1}` : '' };
+    return { active: l < r.max && areaOpen(r.area || 1) && zoneClean(r.area || 1) && (!r.needs || isBuilt(r.needs)), cost: r.cost(l), name, icon: r.icon, sub: r.max > 1 ? `Nv ${l + 1}` : '' };
   }
   if (pad.kind === 'patch') return { active: reachable(r) && !unlocked(r.id), cost: r.cost, name: ITEMS[r.crop].name, icon: ITEMS[r.crop].icon, sub: 'Campo' };
   if (pad.kind === 'build') return { active: reachable(r) && !isBuilt(pad.id), cost: r.cost, name: r.name, icon: ITEMS[r.output].icon, sub: '' };
@@ -2036,6 +2116,7 @@ function refreshWorld() {
     if (s.plaza) s.plaza.visible = s.walk.visible = open;
     s.tills.forEach(t => { t.open = open && tillOpen(t); t.mesh.visible = t.open; t.disc.ring.visible = t.disc.fill.visible = t.open; t.cashier.g.visible = t.open && S.lv[t.staff] > 0; });
   });
+  RUBBLE.forEach(Z => { const on = areaOpen(Z.a); Z.meshes.forEach(m => { m.visible = on; }); Z.binMesh.visible = Z.disc.ring.visible = Z.disc.fill.visible = on; });
   const rec = isBuilt('recycler');
   recycler.visible = rec; recZone.ring.visible = recZone.fill.visible = rec; recCashDisc.ring.visible = recCashDisc.fill.visible = rec;
   ATTRS.forEach(a => { const on = S.lv[a.id] > 0; a.mesh.g.visible = on; a.disc.ring.visible = a.disc.fill.visible = on; a.warn.visible = on && a.broken; billPile(a.cash, a.bills, on ? Math.floor(S.tick[a.id] || 0) : 0); });
@@ -2089,6 +2170,8 @@ function completePad(pad) {
     }[r.kind || pad.id] || (r.shop ? `Segunda caja abierta en ${r.shop.name}. Contrata otra cajera` : ''));
   } else {
     S[pad.id] = true;
+    const dirty = rubbleZone(+Object.keys(AREA_GATE).find(a => AREA_GATE[a] === pad.id));
+    if (dirty) toast(`🧹 ¡Se abre ${dirty.name}! Hay basura por todas partes: bárrela y vacía el saco en el contenedor 🗑️ para poder construir`); else
     toast({ gate: '¡Se abre el bosque! Al fondo está la tienda del bosque, con sus propios clientes', gate4: '¡Se abre el lago! Pesca y vende en la pescadería', gate3: 'El prado está lleno de basura. Barre, llena el saco y llévalo al reciclaje',
       gate5: '🐑 ¡Granja de animales! Ovejas, cerdos, cabras y maíz', gate6: '🪓 ¡Aserradero! Tala árboles y haz muebles', gate7: '🎡 ¡La feria! Construye atracciones que venden entradas', gate8: '🏊 ¡Piscinas! Tobogán, olas y chiringuito' }[pad.id]);
   }
@@ -2658,6 +2741,7 @@ function toScreen(x, y, z) { v3.set(x, y, z).project(camera); return { x: (v3.x 
 const floats = [];
 function burst(x, y, z, text, cls = '') { const n = mk('float ' + cls, text); floats.push({ n, x, y, z, t: 0 }); }
 const headTag = mk('headtag');
+const rubbleTags = RUBBLE.map(() => { const t = mk('blabel'); t.hidden = true; return t; });
 SHOPS.forEach(s => { s.counterTag = mk('blabel'); s.cashTag = mk('blabel money'); s.tills.forEach(t => { t.tag = mk('blabel'); t.tag.hidden = true; }); s.counterTag.hidden = s.cashTag.hidden = true; });
 const recTag = mk('blabel'), recHopTag = mk('blabel'), recCashTag = mk('blabel money');
 [recTag, recHopTag, recCashTag].forEach(t => { t.hidden = true; });
@@ -2968,8 +3052,15 @@ function update(dt) {
   }
   // Sweeping the meadow into the sack
   const sackCap = sackOf(S.lv.bin);
-  const meadow = S.gate3 && P.x > 16.2 && P.x < 34.3 && P.z < 7.8, r = broomOf(S.lv.broom);
-  broomRing.visible = meadow;
+  const meadow = S.gate3 && P.x > 16.2 && P.x < 34.3 && P.z < 7.8, r = broomOf(S.lv.broom), rz = !meadow && rubbleAt(P.x, P.z);
+  broomRing.visible = meadow || !!rz;
+  if (rz) {
+    // A newly opened zone still full of rubbish: same broom and sack as in the meadow
+    broomRing.position.set(P.x, .03, P.z); broomRing.scale.setScalar(r);
+    broomRing.material.color.setHex(S.sack >= sackCap ? 0xff6a5a : 0xffffff);
+    if (S.sack < sackCap) { const got = sweepRubble(rz, P.x, P.z, r, sackCap - S.sack); if (got) { S.sack += got; sfx.sweep(); P.swing = Math.max(P.swing, .6); } P.sackWarned = false; }
+    else if (!P.sackWarned) { P.sackWarned = true; sfx.full(); toast('¡Saco lleno! Vacíalo en el contenedor 🗑️ de la zona'); }
+  }
   if (meadow) {
     broomRing.position.set(P.x, .03, P.z); broomRing.scale.setScalar(r);
     broomRing.material.color.setHex(S.sack >= sackCap ? 0xff6a5a : 0xffffff);
@@ -3037,6 +3128,17 @@ function update(dt) {
       flyTo(m, new T.Vector3(REC.hopper.x, 1.4, REC.hopper.z), .3, () => m.material.dispose());
     }
   }
+  // Zone skips: emptying the sack there pays half of what the recycling plant would
+  P.binT = (P.binT || 0) - dt;
+  RUBBLE.forEach(Z => {
+    if (!areaOpen(Z.a)) return;
+    const at = near(Z.zone); Z.disc.fill.material.opacity = at ? .6 : .3;
+    if (!at || S.sack <= 0 || P.binT > 0) return;
+    const k = Math.min(S.sack, Math.max(1, Math.ceil(S.sack / 25))), v = Math.max(1, Math.round(k * trashValue() * mult() * .5));
+    S.sack -= k; P.binT = .04; addCoins(v); sfx.drop(); if (Math.random() < .3) burst(Z.bin.x, 1.6, Z.bin.z - 1.2, '+' + fmt(v));
+    const m = mesh(trashGeo, mat(pick(TRASH_COLORS))); m.position.set(P.x, 1, P.z); scene.add(m);
+    flyTo(m, new T.Vector3(Z.bin.x, 1.1, Z.bin.z - 1.2), .3, () => m.material.dispose());
+  });
   // Vehicles: instant sale at a lower price
   SELLS.forEach((s, i) => {
     if (!sellActive(s)) return;
@@ -3142,12 +3244,16 @@ function update(dt) {
   const topShop = P.stack.length ? shopFor(P.stack[P.stack.length - 1].userData.item) : FARM;
   let target = null;
   if (full) target = topShop && topShop.open ? topShop.counter : COUNTER_ZONE;
-  else if (S.sack >= sackCap && isBuilt('recycler')) target = REC.zone;
+  else if (S.sack >= sackCap && (isBuilt('recycler') || RUBBLE.some(Z => areaOpen(Z.a)))) {
+    // The nearest place to empty the sack: a zone skip or the recycling plant
+    const spots = RUBBLE.filter(Z => areaOpen(Z.a)).map(Z => Z.zone).concat(isBuilt('recycler') ? [REC.zone] : []);
+    target = spots.reduce((b, s) => ((s.x - P.x) ** 2 + (s.z - P.z) ** 2 < (b.x - P.x) ** 2 + (b.z - P.z) ** 2 ? s : b));
+  }
   else if (waitingTill >= 0 && S.mission < 8) target = FARM.tills[waitingTill].zone;
   else if (S.shops.farm.cash > 0 && S.mission < 8) target = CASH;
   else if (S.tut === 0) target = { x: PATCHES[0].x, z: PATCHES[0].z };
   else if (S.tut === 1 && P.stack.length >= 4) target = COUNTER_ZONE;
-  else if (S.tut >= 2) { const m = MISSIONS[S.mission], t = m && m.target(); if (t && (!t.g || t.g.visible)) target = t; }
+  else if (S.tut >= 2) { const m = MISSIONS[S.mission], t = m && m.target(); if (t && (!t.g || t.g.visible)) target = t; else if (t && t.ref && areaOpen(t.ref.area || 1) && !zoneClean(t.ref.area || 1)) target = rubbleTarget(t.ref.area); }
   arrow.visible = !!target;
   if (target) { arrow.position.set(target.x, 1.6 + Math.sin(performance.now() / 220) * .2, target.z); arrow.rotation.y += dt * 2; }
 
@@ -3175,6 +3281,13 @@ function updateLabels(dt) {
     if (!show(pad.label, d < 5.5)) return;
     pad.label.classList.toggle('near', d < 2.8);
     place(pad.label, toScreen(pad.x, .1, pad.z));
+  });
+  RUBBLE.forEach((Z, i) => {
+    const d = areaOpen(Z.a) ? dist(Z.bin.x, Z.bin.z) : 99, pct = Math.min(100, Math.floor(rubbleFrac(Z) / RUBBLE_CLEAN * 100));
+    if (!show(rubbleTags[i], d < 14 && (Z.left > 0 || S.sack > 0))) return;
+    setHtml(rubbleTags[i], `<b>🗑️ Contenedor</b><span class="io">${pct < 100 ? `🧹 Zona ${pct}% limpia · ` : ''}${S.sack ? 'Vacía aquí el saco' : 'Barre la basura'}</span>`);
+    rubbleTags[i].classList.toggle('call', S.sack >= sackOf(S.lv.bin));
+    place(rubbleTags[i], toScreen(Z.bin.x, 2.2, Z.bin.z - 1.2));
   });
   const cap = capOf(S.lv.bag), n = P.stack.length, sackCap = sackOf(S.lv.bin);
   place(headTag, toScreen(P.x, 1.9 + Math.min(n, 14) * .05, P.z));
