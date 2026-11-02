@@ -246,6 +246,18 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
   .creator { top: 0; justify-content: flex-end; align-items: center; padding: 16px max(24px, env(safe-area-inset-right, 0px)) 16px 16px; }
   .cbox { width: min(400px, 48vw); max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); }
 }
+.lvl { pointer-events: auto; position: relative; width: 44px; height: 44px; border-radius: 50%; padding: 4px; border: 0; cursor: pointer;
+  background: conic-gradient(#9be37a var(--p, 0%), rgba(40, 28, 20, .55) 0); box-shadow: 0 3px 0 rgba(0,0,0,.28); }
+.lvl b { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%; background: linear-gradient(#9a5ae0, #6a2fb4); color: var(--cream);
+  font-family: var(--font-display); font-weight: 400; font-size: 1.05rem; text-shadow: 0 2px 0 rgba(0,0,0,.35); }
+.lvl.bump { animation: bump .35s; }
+.adbox.levelup .dsub { font-size: .75rem; letter-spacing: .6px; text-transform: uppercase; font-weight: 900; color: #6a2fb4; }
+.lvlbig { align-self: center; width: 96px; height: 96px; border-radius: 50%; display: grid; place-items: center; font-family: var(--font-display); font-size: 3rem; color: var(--cream);
+  background: radial-gradient(circle at 35% 30%, #c08aff, #6a2fb4 70%); border: 4px solid var(--gold); box-shadow: 0 5px 0 var(--gold-dark); text-shadow: 0 3px 0 rgba(0,0,0,.3); animation: bump .6s 2; }
+.lvlrewards { display: flex; flex-direction: column; gap: 6px; background: #f3e6cf; border-radius: 12px; padding: 10px 12px; font-weight: 900; text-align: left; }
+#confetti { position: fixed; inset: 0; z-index: 11; pointer-events: none; overflow: hidden; }
+#confetti i { position: absolute; top: -12px; width: 9px; height: 14px; border-radius: 2px; animation: fall linear forwards; }
+@keyframes fall { to { transform: translateY(105vh) rotate(720deg); } }
 @keyframes wiggle { 0%,100% { transform: rotate(0); } 20% { transform: rotate(-8deg); } 40% { transform: rotate(8deg); } 60% { transform: rotate(0); } }
 @keyframes bump { 50% { transform: scale(1.06); } }
 @keyframes pulse { 0%,100% { transform: translate(-50%, -100%) scale(1); } 50% { transform: translate(-50%, -100%) scale(1.08); } }
@@ -260,6 +272,7 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
 <div class="hud">
   <div class="hudrow">
     <div class="pill" id="coinsPill"><span class="coin" id="hudCoin"></span><span id="coinsTxt">0</span></div>
+    <button class="lvl" id="lvlPill" aria-label="Nivel"><b id="lvlNum">1</b></button>
     <div class="spacer"></div>
     <button class="iconbtn" id="tractorBtn" hidden aria-label="Subir o bajar del tractor">🚜</button>
     <button class="iconbtn chest" id="chestBtn" hidden aria-label="Cofre diario">🎁</button>
@@ -338,6 +351,17 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
     <button class="ghost" id="dayOk">Seguir</button>
   </div>
 </div>
+<div class="overlay" id="levelOverlay" hidden>
+  <div class="adbox levelup">
+    <p class="dsub">¡Has subido de nivel!</p>
+    <div class="lvlbig" id="lvlBig">2</div>
+    <h3 id="lvlTitle">¡Nivel 2!</h3>
+    <div class="lvlrewards" id="lvlRewards"></div>
+    <button id="lvlAd">📺 Doblar las monedas</button>
+    <button class="ghost" id="lvlOk">¡Genial!</button>
+  </div>
+</div>
+<div id="confetti" aria-hidden="true"></div>
 <div class="overlay" id="panelOverlay" hidden>
   <div class="adbox panel">
     <h3 id="panelTitle"></h3>
@@ -614,8 +638,8 @@ const MAP_CONTENT = {
   },
 };
 // The version goes up with every release; tools/build.py stamps the build date (while developing it says 'en pruebas')
-const GAME_VERSION = '24';
-const BUILD_DATE = '02/11/2026 17:35';
+const GAME_VERSION = '25';
+const BUILD_DATE = '02/11/2026 17:38';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -625,6 +649,10 @@ const VEHICLE_SKINS = [
   { id: 'black',  name: 'Noche',         icon: '⚫', body: 0x2a2a30, mower: 0x2a2a30, hub: 0xe8384a, need: 'Atrapa a 10 ladrones', goal: 10, prog: () => S.meta.thieves || 0 },
   { id: 'purple', name: 'Feriante',      icon: '🟣', body: 0x8e3bb0, mower: 0x8e3bb0, hub: 0xf6c445, need: 'Abre la feria', goal: 1, prog: () => +S.gate7 },
   { id: 'gold',   name: 'Oro puro',      icon: '🥇', body: 0xf6c445, mower: 0xf6c445, hub: 0xfdf6ea, metal: true, need: 'Consigue 10 medallas de oro', goal: 10, prog: () => S.meta.golds || 0 },
+  { id: 'coral',  name: 'Coral',         icon: '🪸', body: 0xff7f6a, mower: 0xff7f6a, hub: 0xfdf6ea, need: 'Abre el astillero en la Costa Dorada', goal: 1, prog: () => +((S.farm || 0) % MAPS.length === 1 && S.gate6) },
+  { id: 'police', name: 'Patrulla',      icon: '🚓', body: 0x2f4f8f, mower: 0x2f4f8f, hub: 0xfdfdfd, need: 'Llega al nivel 8', goal: 8, lvl: 8, prog: () => S.meta.level || 1 },
+  { id: 'camo',   name: 'Camuflaje',     icon: '🪖', body: 0x5a6a32, mower: 0x5a6a32, hub: 0x2a2a2a, need: 'Llega al nivel 12', goal: 12, lvl: 12, prog: () => S.meta.level || 1 },
+  { id: 'galaxy', name: 'Galaxia',       icon: '🌌', body: 0x3a2a7a, mower: 0x3a2a7a, hub: 0xf5e01f, metal: true, need: 'Llega al nivel 20', goal: 20, lvl: 20, prog: () => S.meta.level || 1 },
   { id: 'mint',   name: 'Helado de menta', icon: '🍦', body: 0x9fe3c8, mower: 0x9fe3c8, hub: 0xf06aa8, need: 'Mira un anuncio', goal: 1, prog: () => 0, ad: true },
 ];
 // The avatar creator: hair style, hair colour and skin tone are picked from these lists
@@ -658,6 +686,18 @@ const OUTFITS = [
     look: { shirt: 'gold', pants: 0xc98f12, bib: 0xc98f12, hat: 'straw', hatColor: 0xf6c445, kerchief: true, boot: 0xc98f12 } },
   { id: 'queen',   name: 'Reina del huerto', icon: '👑', text: 'Vestido largo y corona', need: 'Múdate a una granja nueva', goal: 1, prog: () => +(S.farm > 0),
     look: { shirt: 0x8e5bd0, skirt: 0x6a2fb4, skirtLong: true, pants: 'skin', hat: 'crown', boot: 0x6a2fb4 } },
+  { id: 'sailor',  name: 'Marinera',         icon: '⚓', text: 'Camiseta de rayas y gorra de marinera', need: 'Abre el puerto pesquero en la Costa Dorada', goal: 1, prog: () => +((S.farm || 0) % MAPS.length === 1 && S.gate5),
+    look: { shirt: 'stripes', pants: 0x2f4f8f, hat: 'sailor', kerchief: true, boot: 0xfdfdfd } },
+  { id: 'surfer',  name: 'Surfera',          icon: '🏄', text: 'Neopreno, visera y gafas de sol', need: 'Abre la playa en la Costa Dorada', goal: 1, prog: () => +((S.farm || 0) % MAPS.length === 1 && S.gate8),
+    look: { shirt: 0x2fb5a0, pants: 0x2a2a30, hat: 'visor', hatColor: 0xf5c518, glasses: true, boot: 0x2a2a30 } },
+  { id: 'explorer', name: 'Exploradora',     icon: '🧭', text: 'Ropa de safari y sombrero', need: 'Llega al nivel 5', goal: 5, lvl: 5, prog: () => S.meta.level || 1,
+    look: { shirt: 0xc9a76a, pants: 0x6b5a3a, hat: 'straw', hatColor: 0xc9a76a, kerchief: true, boot: 0x5a3a22 } },
+  { id: 'witch',   name: 'Bruja',            icon: '🧙', text: 'Vestido largo y sombrero puntiagudo', need: 'Llega al nivel 10', goal: 10, lvl: 10, prog: () => S.meta.level || 1,
+    look: { shirt: 0x3a2a4a, skirt: 0x2a1d33, skirtLong: true, pants: 'skin', hat: 'witch', boot: 0x2a1d33 } },
+  { id: 'pirate',  name: 'Pirata',           icon: '🏴‍☠️', text: 'Camisa roja y sombrero pirata', need: 'Llega al nivel 15', goal: 15, lvl: 15, prog: () => S.meta.level || 1,
+    look: { shirt: 0xe8384a, pants: 0x2a2a30, hat: 'pirate', kerchief: true, boot: 0x2a2a30 } },
+  { id: 'astronaut', name: 'Astronauta',     icon: '🚀', text: 'Traje espacial con casco', need: 'Llega al nivel 25', goal: 25, lvl: 25, prog: () => S.meta.level || 1,
+    look: { shirt: 0xf4f4f4, pants: 0xf4f4f4, hat: 'helmet', badge: true, boot: 0xd9dde3 } },
   { id: 'flower',  name: 'Florista',         icon: '🌸', text: 'Vestido rosa y corona de flores', need: 'Mira un anuncio', goal: 1, prog: () => 0, ad: true,
     look: { shirt: 0xf7c6dc, skirt: 0xf06aa8, pants: 'skin', hat: 'flowers', boot: 0xf06aa8 } },
 ];
@@ -863,6 +903,7 @@ const plaidTex = canvasTex(64, 64, (g, w, h) => {
   g.fillStyle = 'rgba(255, 240, 220, .35)'; for (let i = 10; i < w; i += 16) { g.fillRect(i, 0, 2, h); g.fillRect(0, i, w, 2); }
 }, 2, 2);
 // Black and red lumberjack check for the woodcutter outfit
+const stripeTex = canvasTex(32, 32, (g, w, h) => { g.fillStyle = '#fdfdfd'; g.fillRect(0, 0, w, h); g.fillStyle = '#2f4f8f'; for (let y = 0; y < h; y += 8) g.fillRect(0, y, w, 4); }, 1, 3);
 const checkTex = canvasTex(64, 64, (g, w, h) => {
   g.fillStyle = '#c8352b'; g.fillRect(0, 0, w, h);
   g.fillStyle = 'rgba(20, 15, 15, .75)'; for (let i = 0; i < w; i += 32) { g.fillRect(i, 0, 16, h); g.fillRect(0, i, w, 16); }
@@ -898,7 +939,7 @@ const M = {
   road: new LitMat({ color: 0x60636a, map: noiseTex(255, 40, 12, 1) }), sidewalk: mat(0xd8d0c2), roadLine: mat(0xf5f0e0),
   hedge: mat(THEME.hedge), pine: mat(THEME.pine), pine2: mat(THEME.pine2), leaves: mat(THEME.leaves), trunk: mat(0x7a4e2d), wood: mat(0xc98a4b), woodDark: mat(0x8f5a2b),
   red: mat(0xd8402f), white: mat(0xfdf6ea), skin: mat(0xf2c6a0), hair: mat(0xf06a32), hair2: mat(0xd8521f), freckle: mat(0xc07a52), eye: mat(0x22150c), cloud: mat(0xffffff),
-  plaid: new LitMat({ map: plaidTex }), check: new LitMat({ map: checkTex }), denim: new LitMat({ map: denimTex }), kerchief: mat(0xe8402f),
+  plaid: new LitMat({ map: plaidTex }), check: new LitMat({ map: checkTex }), stripes: new LitMat({ map: stripeTex }), denim: new LitMat({ map: denimTex }), kerchief: mat(0xe8402f),
   straw: mat(0xf2c94c), strawDark: mat(0xd9a93a), band: mat(0xd8402f), metal: mat(0xd9dde3), dark: mat(0x4a3a2e), boot: mat(0x6e452c),
   blush: mat(0xf09a8a), gold: mat(0xf6c445), squirrel: mat(0xd2752c), squirrelLight: mat(0xf3c08a), stem: mat(0x3f9a3a), leaf: mat(0x4caf50),
   wheat: mat(0xe8c25a), wheatHead: mat(0xd9a93a), pumpkin: mat(0xf08a24), sunPetal: mat(0xffd21f), sunCore: mat(0x6b3e1e),
@@ -1495,7 +1536,7 @@ function sweepRubble(Z, x, z, r, room) {
     dummy.position.set(c.x, 0, c.z); dummy.scale.setScalar(0); dummy.updateMatrix(); Z.meshes[c.type].setMatrixAt(c.idx, dummy.matrix); Z.meshes[c.type].instanceMatrix.needsUpdate = true;
     if (Math.random() < .25) puff(c.x, .2, c.z, debris.types[c.type].mat.color.getHex(), 2, .6, 1.6);
   }
-  if (!wasClean && zoneClean(Z.a)) { sfx.mission(); toast(`✨ ¡Has limpiado ${Z.name}! Ya puedes construir allí`); puff(x, 1, z, 0xf6c445, 18, 2, 4); refreshWorld(); }
+  if (!wasClean && zoneClean(Z.a)) { addXP(80); sfx.mission(); toast(`✨ ¡Has limpiado ${Z.name}! Ya puedes construir allí`); puff(x, 1, z, 0xf6c445, 18, 2, 4); refreshWorld(); }
   return got;
 }
 // The nearest rubbish of a zone, for the guide arrow
@@ -1666,6 +1707,21 @@ function makePerson(o) {
   } else if (hat === 'flowers') {
     const ring = mesh(new T.TorusGeometry(.24, .025, 5, 20), M.leaf); ring.rotation.x = Math.PI / 2 + .15; ring.position.y = .17; head.add(ring);
     for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2, fl = mesh(new T.SphereGeometry(.055, 8, 6), mat([0xf06aa8, 0xffffff, 0xf5c518, 0xb98ae8][i % 4]), false); fl.position.set(Math.sin(a) * .24, .17 + Math.cos(a) * .035, Math.cos(a) * .24); head.add(fl); }
+  } else if (hat === 'sailor') {
+    const cap = mesh(new T.CylinderGeometry(.27, .25, .12, 16), M.white); cap.position.y = .2; head.add(cap);
+    const band = mesh(new T.CylinderGeometry(.255, .255, .05, 16), mat(0x2f4f8f)); band.position.y = .15; head.add(band);
+    const top = mesh(new T.CylinderGeometry(.3, .3, .03, 16), M.white); top.position.y = .27; head.add(top);
+  } else if (hat === 'witch') {
+    const brim = mesh(new T.CylinderGeometry(.48, .5, .03, 20), hm || M.dark); brim.position.y = .2; head.add(brim);
+    const cone = mesh(new T.ConeGeometry(.24, .62, 14), hm || M.dark); cone.position.set(0, .5, -.05); cone.rotation.x = -.25; head.add(cone);
+    const band = mesh(new T.CylinderGeometry(.235, .235, .05, 14), mat(0x8e3bb0)); band.position.y = .24; head.add(band);
+  } else if (hat === 'pirate') {
+    const crown = mesh(new T.SphereGeometry(.29, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), M.dark); crown.position.y = .06; head.add(crown);
+    const brim = mesh(new T.CylinderGeometry(.42, .42, .04, 3), M.dark); brim.position.y = .14; brim.rotation.y = Math.PI; head.add(brim);
+    const skull = mesh(new T.SphereGeometry(.05, 6, 5), M.white, false); skull.position.set(0, .22, .27); head.add(skull);
+  } else if (hat === 'helmet') {
+    const glass = new T.Mesh(new T.SphereGeometry(.4, 18, 14), new LitMat({ color: 0xbfe6ff, transparent: true, opacity: .32, roughness: .1 })); glass.position.y = .02; head.add(glass);
+    const ring = mesh(new T.TorusGeometry(.33, .05, 8, 20), M.white); ring.rotation.x = Math.PI / 2; ring.position.y = -.3; head.add(ring);
   } else if (hat === 'visor') {
     const band = mesh(new T.TorusGeometry(.265, .03, 5, 20), hm); band.rotation.x = Math.PI / 2; band.position.y = .12; head.add(band);
     const peak = mesh(new T.CylinderGeometry(.2, .2, .025, 14, 1, false, -Math.PI / 2, Math.PI), hm); peak.position.set(0, .12, .2); head.add(peak);
@@ -2254,7 +2310,7 @@ function completePad(pad) {
     $('moveTxt').textContent = `Granja ${n + 1}: un mapa nuevo. Todo se venderá ×${2 ** n} y las mejoras costarán algo más. Ganas ⭐ ${starGain()} estrellas para mejoras permanentes.`;
     $('moveOverlay').hidden = false; return;
   }
-  delete S.paid[pad.id];
+  delete S.paid[pad.id]; addXP(15);
   const kind = pad.kind, r = pad.ref;
   if (kind === 'upg') {
     S.lv[pad.id]++;
@@ -2589,7 +2645,7 @@ function updateCustomers(dt) {
         S.meta.streak = (S.meta.streak || 0) + 1; S.meta.bestStreak = Math.max(S.meta.bestStreak || 0, S.meta.streak);
         if (c.vip) S.meta.vips = (S.meta.vips || 0) + 1;
         if (c.type === 'critic') { S.meta.critics = (S.meta.critics || 0) + 1; toast('🧐 ¡Al crítico le ha encantado! Paga el doble y calma a todos'); }
-        S.shops[s.id].cash += amount; S.served++; S.today.served++; S.today.sales += amount; S.servedBy[s.id] = (S.servedBy[s.id] || 0) + 1; S.sold[c.want] = (S.sold[c.want] || 0) + c.got;
+        S.shops[s.id].cash += amount; S.served++; S.today.served++; addXP(c.vip ? 10 : 4); S.today.sales += amount; S.servedBy[s.id] = (S.servedBy[s.id] || 0) + 1; S.sold[c.want] = (S.sold[c.want] || 0) + c.got;
         c.m.stack.clear();
         for (let b = 0; b < Math.min(4, 1 + Math.floor(c.got / 2)); b++) { const bill = makeBill(); bill.position.set(c.x, 1, c.z); scene.add(bill); flyTo(bill, new T.Vector3(s.cash.x, .2, s.cash.z), .45 + b * .08, () => syncCash(s)); }
         const t = s.tills[c.till];
@@ -2728,6 +2784,7 @@ function spawnOfficers() {
 }
 function dropThief(th) { const i = thieves.indexOf(th); if (i >= 0) thieves.splice(i, 1); scene.remove(th.m.g); th.tag.remove(); }
 function catchThief(th, bySonia) {
+  addXP(25);
   dropThief(th);
   const reward = Math.round(Math.max(400, Math.sqrt(S.earned + 100) * 12) * fscale());
   if (th.loot) { S.shops[th.shop.id].cash += th.loot; syncCash(th.shop); }
@@ -2920,7 +2977,7 @@ function spawnWeed() {
 function removeWeed(w, bySonia) {
   const i = weeds.indexOf(w); if (i < 0) return;
   weeds.splice(i, 1); w.patch.weeds = Math.max(0, (w.patch.weeds || 0) - 1); scene.remove(w.m);
-  S.meta.weeds = (S.meta.weeds || 0) + 1; puff(w.x, .3, w.z, 0x5a7a22, 6, .7, 2);
+  S.meta.weeds = (S.meta.weeds || 0) + 1; if (bySonia) addXP(1); puff(w.x, .3, w.z, 0x5a7a22, 6, .7, 2);
   if (bySonia || Math.hypot(w.x - P.x, w.z - P.z) < 10) sfx.cut();
 }
 function updateWeeds(dt) {
@@ -3103,7 +3160,7 @@ function checkMission() {
     const rw = Math.round(m.reward * fscale());
     // After the mission list changed, missions finished before are not paid twice
     const pay = m.v3 || (m.v2 && (S.mfrom || 1) < 2) || S.mission >= (S.mpaid || 0) ? rw : 0;
-    S.mission++; if (pay) addCoins(pay); sfx.mission();
+    S.mission++; if (pay) addCoins(pay); addXP(40); sfx.mission();
     toast(pay ? `¡Misión cumplida! +${fmt(pay)} monedas` : '¡Misión cumplida!');
 
     const box = $('mission'); box.classList.remove('done'); void box.offsetWidth; box.classList.add('done');
@@ -3144,7 +3201,7 @@ const flying = [];
 function cutPlant(pl) { pl.grow = 0; pl.dirty = true; sfx.cut(); if (Math.random() < .4) puff(pl.x, .5, pl.z, pl.patch.parts[0].material.color.getHex(), 3, .7, 2); }
 const stackLocal = n => new T.Vector3(0, n * .21, 0);
 function toStack(b) { P.stack.push(b); flying.push({ b, t: 0, dur: .28, from: b.position.clone(), kind: 'pick', index: P.stack.length - 1 }); }
-function pickUp(pl) { cutPlant(pl); const b = makeItem(pl.crop); b.position.set(pl.x, .4, pl.z); scene.add(b); toStack(b); if (S.tut === 0) S.tut = 1; }
+function pickUp(pl) { addXP(1); cutPlant(pl); const b = makeItem(pl.crop); b.position.set(pl.x, .4, pl.z); scene.add(b); toStack(b); if (S.tut === 0) S.tut = 1; }
 function takeFromStack(pred) {
   for (let i = P.stack.length - 1; i >= 0; i--) {
     const b = P.stack[i];
@@ -3403,7 +3460,7 @@ function update(dt) {
     sonia.bob.position.y = -.35 + Math.sin(performance.now() / 200) * .03;
     P.fishT += dt * (1 + .3 * S.lv.rod);
     if (P.fishT >= fishingAt.fish) {
-      P.fishT = 0; S.caught++;
+      P.fishT = 0; S.caught++; addXP(2);
       const fish = makeItem(fishingAt.output); fish.position.set(fishingAt.ex, .3, fishingAt.ez); scene.add(fish); toStack(fish);
       sfx.splash(); puff(fishingAt.ex, .15, fishingAt.ez, 0xbfe6ff, 10, .8, 3); burst(fishingAt.ex, 1, fishingAt.ez, ITEMS[fishingAt.output].icon, 'white');
     }
@@ -3702,7 +3759,7 @@ function updateExtras(dt) {
   if (ORDER) {
     ORDER.left -= dt;
     if (ORDER.items.every(i => i.got >= i.need)) {
-      addCoins(ORDER.reward); flyCoins(P.x, 1.5, P.z, 10); burst(P.x, 2.2, P.z, '📋 +' + fmt(ORDER.reward)); sfx.mission();
+      addCoins(ORDER.reward); addXP(60); flyCoins(P.x, 1.5, P.z, 10); burst(P.x, 2.2, P.z, '📋 +' + fmt(ORDER.reward)); sfx.mission();
       S.meta.orders = (S.meta.orders || 0) + 1; S.farmOrders = (S.farmOrders || 0) + 1; addMood(-15);
       toast(`📋 ¡Pedido entregado! +${fmt(ORDER.reward)} y el enfado baja un 15%`);
       ORDER = null; orderNextT = 20;
@@ -3748,6 +3805,45 @@ const skinGot = o => o.id === 'classic' || (S.meta.skins || []).includes(o.id);
 function wearSkin(o) {
   S.meta.skin = o.id; dressSonia(o.id); sfx.buy(); toast(`${o.icon} ${who()} estrena: ${o.name}`); save();
 }
+/* ---------- Player level ---------- */
+// Everything Sonia does gives experience; every level pays coins, every 5th a star, and some levels unlock outfits and paint.
+// The level belongs to the player, so it carries on through every farm.
+const xpNeed = l => Math.round(60 * 1.18 ** (l - 1));
+let lvlCoins = 0;
+function addXP(n) {
+  const m = S.meta; m.level = m.level || 1; m.xp = (m.xp || 0) + n;
+  let up = 0; while (m.xp >= xpNeed(m.level)) { m.xp -= xpNeed(m.level); m.level++; up = m.level; }
+  if (up) levelUp(up);
+  renderLevel();
+}
+function renderLevel() {
+  const l = S.meta.level || 1, p = $('lvlPill');
+  if ($('lvlNum').textContent !== String(l)) { $('lvlNum').textContent = l; p.classList.remove('bump'); void p.offsetWidth; p.classList.add('bump'); }
+  p.style.setProperty('--p', Math.round((S.meta.xp || 0) / xpNeed(l) * 100) + '%');
+}
+function levelUp(l) {
+  const star = l % 5 === 0, gifts = [...OUTFITS.filter(o => o.lvl === l), ...VEHICLE_SKINS.filter(v => v.lvl === l)];
+  const next = [...OUTFITS, ...VEHICLE_SKINS].filter(o => o.lvl > l).sort((p, q) => p.lvl - q.lvl)[0];
+  lvlCoins = Math.round(Math.sqrt(S.earned + 100) * 15 * fscale() * (1 + l * .05));
+  if (star) { S.stars++; S.meta.starsTotal = (S.meta.starsTotal || 0) + 1; }
+  $('lvlBig').textContent = l; $('lvlTitle').textContent = `¡Nivel ${l}!`;
+  $('lvlRewards').innerHTML = `<span>💰 ${fmt(lvlCoins)} monedas</span>${star ? '<span>⭐ 1 estrella para mejoras permanentes</span>' : ''}${gifts.map(g => `<span>🎁 ${g.icon} ${g.name}</span>`).join('')}`
+    + (next ? `<span style="color:var(--ink-soft);font-weight:800">Próximo regalo en el nivel ${next.lvl}: ${next.icon} ${next.name}</span>` : '');
+  $('lvlAd').textContent = `📺 Doblar las monedas (+${fmt(lvlCoins)})`;
+  $('levelOverlay').hidden = false; confetti(); sfx.mission(); setTimeout(() => sfx.bell(), 350); save();
+}
+function claimLevel(double) { $('levelOverlay').hidden = true; const v = lvlCoins * (double ? 2 : 1); lvlCoins = 0; if (v) { addCoins(v); flyCoins(P.x, 1.5, P.z, 12); burst(P.x, 2.2, P.z, '+' + fmt(v)); sfx.coin(); } save(); }
+function confetti() {
+  const box = $('confetti'), cols = ['#f6c445', '#e8384a', '#3fa34d', '#3f7fd0', '#f06aa8', '#9a5ae0'];
+  for (let i = 0; i < 60; i++) {
+    const c = document.createElement('i'); c.style.left = Math.random() * 100 + '%'; c.style.background = pick(cols);
+    c.style.animationDuration = 1.6 + Math.random() * 1.6 + 's'; c.style.animationDelay = Math.random() * .4 + 's'; box.appendChild(c);
+    setTimeout(() => c.remove(), 3800);
+  }
+}
+$('lvlOk').addEventListener('click', () => claimLevel(false));
+$('lvlAd').addEventListener('click', () => { $('levelOverlay').hidden = true; showAd(() => claimLevel(true)); });
+$('lvlPill').addEventListener('click', () => toast(`⭐ Nivel ${S.meta.level || 1}: te faltan ${xpNeed(S.meta.level || 1) - (S.meta.xp || 0)} puntos para el siguiente`));
 const chestValue = () => Math.round(Math.max(1000, Math.sqrt(S.earned + 100) * 80) * fscale());
 const chestReady = () => S.tut >= 2 && S.chestDay !== todayKey();
 
@@ -3996,6 +4092,7 @@ function endDay() {
   const bonus = medal ? Math.round(td.sales * MEDALS[medal].pct) : 0;
   S.meta.days = (S.meta.days || 0) + 1;
   if (medal === 'gold') S.meta.golds = (S.meta.golds || 0) + 1;
+  if (medal) addXP({ gold: 100, silver: 60, bronze: 30 }[medal]);
   S.pendingSum = { n: S.dayN, served: td.served, angry: td.angry, sales: td.sales, medal, bonus, closed: !!S.dayClosed };
   sfx.mission(); save(); showSummary();
 }
@@ -4157,6 +4254,14 @@ if (S.mfix !== undefined) {
 soundLabel(); spawnWorkers(); spawnDog(); refreshWorld(); BUILDS.forEach(syncPile); SHOPS.forEach(syncCash); renderMission();
 camera.position.set(0, 13, 13);
 $('loading').hidden = true;
+if (S.meta.level === undefined) {
+  // Capped at level 8 so the outfits and paint of the higher levels are still there to earn
+  let xp = Math.round(S.served * 2 + S.mission * 20 + (S.farm || 0) * 1500), l = 1;
+  while (xp >= xpNeed(l) && l < 8) { xp -= xpNeed(l); l++; }
+  xp = Math.min(xp, xpNeed(l) - 1);
+  S.meta.level = l; S.meta.xp = xp;
+}
+renderLevel();
 renderMood(); if (S.over) gameOver(); else if (S.pendingSum) showSummary();
 $('hint').lastChild.textContent = ' Arrastra el dedo para mover a ' + who();
 if (S.tut === 0 && !S.meta.avatar) openCreator();
