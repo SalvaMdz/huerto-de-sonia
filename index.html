@@ -436,6 +436,18 @@ const ITEMS = {
   lemon:      { name: 'Limones',   icon: '🍋', value: 210,  shape: 'box',  wrap: 0xa8703a, top: [0xf5e01f] },
   lemonade:   { name: 'Limonada',  icon: '🥤', value: 620,  shape: 'jar',  wrap: 0xf5e01f, top: [0xe8384a] },
   icecream:   { name: 'Helados',   icon: '🍦', value: 720,  shape: 'jar',  wrap: 0xfdf6ea, top: [0xf06aa8, 0x8b5a3c] },
+  // Costa Dorada
+  coconut:    { name: 'Cocos',          icon: '🥥', value: 70,   shape: 'box',  wrap: 0x8f5a2b, top: [0x6b4a2e] },
+  mussel:     { name: 'Mejillones',     icon: '🦪', value: 150,  shape: 'fish', wrap: 0x9fd3e8, top: [0x2a2a40] },
+  shrimp:     { name: 'Gambas',         icon: '🦐', value: 230,  shape: 'fish', wrap: 0x9fd3e8, top: [0xf08a5a] },
+  octopus:    { name: 'Pulpos',         icon: '🐙', value: 340,  shape: 'fish', wrap: 0x9fd3e8, top: [0xb0479a] },
+  paella:     { name: 'Paellas',        icon: '🥘', value: 650,  shape: 'pie',  wrap: 0x4a4a4a, top: [0xf5c518] },
+  bamboo:     { name: 'Bambú',          icon: '🎋', value: 190,  shape: 'loaf', wrap: 0x8fbf4a, top: [0x6a9a3a] },
+  surfboard:  { name: 'Tablas de surf', icon: '🏄', value: 470,  shape: 'box',  wrap: 0x2fb5a0, top: [0xfdf6ea, 0xf5c518] },
+  sailboat:   { name: 'Veleros',        icon: '⛵', value: 1250, shape: 'box',  wrap: 0xfdf6ea, top: [0x3f7fd0, 0xe8384a] },
+  cocktail:   { name: 'Piñas coladas',  icon: '🍹', value: 320,  shape: 'jar',  wrap: 0xfff3c4, top: [0xf5c518] },
+  pineapple:  { name: 'Piñas',          icon: '🍍', value: 210,  shape: 'box',  wrap: 0xa8703a, top: [0xf5c518] },
+  smoothie:   { name: 'Batidos de mango', icon: '🥭', value: 620, shape: 'jar', wrap: 0xf5a524, top: [0x3fa34d] },
 };
 // Areas: 1 farm · 2 forest (north gate) · 3 meadow to clean (east gate) · 4 lake (west gate) · 5 town (south, always open)
 //        6 animal farm (west of the lake) · 7 sawmill woods (east of the meadow) · 8 fair (south of the town) · 9 pools (south of the fair)
@@ -559,9 +571,51 @@ const MAPS = [
   { name: 'Isla Tropical',      icon: '🏝️', sky: 0x7fd0ff, grass: 0x6fcf5a, grassDark: 0x62c24e, pine: 0x2f9a45, pine2: 0x4fbf5a, hedge: 0x2f9a45, meadow: 0x9ac860, leaves: 0x3fbf5a, path: 0xf7eac0, water: 0x22d8c8, trees: 'palm',     weather: 'none',   bonus: { kind: 'all',     text: 'Todo se vende un 50% más caro' } },
 ];
 const mapOf = n => MAPS[n % MAPS.length];
+// What a map changes beyond its looks: the last four zones get their own crops, animals, workshops, shops and rides.
+// Ids stay the same (missions and saves refer to them); names, products and models change.
+const MAP_CONTENT = {
+  'Costa Dorada': {
+    sea: true,
+    patches: { G: { crop: 'coconut' }, H: { crop: 'bamboo' }, I: { crop: 'pineapple' } },
+    procs: {
+      loom: { name: 'Arrocería', input: 'mussel', output: 'paella', body: 0xfff1d6, roof: 0xf5a524 },
+      sawmill: { name: 'Taller de tablas de surf', input: 'bamboo', output: 'surfboard', body: 0xbfe6ff, roof: 0x2fb5a0 },
+      carpentry: { name: 'Astillero de veleros', input: 'surfboard', output: 'sailboat', body: 0xfdf6ea, roof: 0x3f7fd0 },
+      popstand: { name: 'Coctelería', input: 'coconut', output: 'cocktail', body: 0xfff3c4, roof: 0x2fb5a0 },
+      lemonbar: { name: 'Batidería', input: 'pineapple', output: 'smoothie', body: 0xfde3c3, roof: 0xf5a524 },
+    },
+    animals: {
+      sheep: { name: 'Bateas de mejillones', output: 'mussel', look: 'mussel' },
+      pigs: { name: 'Vivero de pulpos', output: 'octopus', look: 'octopus' },
+      goats: { name: 'Vivero de gambas', output: 'shrimp', look: 'shrimp' },
+    },
+    shops: {
+      barn: { name: 'Lonja', icon: '🦐', awning: 0x3f7fd0, goods: ['coconut', 'mussel', 'shrimp', 'octopus', 'paella'] },
+      lumber: { name: 'Tienda náutica', icon: '⛵', awning: 0x2fb5a0, goods: ['bamboo', 'surfboard', 'sailboat'] },
+      fair: { name: 'Puesto del paseo', icon: '🍹', awning: 0xf5a524, goods: ['cocktail'] },
+      beach: { name: 'Chiringuito', icon: '🍍', awning: 0xe8384a, goods: ['pineapple', 'smoothie', 'icecream'] },
+    },
+    gates: { gate5: { name: 'Abrir el puerto pesquero', icon: '⚓' }, gate6: { name: 'Abrir el astillero', icon: '⛵' }, gate7: { name: 'Abrir el paseo marítimo', icon: '🎡' }, gate8: { name: 'Abrir la playa', icon: '🏖️' } },
+    gateToasts: { gate5: '⚓ ¡Puerto pesquero! Mejillones, gambas, pulpos y cocos', gate6: '⛵ ¡Astillero! Bambú, tablas de surf y veleros', gate7: '🎡 ¡Paseo marítimo! Atracciones junto al mar', gate8: '🏖️ ¡La playa! Piñas, batidos y surf' },
+    zones: { 6: 'el puerto pesquero', 7: 'el astillero', 8: 'el paseo marítimo', 9: 'la playa' },
+    rides: { carousel: ['Tiovivo marinero', '🎠'], haunted: ['Barco fantasma', '🏴‍☠️'], bumper: ['Lanchas de choque', '🚤'], ferris: ['Noria del puerto', '🎡'], coaster: ['Montaña rusa del acantilado', '🎢'], pool: ['Piscina natural', '🏊'], slide: ['Tobogán acuático', '🛝'], waves: ['Escuela de surf', '🏄'] },
+    missions: {
+      'Abre la granja de animales': 'Abre el puerto pesquero', 'Compra las ovejas': 'Pon las bateas de mejillones', 'Planta el maizal': 'Planta los cocoteros',
+      'Construye el telar': 'Construye la arrocería', 'Compra las cabras': 'Pon el vivero de gambas', 'Compra los cerdos trufferos': 'Pon el vivero de pulpos',
+      'Contrata una cajera en la tienda de la granja': 'Contrata una cajera en la lonja', 'Abre el aserradero': 'Abre el astillero', 'Planta el bosque para talar': 'Planta el bambú',
+      'Construye el aserradero': 'Construye el taller de tablas de surf', 'Construye la carpintería': 'Construye el astillero de veleros',
+      'Contrata una cajera en la tienda de muebles': 'Contrata una cajera en la tienda náutica', 'Abre la feria': 'Abre el paseo marítimo',
+      'Construye el tiovivo': 'Construye el tiovivo marinero', 'Construye la palomitería': 'Construye la coctelería', 'Construye la casa del terror': 'Construye el barco fantasma',
+      'Contrata al mecánico de la feria': 'Contrata al mecánico del paseo', 'Construye los autos de choque': 'Construye las lanchas de choque', 'Construye la noria': 'Construye la noria del puerto',
+      'Sube el tiovivo al nivel 3': 'Sube el tiovivo marinero al nivel 3', 'Construye la montaña rusa': 'Construye la montaña rusa del acantilado', 'Abre las piscinas': 'Abre la playa',
+      'Construye la piscina': 'Construye la piscina natural', 'Planta los limoneros': 'Planta las piñas', 'Construye la limonadería': 'Construye la batidería',
+      'Construye el tobogán': 'Construye el tobogán acuático', 'Construye la piscina de olas': 'Construye la escuela de surf',
+    },
+  },
+};
 // The version goes up with every release; tools/build.py stamps the build date (while developing it says 'en pruebas')
-const GAME_VERSION = '23';
-const BUILD_DATE = '02/11/2026 17:00';
+const GAME_VERSION = '24';
+const BUILD_DATE = '02/11/2026 17:35';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -701,6 +755,13 @@ const boosted = () => Date.now() < S.boostUntil;
 const fscale = () => 1.6 ** (S.farm || 0);
 const mult = () => (boosted() ? 2 : 1) * 2 ** (S.farm || 0);
 const THEME = mapOf(S.farm || 0);
+// The current map's own zones replace the names, products and colours of the shared ones before the world is built
+const MAPC = MAP_CONTENT[THEME.name] || {};
+{
+  const put = (list, over) => Object.entries(over || {}).forEach(([id, o]) => Object.assign(list.find(x => x.id === id), o));
+  put(PATCHES, MAPC.patches); put(PROCS, MAPC.procs); put(ANIMALS, MAPC.animals); put(SHOPS, MAPC.shops); put(GATES, MAPC.gates);
+  Object.entries(MAPC.rides || {}).forEach(([id, [name, icon]]) => { const a = ATTRS.find(x => x.id === id); a.name = UPGRADES[id].name = name; a.icon = UPGRADES[id].icon = icon; });
+}
 // The map's bonus multiplies the price of some goods (or of everything)
 const FISH = ['sardine', 'trout', 'crab', 'can'], WOOD = ['log', 'plank', 'furniture'];
 const mapPrice = k => { const b = THEME.bonus; if (!b) return 1; return b.kind === 'all' ? 1.5 : (b.kind === 'fish' && FISH.includes(k)) || (b.kind === 'wood' && WOOD.includes(k)) ? 3 : 1; };
@@ -959,7 +1020,12 @@ for (let z = -42; z <= -15; z += 2.3) { tree(-13.4 - rr(), z, 1 + rr() * .3); tr
 for (let x = 14; x <= 62; x += 2.2) { tree(x, -15.6 - rr() * .5, 1 + rr() * .3); tree(-x, -15.6 - rr() * .5, 1 + rr() * .3); tree(x + 1, 19.6 + rr() * .5, 1 + rr() * .3); tree(-x - 1, 19.6 + rr() * .5, 1 + rr() * .3); }
 for (let z = -15; z <= 19; z += 2.2) { tree(63 + rr(), z, 1.1 + rr() * .3); tree(-63 - rr(), z, 1.1 + rr() * .3); }
 for (let z = 23; z <= 66; z += 2.3) { tree(26.5 + rr(), z, 1 + rr() * .3); tree(-26.5 - rr(), z, 1 + rr() * .3); }
-for (let x = -25; x <= 25; x += 2) tree(x + rr(), 66.6 + rr(), 1 + rr() * .3);
+if (MAPC.sea) {
+  // On the coast the far end of the pools opens onto a beach and the sea
+  flat(new T.PlaneGeometry(260, 5), M.sand, 0, .012, 67.6);
+  flat(new T.PlaneGeometry(260, 90), M.water, 0, .03, 115);
+  for (let x = -24; x <= 24; x += 6) { const um = mesh(new T.ConeGeometry(.7, .35, 10), mat(pick([0xe8384a, 0x2fb5a0, 0xf5c518]))); um.position.set(x + rr(), 1.5, 67.4); scene.add(um); const pole = mesh(new T.CylinderGeometry(.03, .03, 1.5, 5), M.white); pole.position.set(um.position.x, .75, 67.4); scene.add(pole); }
+} else for (let x = -25; x <= 25; x += 2) tree(x + rr(), 66.6 + rr(), 1 + rr() * .3);
 for (let x = -11; x <= 11; x += 2.4) if (Math.abs(x) > 2.5) tree(x, -15.2 - rr() * .4, .8 + rr() * .3);
 function hedge(x, z, w, d) { const h = mesh(new T.BoxGeometry(w, .8, d), M.hedge); h.position.set(x, .4, z); scene.add(h); return h; }
 hedge(-7.25, -14, 10.5, .9); hedge(7.25, -14, 10.5, .9); hedge(0, -41.9, 25.7, .9);
@@ -1154,6 +1220,24 @@ const CROP_PARTS = {
     { geo: pg(new T.ConeGeometry(.6, .9, 7), 1), mat: M.pine },
     { geo: pg(new T.ConeGeometry(.45, .8, 7), 1.5), mat: M.pine2 },
     { geo: pg(new T.ConeGeometry(.3, .6, 7), 1.95), mat: M.pine },
+  ],
+  coconut: [
+    { geo: pg(new T.CylinderGeometry(.05, .08, 1.1, 6).translate(.05, 0, 0), .55), mat: M.trunk },
+    { geo: pg(new T.ConeGeometry(.36, .2, 6), 1.18), mat: M.crown },
+    { geo: pg(new T.ConeGeometry(.26, .16, 5).rotateY(.5), 1.28), mat: M.leaf },
+    { geo: pg(new T.SphereGeometry(.08, 6, 5).translate(.12, 0, .06), 1.02), mat: mat(0x6b4a2e) },
+    { geo: pg(new T.SphereGeometry(.08, 6, 5).translate(-.06, 0, .12), 1.0), mat: mat(0x6b4a2e) },
+  ],
+  bamboo: [
+    { geo: pg(new T.CylinderGeometry(.05, .06, 1.8, 6).translate(-.12, 0, 0), .9), mat: mat(0x7fb34a) },
+    { geo: pg(new T.CylinderGeometry(.05, .06, 1.4, 6).translate(.14, 0, .08), .7), mat: mat(0x8fbf4a) },
+    { geo: pg(new T.CylinderGeometry(.04, .05, 2.1, 6).translate(.02, 0, -.14), 1.05), mat: mat(0x6aa03a) },
+    { geo: pg(new T.SphereGeometry(.18, 6, 4).scale(1.6, .15, .6).rotateZ(.4), 1.7), mat: M.leaf },
+  ],
+  pineapple: [
+    { geo: pg(new T.SphereGeometry(.17, 8, 6).scale(1, 1.35, 1), .26), mat: mat(0xd9a020) },
+    { geo: pg(new T.ConeGeometry(.12, .3, 5), .63), mat: M.leaf },
+    { geo: pg(new T.SphereGeometry(.2, 6, 4).scale(1.5, .12, .5).rotateY(1), .05), mat: M.leaf },
   ],
   lemon: [
     { geo: pg(new T.CylinderGeometry(.07, .1, .7, 6), .35), mat: M.trunk },
@@ -1356,6 +1440,7 @@ const RUBBLE = [
   { a: 9, name: 'las piscinas',          x0: -24,   x1: 24,    z0: 46,    z1: 63.8, n: 260, bin: { x: 6.5, z: 46.6 } },
 ];
 const RUBBLE_CLEAN = .85;
+RUBBLE.forEach(Z => { if (MAPC.zones && MAPC.zones[Z.a]) Z.name = MAPC.zones[Z.a]; });
 {
   // Spots that must stay free: fields, buildings, pens, rides, shop squares, the lake and every pad
   const spots = [...Object.values(UPGRADES), ...PATCHES, ...GATES, ...SPECIAL, ...TOWN, ...SELLS].map(p => [p.x, p.z]).concat(PROCS.map(p => [p.zx, p.zz]), ANIMALS.map(a => [a.zx, a.zz]));
@@ -1685,6 +1770,26 @@ function makeGoat() {
   [[-.12, -.22], [.12, -.22], [-.12, .22], [.12, .22]].forEach(([x, z]) => { const l = mesh(new T.BoxGeometry(.07, .32, .07), M.goat); l.position.set(x, .16, z); g.add(l); });
   return g;
 }
+// Sea life for the Costa Dorada's fish farms
+function makeMussel() {
+  const g = new T.Group();
+  for (let i = 0; i < 3; i++) { const s = mesh(new T.SphereGeometry(.09, 7, 5).scale(1.6, .55, .8), mat(0x2a2a40)); s.position.set((i - 1) * .14, .06 + (i % 2) * .05, (i % 2) * .08); s.rotation.y = i; g.add(s); }
+  return g;
+}
+function makeShrimp() {
+  const g = new T.Group(), m = mat(0xf08a5a);
+  const b = mesh(new T.SphereGeometry(.12, 8, 6).scale(.7, .7, 1.5), m); b.position.y = .16; g.add(b);
+  const t = mesh(new T.ConeGeometry(.09, .2, 5), m); t.rotation.x = -Math.PI / 2; t.position.set(0, .16, -.26); g.add(t);
+  [-.04, .04].forEach(x => { const a = mesh(new T.CylinderGeometry(.006, .006, .3, 3), m, false); a.position.set(x, .25, .22); a.rotation.x = .9; g.add(a); });
+  return g;
+}
+function makeOctopus() {
+  const g = new T.Group(), m = mat(0xb0479a);
+  const h = mesh(new T.SphereGeometry(.2, 10, 8).scale(1, 1.15, 1), m); h.position.y = .32; g.add(h);
+  [-.07, .07].forEach(x => { const e = mesh(new T.SphereGeometry(.03, 5, 4), M.eye, false); e.position.set(x, .34, .18); g.add(e); });
+  for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2, l = mesh(new T.CylinderGeometry(.03, .045, .3, 5), m); l.position.set(Math.sin(a) * .16, .1, Math.cos(a) * .16); l.rotation.set(Math.cos(a) * .8, 0, -Math.sin(a) * .8); g.add(l); }
+  return g;
+}
 function makeBee() { const g = new T.Group(); const b = mesh(new T.SphereGeometry(.07, 6, 5).scale(1.3, 1, 1), M.bee, false); g.add(b); const s = mesh(new T.BoxGeometry(.04, .1, .1), M.dark, false); g.add(s); return g; }
 function makeRobot() {
   const g = new T.Group();
@@ -1768,7 +1873,10 @@ function makePen(a) {
     });
     const house = mesh(new T.BoxGeometry(1.4, 1, 1), mat({ coop: 0xd8402f, sheep: 0xf3e3c3, pigs: 0xc98a4b, goats: 0x8f5a2b }[a.id] || 0x9a5a35)); house.position.set(-1.4, .5, -1); g.add(house);
     const roof = mesh(new T.ConeGeometry(1.1, .6, 4), M.woodDark); roof.rotation.y = Math.PI / 4; roof.position.set(-1.4, 1.3, -1); g.add(roof);
-    const count = { coop: 5, sheep: 4 }[a.id] || 3, maker = { coop: makeHen, sheep: makeSheep, pigs: makePig, goats: makeGoat }[a.id] || makeCow;
+    // Fish farms on the coast: a pool of sea water inside the fence
+    if (a.look) { const pool = mesh(new T.PlaneGeometry(4.4, 3.2), M.water, false); pool.rotation.x = -Math.PI / 2; pool.position.y = .05; g.add(pool); }
+    const kind = a.look || a.id, count = { coop: 5, sheep: 4, mussel: 6, shrimp: 5 }[kind] || 3;
+    const maker = { coop: makeHen, sheep: makeSheep, pigs: makePig, goats: makeGoat, mussel: makeMussel, shrimp: makeShrimp, octopus: makeOctopus }[kind] || makeCow;
     for (let i = 0; i < count; i++) {
       const m = maker();
       const st = { m, x: (Math.random() - .3) * 2.6, z: (Math.random() - .5) * 2, tx: 0, tz: 0, t: 0 };
@@ -2191,7 +2299,7 @@ function completePad(pad) {
     S[pad.id] = true;
     const dirty = rubbleZone(+Object.keys(AREA_GATE).find(a => AREA_GATE[a] === pad.id));
     if (dirty) toast(`🧹 ¡Se abre ${dirty.name}! Hay basura por todas partes: bárrela y vacía el saco en el contenedor 🗑️ para poder construir`); else
-    toast({ gate: '¡Se abre el bosque! Al fondo está la tienda del bosque, con sus propios clientes', gate4: '¡Se abre el lago! Pesca y vende en la pescadería', gate3: 'El prado está lleno de basura. Barre, llena el saco y llévalo al reciclaje',
+    toast((MAPC.gateToasts && MAPC.gateToasts[pad.id]) || { gate: '¡Se abre el bosque! Al fondo está la tienda del bosque, con sus propios clientes', gate4: '¡Se abre el lago! Pesca y vende en la pescadería', gate3: 'El prado está lleno de basura. Barre, llena el saco y llévalo al reciclaje',
       gate5: '🐑 ¡Granja de animales! Ovejas, cerdos, cabras y maíz', gate6: '🪓 ¡Aserradero! Tala árboles y haz muebles', gate7: '🎡 ¡La feria! Construye atracciones que venden entradas', gate8: '🏊 ¡Piscinas! Tobogán, olas y chiringuito' }[pad.id]);
   }
   if (S.tut < 3) S.tut = 3;
@@ -2975,6 +3083,8 @@ const MISSIONS = [
   { text: 'Múdate a una granja nueva', reward: 0, goal: 1, prog: () => 0, target: padT('move') },
 ];
 MOVE_AFTER = MISSIONS.findIndex(m => m.text.startsWith('Abre las piscinas')) + 1;
+// Missions about the last zones take the current map's names
+MISSIONS.forEach(m => { if (MAPC.missions && MAPC.missions[m.text]) m.text = MAPC.missions[m.text]; });
 function renderMission() {
   const box = $('mission');
   if (S.tut < 1 && S.mission === 0) { box.hidden = true; return; }
@@ -3268,6 +3378,7 @@ function update(dt) {
       if (b.dock && producing) { const f = builds[b.id].g.userData.fisher; f.arm.rotation.x = -1 + Math.sin(performance.now() / 500) * .1; }
       builds[b.id].animals.forEach(a => {
         if (a.bee) { a.a += dt * a.s; a.bee.position.set(Math.cos(a.a) * a.r, a.h + Math.sin(a.a * 3) * .15, Math.sin(a.a) * a.r * .6); a.bee.rotation.y = -a.a; return; }
+        if (b.look === 'mussel') return; // mussels stay put
         a.t -= dt;
         if (a.t <= 0) { a.t = 1.5 + Math.random() * 3; a.tx = (Math.random() - .3) * 2.8; a.tz = (Math.random() - .5) * 2.2; }
         const dx = a.tx - a.x, dz = a.tz - a.z, d = Math.hypot(dx, dz), v = b.id === 'coop' ? 1.2 : .5;
