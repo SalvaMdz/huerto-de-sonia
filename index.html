@@ -508,6 +508,8 @@ const UPGRADES = {
   rod:       { name: 'Caña',         icon: '🎣', x: -14.5, z: 3.5, max: 6,  cost: l => Math.round(2000 * 1.8 ** l), area: 4, needs: 'dock1' },
   fisher:    { name: 'Pescador',     icon: '🧑‍🦰', x: -14.5, z: 6.5, max: 3, cost: l => Math.round(5000 * 2.5 ** l), area: 4, needs: 'dock1' },
   patrol:    { name: 'Policía',      icon: '👮', x: -9.6, z: 8.7, max: 3, cost: l => Math.round(15000 * 3 ** l), needs: 'police' },
+  mower:     { name: 'Cortacésped',  icon: '🌿', x: 7, z: -37.5, max: 1, cost: () => 15000, area: 2 },
+  gardener:  { name: 'Jardinero',    icon: '🧑‍🌾', x: 10, z: -37.5, max: 4, cost: l => Math.round(8000 * 2.3 ** l), area: 2 },
   mechanic:  { name: 'Mecánico',     icon: '🔧', x: 21.5, z: 33,  max: 3, cost: l => Math.round(900000 * 2.6 ** l), area: 8 },
 };
 // Rides: each one is bought and levelled on its own pad; it sells tickets into a pile next to it and breaks down now and then
@@ -557,8 +559,8 @@ const MAPS = [
 ];
 const mapOf = n => MAPS[n % MAPS.length];
 // The version goes up with every release; tools/build.py stamps the build date (while developing it says 'en pruebas')
-const GAME_VERSION = '21';
-const BUILD_DATE = '02/11/2026 16:56';
+const GAME_VERSION = '22';
+const BUILD_DATE = '02/11/2026 16:59';
 // The avatar creator: hair style, hair colour and skin tone are picked from these lists
 const AVATAR_HAIR = [
   { id: 'curly', name: 'Rizos largos' }, { id: 'long', name: 'Coletas' }, { id: 'bun', name: 'Moño' }, { id: 'short', name: 'Corto' }, { id: 'afro', name: 'Rizos cortos' },
@@ -696,6 +698,8 @@ const houses = () => TOWN.filter(t => t.kind === 'house' && isBuilt(t.id)).lengt
 const fameOf = k => { const sh = shopFor(k); return 1 + .15 * ((sh && S.lv['fame_' + sh.id]) || 0); };
 const priceF = () => priceOf(S.lv.sign) * (isBuilt('townhall') ? 1.25 : 1) * (1 + .1 * (S.perks.price || 0));
 const fishersOn = () => ANIMALS.filter(a => a.dock && isBuilt(a.id)).slice(0, S.lv.fisher);
+// The vehicle Sonia rides: the tractor harvests more at once, the mower cuts down weeds; S.vehicle 'none' means on foot
+const vehicleNow = () => (S.vehicle === 'mower' && S.lv.mower ? 'mower' : S.vehicle !== 'none' && S.vehicle !== 'mower' && S.lv.tractor && S.tractorOn ? 'tractor' : null);
 const tillOpen = t => !t.id || isBuilt(t.id);
 const beltRate = () => (1 + .35 * S.lv.belt) / .45;
 const trashValue = () => 10 * (1 + .5 * S.lv.compactor);
@@ -1178,7 +1182,7 @@ function updatePlants(dt) {
   const touched = new Set(), gm = growOf(S.lv.water);
   for (const pl of plants) {
     if (!unlocked(pl.patch.id)) { if (pl.dirty) { writePlant(pl, 0); touched.add(pl.patch); pl.dirty = false; } continue; }
-    if (pl.grow < 1) { pl.grow = Math.min(1, pl.grow + dt * gm / pl.patch.regrow); if (pl.grow >= 1) pl.pop = 1; pl.dirty = true; }
+    if (pl.grow < 1) { pl.grow = Math.min(1, pl.grow + dt * gm * Math.max(.4, 1 - .1 * (pl.patch.weeds || 0)) / pl.patch.regrow); if (pl.grow >= 1) pl.pop = 1; pl.dirty = true; }
     if (pl.pop > 0) { pl.pop = Math.max(0, pl.pop - dt * 3); pl.dirty = true; }
     if (pl.dirty) { writePlant(pl, pl.grow < 1 ? .12 + .55 * pl.grow : 1 + Math.sin(pl.pop * Math.PI) * .25); touched.add(pl.patch); pl.dirty = false; }
   }
@@ -2120,7 +2124,7 @@ function refreshWorld() {
   const rec = isBuilt('recycler');
   recycler.visible = rec; recZone.ring.visible = recZone.fill.visible = rec; recCashDisc.ring.visible = recCashDisc.fill.visible = rec;
   ATTRS.forEach(a => { const on = S.lv[a.id] > 0; a.mesh.g.visible = on; a.disc.ring.visible = a.disc.fill.visible = on; a.warn.visible = on && a.broken; billPile(a.cash, a.bills, on ? Math.floor(S.tick[a.id] || 0) : 0); });
-  $('tractorBtn').hidden = !S.lv.tractor; $('tractorBtn').classList.toggle('off', !S.tractorOn);
+  const vh = vehicleNow(); $('tractorBtn').hidden = !S.lv.tractor && !S.lv.mower; $('tractorBtn').textContent = vh === 'mower' ? '🌿' : '🚜'; $('tractorBtn').classList.toggle('off', !vh);
 }
 function completePad(pad) {
   if (pad.kind === 'move') {
@@ -2136,7 +2140,9 @@ function completePad(pad) {
     S.lv[pad.id]++;
     if (pad.id === 'helper' || pad.id === 'carrier' || pad.id === 'robots') spawnWorkers();
     if (pad.id === 'dog') spawnDog();
-    if (pad.id === 'tractor') S.tractorOn = true;
+    if (pad.id === 'tractor') { S.tractorOn = true; S.vehicle = 'tractor'; }
+    if (pad.id === 'mower') S.vehicle = 'mower';
+    if (pad.id === 'gardener') spawnWorkers();
     if (r.attr) { if (S.lv[pad.id] === 1) popIn(r.attr.mesh.g); toast(S.lv[pad.id] === 1 ? `${r.icon} ${r.name}: vende entradas. Recoge el dinero en su círculo` : `${r.icon} ${r.name} nivel ${S.lv[pad.id]}: más entradas`); }
     toast({
       bag: `Cesta más grande: caben ${capOf(S.lv.bag)}`, boots: `¡${who()} corre más rápido!`, sign: `Precios +${Math.round((priceOf(S.lv.sign) - 1) * 100)}% y vienen más clientes`,
@@ -2147,7 +2153,8 @@ function completePad(pad) {
       broom: `Nueva herramienta: ${BROOM_NAMES[S.lv.broom]}. Limpias más espacio`, bin: `Saco más grande: caben ${sackOf(S.lv.bin)} kilos`,
       belt: 'La cinta va más rápido', compactor: 'Cada kilo reciclado vale más', robots: 'Un robot barrendero limpia por ti',
       rod: 'Pescas más rápido', fisher: 'Un pescador pesca solo en un muelle',
-      mechanic: 'El mecánico arregla solo las atracciones averiadas', patrol: 'Otro policía patrulla las tiendas',
+      mechanic: 'El mecánico arregla solo las atracciones averiadas', mower: '🌿 ¡Cortacésped! Cambia de vehículo con el botón de arriba y pasa por encima de las malas hierbas',
+      gardener: '🧑‍🌾 Un jardinero arranca las malas hierbas por ti', patrol: 'Otro policía patrulla las tiendas',
     }[pad.id] || (r.fame ? `⭐ ${r.fame.name}: todo se vende un ${15 * S.lv[pad.id]}% más caro` : r.shop ? `La cajera ya cobra en ${r.shop.name}` : ''));
   } else if (kind === 'patch') {
     S.unlocked.push(r.id);
@@ -2181,7 +2188,7 @@ function completePad(pad) {
 }
 
 /* ---------- Workers: squirrels, carriers, cashiers, robots ---------- */
-const squirrels = [], carriers = [], robots = [];
+const squirrels = [], carriers = [], robots = [], gardeners = [];
 SHOPS.forEach(s => s.tills.forEach((t, i) => {
   const p = makePerson({ shirt: mat(0xfdf6ea), pants: mat(0x2f3f5f), hair: mat(pick(HAIRS)), long: Math.random() < .7, apron: mat(s.awning) });
   p.g.position.set(t.x + .75, 0, t.z); p.g.rotation.y = -Math.PI / 2; scene.add(p.g); t.cashier = p;
@@ -2197,6 +2204,13 @@ function spawnWorkers() {
     m.g.scale.setScalar(.85);
     const c = { m, x: COUNTER_ZONE.x + 1.5, z: COUNTER_ZONE.z - 1 - carriers.length * .6, face: 0, carry: [], state: 'pick', target: null, walk: 0 };
     m.g.position.set(c.x, 0, c.z); scene.add(m.g); carriers.push(c);
+  }
+  while (gardeners.length < S.lv.gardener) {
+    const m = makePerson({ shirt: mat(0x6abf5a), pants: mat(0x6b4a2e), hair: mat(pick(HAIRS)), hat: 'straw', long: Math.random() < .5 });
+    const hoe = mesh(new T.CylinderGeometry(.025, .025, .9, 5), M.woodDark); hoe.position.set(0, -.2, .15); hoe.rotation.x = .6; m.arm.add(hoe);
+    m.g.scale.setScalar(.88);
+    const gd = { m, x: 5 + gardeners.length, z: 4.8, face: 0, walk: 0, target: null, pull: 0, wt: 0, tx: 5, tz: 4.8 };
+    m.g.position.set(gd.x, 0, gd.z); scene.add(m.g); gardeners.push(gd);
   }
   while (robots.length < S.lv.robots) {
     const m = makeRobot();
@@ -2286,6 +2300,22 @@ function updateWorkers(dt) {
     }
     c.m.g.position.set(c.x, 0, c.z); walkAnim(c.m, !arrived, c.walk || 0);
     c.m.g.rotation.y = lerpAngle(c.m.g.rotation.y, c.face, Math.min(1, dt * 12));
+  }
+  // Gardeners pull out the weeds, the nearest first; with none left they stroll around the farm
+  for (const gd of gardeners) {
+    if (gd.target && !weeds.includes(gd.target)) gd.target = null;
+    if (!gd.target) {
+      let best = null, bd = 1e9;
+      weeds.forEach(w => { if (w.claimed && w.claimed !== gd) return; const d = (w.x - gd.x) ** 2 + (w.z - gd.z) ** 2; if (d < bd) { bd = d; best = w; } });
+      if (best) { best.claimed = gd; gd.target = best; }
+    }
+    let tx = gd.tx, tz = gd.tz, sp = 2.4 * wsp;
+    if (gd.target) { tx = gd.target.x; tz = gd.target.z; }
+    else { gd.wt -= dt; sp = 1.2; if (gd.wt <= 0) { gd.wt = 3 + Math.random() * 4; gd.tx = -8 + Math.random() * 16; gd.tz = 1 + Math.random() * 3; } }
+    const arrived = stepToward(gd, tx, tz, sp, dt);
+    if (arrived && gd.target) { gd.pull += dt; gd.m.arm.rotation.x = -.6 - Math.sin(gd.pull * 14) * .5; if (gd.pull > .6) { removeWeed(gd.target, false); gd.target = null; gd.pull = 0; } } else gd.pull = 0;
+    gd.m.g.position.set(gd.x, 0, gd.z); walkAnim(gd.m, !arrived, gd.walk || 0);
+    gd.m.g.rotation.y = lerpAngle(gd.m.g.rotation.y, gd.face, Math.min(1, dt * 12));
   }
   // Robots sweep the meadow and the town litter, then empty their bag into the hopper
   const capR = 15 + S.lv.workers * 3;
@@ -2469,11 +2499,23 @@ const tractor = (() => {
   const bar = mesh(new T.BoxGeometry(1.9, .1, .22), M.metal); bar.position.set(0, .22, 1.2); g.add(bar);
   g.visible = false; sonia.g.add(g); return g;
 })();
+// Ride-on mower: cuts down the weeds it drives over
+const mower = (() => {
+  const g = new T.Group();
+  const deck = mesh(new T.BoxGeometry(1, .18, 1.1), mat(0x2f8f3a)); deck.position.set(0, .3, .1); g.add(deck);
+  const body = mesh(new T.BoxGeometry(.7, .32, .8), mat(0x3fa34d)); body.position.set(0, .55, -.1); g.add(body);
+  const hood = mesh(new T.BoxGeometry(.6, .26, .45), mat(0x3fa34d)); hood.position.set(0, .55, .45); g.add(hood);
+  const seat = mesh(new T.BoxGeometry(.42, .1, .34), M.dark); seat.position.set(0, .76, -.25); g.add(seat);
+  const wheel = mesh(new T.CylinderGeometry(.04, .04, .4, 6), M.dark); wheel.position.set(0, .85, .2); wheel.rotation.x = -.6; g.add(wheel);
+  [[-.45, -.35, .2], [.45, -.35, .2], [-.4, .5, .14], [.4, .5, .14]].forEach(([x, z, r]) => { const w = mesh(new T.CylinderGeometry(r, r, .14, 12), M.tire); w.rotation.z = Math.PI / 2; w.position.set(x, r, z); g.add(w); });
+  const flag = mesh(new T.BoxGeometry(.02, .18, .14), mat(0xf5c518)); flag.position.set(-.3, 1.05, -.45); g.add(flag);
+  g.visible = false; sonia.g.add(g); return g;
+})();
 // Changing clothes rebuilds Sonia's model and moves over what she carries (her stack and the tractor)
 function dressSonia(id) {
   const old = sonia, nu = makeSonia(id);
   nu.g.position.copy(old.g.position); nu.g.rotation.copy(old.g.rotation);
-  old.g.remove(tractor); nu.g.add(tractor);
+  old.g.remove(tractor); nu.g.add(tractor); old.g.remove(mower); nu.g.add(mower);
   while (old.stack.children.length) nu.stack.add(old.stack.children[0]);
   scene.remove(old.g); scene.add(nu.g); sonia = nu;
   puff(P.x, 1, P.z, 0xf06aa8, 16, 1.2, 3.5); puff(P.x, 1.4, P.z, 0xf6c445, 10, 1, 3);
@@ -2729,6 +2771,47 @@ function updateSky() {
   scene.background.copy(skyNow); scene.fog.color.copy(skyNow);
   const glow = Math.max(0, nightF - .45) * 1.8;
   M.lamp.emissiveIntensity = glow; M.window.emissiveIntensity = glow * .6;
+}
+/* ---------- Weeds ---------- */
+// Once the forest is clean, weeds sprout in the fields. Each one slows its field down by 10% (down to 40%).
+// Sonia pulls them out by standing on them for a moment, the mower cuts them on the way, and gardeners pull them for her.
+const weeds = [];
+let weedT = 25, weedWarnT = 0;
+const weedsOn = () => S.gate && zoneClean(2);
+const weedLeaf = new T.ConeGeometry(.08, .42, 4); weedLeaf.translate(0, .21, 0);
+const weedMats = [mat(0x5a7a22), mat(0x7a8a2a)], weedFlower = mat(0xf5e01f);
+function spawnWeed() {
+  const open = PATCHES.filter(p => unlocked(p.id) && reachable(p) && (p.weeds || 0) < 6);
+  if (!open.length) return;
+  const p = pick(open), sp = p.spacing || SPACING, g = new T.Group();
+  for (let i = 0; i < 4; i++) { const l = mesh(weedLeaf, weedMats[i % 2]); l.rotation.set((Math.random() - .5) * .9, i * 1.6, (Math.random() - .5) * .9); g.add(l); }
+  if (Math.random() < .5) { const f = mesh(new T.SphereGeometry(.05, 5, 4), weedFlower, false); f.position.y = .42; g.add(f); }
+  const w = { m: g, x: p.x + (Math.random() - .5) * p.cols * sp, z: p.z + (Math.random() - .5) * p.rows * sp, patch: p, pull: 0, claimed: null };
+  g.position.set(w.x, .05, w.z); scene.add(g); popIn(g); weeds.push(w); p.weeds = (p.weeds || 0) + 1;
+}
+function removeWeed(w, bySonia) {
+  const i = weeds.indexOf(w); if (i < 0) return;
+  weeds.splice(i, 1); w.patch.weeds = Math.max(0, (w.patch.weeds || 0) - 1); scene.remove(w.m);
+  S.meta.weeds = (S.meta.weeds || 0) + 1; puff(w.x, .3, w.z, 0x5a7a22, 6, .7, 2);
+  if (bySonia || Math.hypot(w.x - P.x, w.z - P.z) < 10) sfx.cut();
+}
+function updateWeeds(dt) {
+  if (!weedsOn()) return;
+  weedT -= dt;
+  if (weedT <= 0) { weedT = Math.max(4, 12 - S.unlocked.length * .7) * (.7 + Math.random() * .6); spawnWeed(); }
+  const mowing = vehicleNow() === 'mower', still = P.speed < .8;
+  for (const w of [...weeds]) {
+    const d2 = (w.x - P.x) ** 2 + (w.z - P.z) ** 2;
+    if (mowing && d2 < 1.6) { removeWeed(w, true); continue; }
+    // On foot Sonia has to stop on the weed for a moment to pull it out
+    if (!mowing && d2 < .55 && still) { w.pull += dt; w.m.rotation.z = Math.sin(w.pull * 40) * .25; if (w.pull > .5) { removeWeed(w, true); P.swing = 1; } }
+    else if (w.pull) { w.pull = 0; w.m.rotation.z = 0; }
+  }
+  const worst = PATCHES.find(p => (p.weeds || 0) >= 4);
+  if (worst && performance.now() - weedWarnT > 45000) {
+    weedWarnT = performance.now();
+    toast(`🌿 Las malas hierbas frenan el campo de ${ITEMS[worst.crop].name.toLowerCase()}. Quédate encima para arrancarlas, o usa el cortacésped o jardineros`);
+  }
 }
 
 /* ---------- Guide arrow ---------- */
@@ -3011,8 +3094,8 @@ function update(dt) {
   let ix = input.jx, iz = input.jz;
   if (input.keys.has('l')) ix -= 1; if (input.keys.has('r')) ix += 1;
   if (input.keys.has('u')) iz -= 1; if (input.keys.has('d')) iz += 1;
-  const riding = S.lv.tractor > 0 && S.tractorOn;
-  const mag = Math.min(1, Math.hypot(ix, iz)), sp = speedOf(S.lv.boots) * mag * (riding ? 1.35 : 1) * (1 + .08 * (S.perks.speed || 0));
+  const veh = vehicleNow(), riding = veh === 'tractor', mowing = veh === 'mower';
+  const mag = Math.min(1, Math.hypot(ix, iz)), sp = speedOf(S.lv.boots) * mag * (riding ? 1.35 : mowing ? 1.2 : 1) * (1 + .08 * (S.perks.speed || 0));
   if (mag > .05) {
     const a = Math.atan2(ix, iz);
     // Move one axis at a time so Sonia slides along walls instead of sticking to them
@@ -3026,9 +3109,9 @@ function update(dt) {
   sonia.g.position.set(P.x, 0, P.z);
   sonia.g.rotation.y = lerpAngle(sonia.g.rotation.y, P.face, Math.min(1, dt * 14));
   const stepping = P.speed > .2;
-  tractor.visible = riding;
-  if (riding) {
-    sonia.body.position.set(0, .62 + (stepping ? Math.sin(P.walk * 3) * .015 : 0), -.35);
+  tractor.visible = riding; mower.visible = mowing;
+  if (riding || mowing) {
+    sonia.body.position.set(0, (riding ? .62 : .46) + (stepping ? Math.sin(P.walk * 3) * .015 : 0), riding ? -.35 : -.25);
     sonia.legs[0].rotation.x = sonia.legs[1].rotation.x = -1.3; sonia.armL.rotation.x = -.9;
   } else {
     sonia.body.position.set(0, stepping ? Math.abs(Math.sin(P.walk)) * .07 : 0, 0);
@@ -3223,6 +3306,7 @@ function update(dt) {
   updateDog(dt);
   updateGift(dt);
   updateLitter(dt);
+  updateWeeds(dt);
   updateBelt(dt);
   updateLake(dt);
   updateTownLife(dt);
@@ -3396,7 +3480,12 @@ $('adWatch').addEventListener('click', () => {
     if (n <= 0) { clearInterval(adTimer); $('adOverlay').hidden = true; S.boostUntil = Date.now() + 3 * 60 * 1000; save(); toast('¡Ganancias ×2 durante 3 minutos!'); sfx.mission(); }
   }, 1000);
 });
-$('tractorBtn').addEventListener('click', () => { S.tractorOn = !S.tractorOn; toast(S.tractorOn ? `${who()} se sube al tractor` : `${who()} se baja del tractor`); refreshWorld(); save(); });
+// The vehicle button goes round on foot → tractor → mower, skipping the ones not bought yet
+$('tractorBtn').addEventListener('click', () => {
+  const list = [null, ...(S.lv.tractor ? ['tractor'] : []), ...(S.lv.mower ? ['mower'] : [])], next = list[(list.indexOf(vehicleNow()) + 1) % list.length];
+  S.vehicle = next || 'none'; S.tractorOn = next === 'tractor';
+  toast(next === 'tractor' ? `${who()} se sube al tractor` : next === 'mower' ? `${who()} se sube al cortacésped` : `${who()} va a pie`); refreshWorld(); save();
+});
 function moveFarm(headStart) {
   const gain = starGain();
   S.meta.starsTotal = (S.meta.starsTotal || 0) + gain;
@@ -3516,6 +3605,7 @@ const ACHV = [
   { id: 'thief10', icon: '🚔', name: 'Sheriff', text: 'Atrapa a 10 ladrones', goal: 10, prog: () => S.meta.thieves || 0, reward: 120000 },
   { id: 'rides', icon: '🎢', name: 'Feriante', text: 'Construye las 8 atracciones', goal: 8, prog: () => ATTRS.filter(a => S.lv[a.id] > 0).length, reward: 2000000 },
   { id: 'maps', icon: '🗺️', name: 'Viajera', text: 'Múdate a 3 mapas distintos', goal: 3, prog: () => S.farm || 0, reward: 500000 },
+  { id: 'weeds200', icon: '🌿', name: 'Mano verde', text: 'Arranca 200 malas hierbas', goal: 200, prog: () => S.meta.weeds || 0, reward: 50000 },
   { id: 'pets25', icon: '🐶', name: 'Mejor amiga', text: 'Acaricia al perro 25 veces', goal: 25, prog: () => S.meta.pets || 0, reward: 25000 },
   { id: 'days10', icon: '📅', name: 'Tienda abierta', text: 'Termina 10 jornadas', goal: 10, prog: () => S.meta.days || 0, reward: 60000 },
   { id: 'gold5', icon: '🥇', name: 'Día perfecto', text: 'Consigue 5 medallas de oro', goal: 5, prog: () => S.meta.golds || 0, reward: 150000 },
