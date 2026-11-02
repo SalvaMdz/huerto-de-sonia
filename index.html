@@ -2120,7 +2120,7 @@ function stepToward(w, tx, tz, sp, dt) {
   return true;
 }
 const procFor = crop => PROCS.find(p => p.input === crop && isBuilt(p.id));
-function deliverToCounter(items) { items.forEach(k => { const sh = shopFor(k), st = S.shops[sh.id].stock; st[k] = (st[k] || 0) + 1; sh.dirty = true; }); }
+function deliverToCounter(items) { items.forEach(k => { const sh = shopFor(k), st = S.shops[sh.id].stock; if (orderTake(k, sh.x, sh.z)) return; st[k] = (st[k] || 0) + 1; sh.dirty = true; }); }
 function walkAnim(p, moving, walk) {
   p.body.position.y = moving ? Math.abs(Math.sin(walk * .7)) * .06 : 0;
   p.legs[0].rotation.x = moving ? Math.sin(walk * .7) * .6 : 0; p.legs[1].rotation.x = -p.legs[0].rotation.x;
@@ -2346,7 +2346,7 @@ function updateCustomers(dt) {
       if (c.payT <= 0) {
         const tip = isBuilt('cafe') ? 1.1 : 1;
         const amount = Math.round(ITEMS[c.want].value * mapPrice(c.want) * c.got * priceF() * (1 + Math.random() * .2) * tip * mult() * (c.vip ? 3 : 1) * eventMult(c.want) * (c.type === 'critic' ? 2 : 1));
-        orderSold(c.want, c.got); S.meta.streak = (S.meta.streak || 0) + 1; S.meta.bestStreak = Math.max(S.meta.bestStreak || 0, S.meta.streak);
+        S.meta.streak = (S.meta.streak || 0) + 1; S.meta.bestStreak = Math.max(S.meta.bestStreak || 0, S.meta.streak);
         if (c.vip) S.meta.vips = (S.meta.vips || 0) + 1;
         if (c.type === 'critic') { S.meta.critics = (S.meta.critics || 0) + 1; toast('🧐 ¡Al crítico le ha encantado! Paga el doble y calma a todos'); }
         S.shops[s.id].cash += amount; S.served++; S.today.served++; S.today.sales += amount; S.servedBy[s.id] = (S.servedBy[s.id] || 0) + 1; S.sold[c.want] = (S.sold[c.want] || 0) + c.got;
@@ -2870,7 +2870,7 @@ function sellAtVehicle(s) {
   const to = new T.Vector3(s.tx, 1.6, s.tz);
   flyTo(b, to, .32, () => {
     const k = b.userData.item, v = Math.max(1, Math.round(ITEMS[k].value * mapPrice(k) * priceF() * s.rate * mult() * eventMult(k)));
-    orderSold(k, 1);
+    orderTake(k, to.x, to.z);
     S.sold[k] = (S.sold[k] || 0) + 1;
     addCoins(v); S.today.sales += v; burst(to.x + .3, to.y + .4, to.z, '+' + fmt(v)); sfx.coin(); flyCoins(to.x, to.y, to.z, 1);
   });
@@ -2951,9 +2951,11 @@ function update(dt) {
   const cap = capOf(S.lv.bag), full = P.stack.length >= cap;
   P.cutT -= dt;
   if (!full && P.cutT <= 0) {
-    const reach = riding ? 1.7 : 1.05, off = riding ? 1 : .35, fx = P.x + Math.sin(P.face) * off, fz = P.z + Math.cos(P.face) * off;
-    for (const pl of plants) {
-      if (pl.grow < 1 || !unlocked(pl.patch.id) || pl.claimed) continue;
+    const reach = riding ? 1.5 : 1.05, off = riding ? .9 : .35, fx = P.x + Math.sin(P.face) * off, fz = P.z + Math.cos(P.face) * off;
+    // Only the field the cutting point is over gets harvested, so driving along the path between two fields picks nothing
+    const field = PATCHES.find(p => { const sp = p.spacing || SPACING; return Math.abs(fx - p.x) < p.cols * sp / 2 + .45 && Math.abs(fz - p.z) < p.rows * sp / 2 + .45; });
+    for (const pl of field ? plants : []) {
+      if (pl.patch !== field || pl.grow < 1 || !unlocked(pl.patch.id) || pl.claimed) continue;
       if ((pl.x - fx) ** 2 + (pl.z - fz) ** 2 < reach * reach) { pickUp(pl); P.swing = 1; P.cutT = riding ? .025 : .05; break; }
     }
   }
@@ -2991,7 +2993,7 @@ function update(dt) {
     const b = takeFromStack(k => s.goods.includes(k));
     if (b) {
       P.sellT = Math.max(.03, .08 - P.stack.length * .002);
-      flyTo(b, new T.Vector3(s.x, 1.1, s.z), .28, () => { const k = b.userData.item, st = S.shops[s.id].stock; st[k] = (st[k] || 0) + 1; s.dirty = true; sfx.drop(); if (S.tut < 2) S.tut = 2; $('banner').classList.add('gone'); });
+      flyTo(b, new T.Vector3(s.x, 1.1, s.z), .28, () => { const k = b.userData.item, st = S.shops[s.id].stock; if (!orderTake(k, s.x, s.z)) { st[k] = (st[k] || 0) + 1; s.dirty = true; } sfx.drop(); if (S.tut < 2) S.tut = 2; $('banner').classList.add('gone'); });
     } else if (performance.now() - (s.warnT || 0) > 6000) {
       s.warnT = performance.now();
       toast(`${s.name}: aquí solo se vende ${s.goods.map(k => ITEMS[k].icon).join(' ')}`);
@@ -3317,17 +3319,20 @@ function startEvent() {
 function newOrder() {
   const kinds = availableKinds(); if (!kinds.length) return;
   const chosen = [...kinds].sort(() => Math.random() - .5).slice(0, Math.min(kinds.length, Math.random() < .5 ? 1 : 2));
-  const items = chosen.map(k => ({ k, need: Math.max(4, Math.min(40, Math.round(70 / Math.sqrt(ITEMS[k].value)) + 3)), got: 0 }));
+  const items = chosen.map(k => ({ k, need: Math.max(4, Math.min(24, Math.round(55 / Math.sqrt(ITEMS[k].value)) + 3)), got: 0 }));
   const worth = items.reduce((a, it) => a + ITEMS[it.k].value * it.need, 0);
   const left = Math.min(150, DAY_OPEN_END - S.dayT - 5);
   if (left < 60) return;
   ORDER = { items, left, total: left, reward: Math.round(worth * priceF() * mult() * 4 + (2000 + Math.sqrt(S.earned + 100) * 25) * fscale()) };
-  toast('📋 ¡Pedido especial! Vende lo que pide antes de que acabe el tiempo'); sfx.bell();
+  toast(`📋 ¡Pedido especial! Lleva al mostrador ${items.map(i => ITEMS[i.k].icon + ' ' + i.need).join(' y ')} antes de que acabe el tiempo`); sfx.bell();
 }
-function orderSold(k, n) {
-  if (!ORDER) return;
-  const it = ORDER.items.find(i => i.k === k && i.got < i.need);
-  if (it) it.got = Math.min(it.need, it.got + n);
+// Goods for the order count the moment they reach their shop's counter (or a sales vehicle), and are set aside for it
+// instead of going on sale, so the order no longer depends on which customers happen to come by
+function orderTake(k, x, z) {
+  const it = ORDER && ORDER.items.find(i => i.k === k && i.got < i.need);
+  if (!it) return false;
+  it.got++; if (Math.hypot(x - P.x, z - P.z) < 14) burst(x, 1.8, z, '📋', 'white');
+  return true;
 }
 
 function updateExtras(dt) {
@@ -3433,7 +3438,7 @@ function renderExtras() {
   const ob = $('order'); ob.hidden = !ORDER;
   if (ORDER) {
     $('orderTime').textContent = fmtT(ORDER.left); $('orderReward').textContent = fmt(ORDER.reward);
-    $('orderTxt').textContent = ORDER.items.map(i => `${ITEMS[i.k].icon} ${i.got}/${i.need}`).join('   ');
+    $('orderTxt').textContent = ORDER.items.map(i => `${ITEMS[i.k].icon} ${i.got}/${i.need}`).join('   ') + '  · al mostrador';
     const need = ORDER.items.reduce((a, i) => a + i.need, 0), got = ORDER.items.reduce((a, i) => a + i.got, 0);
     $('orderBar').style.width = (got / need * 100) + '%';
     ob.classList.toggle('late', ORDER.left < 30);
