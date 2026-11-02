@@ -288,6 +288,7 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
   <div class="stats" id="stats"></div>
   <button id="avatarBtn">🧑‍🎨 Personaje</button>
   <button id="skinBtn">👗 Aspecto</button>
+  <button id="vskinBtn">🚜 Pintura del tractor</button>
   <button id="starsBtn">⭐ Estrellas</button>
   <button id="achvBtn">🏆 Logros</button>
   <button id="feedbackBtn">💬 Opinión</button>
@@ -559,8 +560,19 @@ const MAPS = [
 ];
 const mapOf = n => MAPS[n % MAPS.length];
 // The version goes up with every release; tools/build.py stamps the build date (while developing it says 'en pruebas')
-const GAME_VERSION = '22';
-const BUILD_DATE = '02/11/2026 16:59';
+const GAME_VERSION = '23';
+const BUILD_DATE = '02/11/2026 17:00';
+// Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
+const VEHICLE_SKINS = [
+  { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
+  { id: 'blue',   name: 'Azul lago',     icon: '🔵', body: 0x3f7fd0, mower: 0x3f7fd0, hub: 0xfdf6ea, need: 'Abre el lago', goal: 1, prog: () => +(S.gate4 || S.farm > 0) },
+  { id: 'green',  name: 'Verde hierba',  icon: '🟢', body: 0x3fa34d, mower: 0x2f8f3a, hub: 0xf5e01f, need: 'Arranca 50 malas hierbas', goal: 50, prog: () => S.meta.weeds || 0 },
+  { id: 'pink',   name: 'Rosa chicle',   icon: '🩷', body: 0xf06aa8, mower: 0xf06aa8, hub: 0xfdf6ea, need: 'Atiende a 500 clientes', goal: 500, prog: () => S.served },
+  { id: 'black',  name: 'Noche',         icon: '⚫', body: 0x2a2a30, mower: 0x2a2a30, hub: 0xe8384a, need: 'Atrapa a 10 ladrones', goal: 10, prog: () => S.meta.thieves || 0 },
+  { id: 'purple', name: 'Feriante',      icon: '🟣', body: 0x8e3bb0, mower: 0x8e3bb0, hub: 0xf6c445, need: 'Abre la feria', goal: 1, prog: () => +S.gate7 },
+  { id: 'gold',   name: 'Oro puro',      icon: '🥇', body: 0xf6c445, mower: 0xf6c445, hub: 0xfdf6ea, metal: true, need: 'Consigue 10 medallas de oro', goal: 10, prog: () => S.meta.golds || 0 },
+  { id: 'mint',   name: 'Helado de menta', icon: '🍦', body: 0x9fe3c8, mower: 0x9fe3c8, hub: 0xf06aa8, need: 'Mira un anuncio', goal: 1, prog: () => 0, ad: true },
+];
 // The avatar creator: hair style, hair colour and skin tone are picked from these lists
 const AVATAR_HAIR = [
   { id: 'curly', name: 'Rizos largos' }, { id: 'long', name: 'Coletas' }, { id: 'bun', name: 'Moño' }, { id: 'short', name: 'Corto' }, { id: 'afro', name: 'Rizos cortos' },
@@ -2485,16 +2497,18 @@ function updateCustomers(dt) {
 }
 
 /* ---------- Tractor, dog, gift boxes, litter, day and night ---------- */
+// The vehicles' paint has its own materials, so a paint job only changes their colours
+const VMAT = { body: new LitMat({ color: 0xd8402f }), hub: new LitMat({ color: 0xf6c445 }), mower: new LitMat({ color: 0x3fa34d }), deck: new LitMat({ color: 0x2f8f3a }) };
 const tractor = (() => {
   const g = new T.Group();
-  const body = mesh(new T.BoxGeometry(.9, .5, 1.4), M.red); body.position.set(0, .62, -.1); g.add(body);
-  const hood = mesh(new T.BoxGeometry(.66, .42, .7), M.red); hood.position.set(0, .82, .55); g.add(hood);
+  const body = mesh(new T.BoxGeometry(.9, .5, 1.4), VMAT.body); body.position.set(0, .62, -.1); g.add(body);
+  const hood = mesh(new T.BoxGeometry(.66, .42, .7), VMAT.body); hood.position.set(0, .82, .55); g.add(hood);
   const grill = mesh(new T.BoxGeometry(.56, .32, .05), M.dark); grill.position.set(0, .8, .91); g.add(grill);
   const pipe = mesh(new T.CylinderGeometry(.05, .05, .5, 6), M.dark); pipe.position.set(.24, 1.25, .6); g.add(pipe);
   const seat = mesh(new T.BoxGeometry(.45, .1, .4), M.dark); seat.position.set(0, .92, -.35); g.add(seat);
   [[-.55, -.4, .46], [.55, -.4, .46], [-.48, .55, .28], [.48, .55, .28]].forEach(([x, z, r]) => {
     const w = mesh(new T.CylinderGeometry(r, r, .24, 14), M.tire); w.rotation.z = Math.PI / 2; w.position.set(x, r, z); g.add(w);
-    const hub = mesh(new T.CylinderGeometry(r * .45, r * .45, .26, 10), M.gold); hub.rotation.z = Math.PI / 2; hub.position.set(x, r, z); g.add(hub);
+    const hub = mesh(new T.CylinderGeometry(r * .45, r * .45, .26, 10), VMAT.hub); hub.rotation.z = Math.PI / 2; hub.position.set(x, r, z); g.add(hub);
   });
   const bar = mesh(new T.BoxGeometry(1.9, .1, .22), M.metal); bar.position.set(0, .22, 1.2); g.add(bar);
   g.visible = false; sonia.g.add(g); return g;
@@ -2502,15 +2516,21 @@ const tractor = (() => {
 // Ride-on mower: cuts down the weeds it drives over
 const mower = (() => {
   const g = new T.Group();
-  const deck = mesh(new T.BoxGeometry(1, .18, 1.1), mat(0x2f8f3a)); deck.position.set(0, .3, .1); g.add(deck);
-  const body = mesh(new T.BoxGeometry(.7, .32, .8), mat(0x3fa34d)); body.position.set(0, .55, -.1); g.add(body);
-  const hood = mesh(new T.BoxGeometry(.6, .26, .45), mat(0x3fa34d)); hood.position.set(0, .55, .45); g.add(hood);
+  const deck = mesh(new T.BoxGeometry(1, .18, 1.1), VMAT.deck); deck.position.set(0, .3, .1); g.add(deck);
+  const body = mesh(new T.BoxGeometry(.7, .32, .8), VMAT.mower); body.position.set(0, .55, -.1); g.add(body);
+  const hood = mesh(new T.BoxGeometry(.6, .26, .45), VMAT.mower); hood.position.set(0, .55, .45); g.add(hood);
   const seat = mesh(new T.BoxGeometry(.42, .1, .34), M.dark); seat.position.set(0, .76, -.25); g.add(seat);
   const wheel = mesh(new T.CylinderGeometry(.04, .04, .4, 6), M.dark); wheel.position.set(0, .85, .2); wheel.rotation.x = -.6; g.add(wheel);
   [[-.45, -.35, .2], [.45, -.35, .2], [-.4, .5, .14], [.4, .5, .14]].forEach(([x, z, r]) => { const w = mesh(new T.CylinderGeometry(r, r, .14, 12), M.tire); w.rotation.z = Math.PI / 2; w.position.set(x, r, z); g.add(w); });
   const flag = mesh(new T.BoxGeometry(.02, .18, .14), mat(0xf5c518)); flag.position.set(-.3, 1.05, -.45); g.add(flag);
   g.visible = false; sonia.g.add(g); return g;
 })();
+function paintVehicles(id) {
+  const v = VEHICLE_SKINS.find(x => x.id === id) || VEHICLE_SKINS[0];
+  VMAT.body.color.setHex(v.body); VMAT.hub.color.setHex(v.hub); VMAT.mower.color.setHex(v.mower); VMAT.deck.color.setHex(v.mower).multiplyScalar(.75);
+  [VMAT.body, VMAT.mower].forEach(m => { m.metalness = v.metal ? .55 : 0; m.roughness = v.metal ? .3 : .9; });
+}
+paintVehicles(S.meta.vehicleSkin);
 // Changing clothes rebuilds Sonia's model and moves over what she carries (her stack and the tractor)
 function dressSonia(id) {
   const old = sonia, nu = makeSonia(id);
@@ -3611,6 +3631,8 @@ const ACHV = [
   { id: 'gold5', icon: '🥇', name: 'Día perfecto', text: 'Consigue 5 medallas de oro', goal: 5, prog: () => S.meta.golds || 0, reward: 150000 },
   { id: 'chest7', icon: '🎁', name: 'Constante', text: 'Abre 7 cofres diarios', goal: 7, prog: () => S.meta.chests || 0, reward: 80000 },
 ];
+const vskinGot = v => v.id === 'red' || (S.meta.vehicleSkins || []).includes(v.id);
+function wearVehicleSkin(v) { S.meta.vehicleSkin = v.id; paintVehicles(v.id); sfx.buy(); puff(P.x, .8, P.z, v.body, 14, 1.2, 3); toast(`${v.icon} Pintura nueva: ${v.name}`); save(); }
 const skinGot = o => o.id === 'classic' || (S.meta.skins || []).includes(o.id);
 function wearSkin(o) {
   S.meta.skin = o.id; dressSonia(o.id); sfx.buy(); toast(`${o.icon} ${who()} estrena: ${o.name}`); save();
@@ -3631,8 +3653,14 @@ function renderExtras() {
     S.meta.skins = [...(S.meta.skins || []), ...newly.map(o => o.id)]; S.meta.skinNew = true; sfx.mission();
     toast(`👗 ¡Nuevo aspecto para ${who()}: ${newly.map(o => o.icon + ' ' + o.name).join(', ')}! Póntelo en el menú ☰`);
   }
+  const vNew = VEHICLE_SKINS.filter(v => !v.ad && !vskinGot(v) && v.prog() >= v.goal);
+  if (vNew.length) {
+    S.meta.vehicleSkins = [...(S.meta.vehicleSkins || []), ...vNew.map(v => v.id)]; S.meta.vskinNew = true; sfx.mission();
+    toast(`🚜 ¡Nueva pintura para el tractor: ${vNew.map(v => v.icon + ' ' + v.name).join(', ')}! Cámbiala en el menú ☰`);
+  }
+  $('vskinBtn').textContent = `🚜 Pintura del tractor: ${VEHICLE_SKINS.filter(vskinGot).length}/${VEHICLE_SKINS.length}${S.meta.vskinNew ? ' · ¡nueva!' : ''}`;
   $('skinBtn').textContent = `👗 Aspecto: ${OUTFITS.filter(skinGot).length}/${OUTFITS.length}${S.meta.skinNew ? ' · ¡nuevo!' : ''}`;
-  $('menuBtn').textContent = S.meta.skinNew ? '☰ ✨' : '☰';
+  $('menuBtn').textContent = S.meta.skinNew || S.meta.vskinNew ? '☰ ✨' : '☰';
   $('chestBtn').hidden = !chestReady();
   $('starsBtn').textContent = `⭐ Estrellas: ${S.stars}`;
   $('achvBtn').textContent = `🏆 Logros: ${ACHV.filter(a => S.achv[a.id]).length}/${ACHV.length}`;
@@ -3675,6 +3703,13 @@ function openPanel(kind) {
       const done = !!S.achv[a.id], p = Math.min(a.goal, a.prog());
       return `<div class="prow ${done ? 'done' : 'locked'}"><span class="pi">${done ? a.icon : '🔒'}</span><span class="pt2"><b>${a.name}</b>${a.text}<br><small>${done ? '¡Conseguido!' : `${fmt(p)}/${fmt(a.goal)} · premio ${fmt(Math.round(a.reward * fscale()))}`}</small></span></div>`;
     }).join('');
+  } else if (kind === 'vskins') {
+    title = '🚜 Pintura del tractor'; sub = 'Pinta el tractor y el cortacésped. Las pinturas se desbloquean jugando y son para siempre.';
+    rows = VEHICLE_SKINS.map(v => {
+      const got = vskinGot(v), on = (S.meta.vehicleSkin || 'red') === v.id, p = Math.min(v.goal, v.prog());
+      const btn = on ? '<button disabled>Puesta</button>' : got ? `<button data-vskin="${v.id}">Pintar</button>` : v.ad ? `<button data-vskinad="${v.id}">📺 Ver</button>` : '<button disabled>🔒</button>';
+      return `<div class="prow ${on ? 'done' : got || v.ad ? '' : 'locked'}"><span class="pi" style="color:#${v.body.toString(16).padStart(6, '0')}">${v.icon}</span><span class="pt2"><b>${v.name}</b>${got ? 'Tractor y cortacésped' : '🔒 ' + v.need}${!got && v.goal > 1 ? `<br><small>${fmt(p)}/${fmt(v.goal)}</small>` : ''}</span>${btn}</div>`;
+    }).join('');
   } else if (kind === 'skins') {
     title = `👗 Aspecto de ${who()}`; sub = 'Desbloqueas ropa nueva según avanzas. Lo que consigues es para siempre, aunque te mudes de granja.';
     rows = OUTFITS.map(o => {
@@ -3711,6 +3746,12 @@ $('panelList').addEventListener('click', e => {
     const p = PERKS.find(q => q.id === b.dataset.perk), l = S.perks[p.id] || 0, c = perkCost(l);
     if (l >= p.max || S.stars < c) return;
     S.stars -= c; S.perks[p.id] = l + 1; sfx.buy(); toast(`⭐ ${p.name}: nivel ${l + 1}`); save(); $('panelList')._h = ''; openPanel('stars');
+  } else if (b.dataset.vskin) {
+    $('panelOverlay').hidden = true; wearVehicleSkin(VEHICLE_SKINS.find(v => v.id === b.dataset.vskin));
+  } else if (b.dataset.vskinad) {
+    const v = VEHICLE_SKINS.find(x => x.id === b.dataset.vskinad);
+    $('panelOverlay').hidden = true;
+    showAd(() => { S.meta.vehicleSkins = [...(S.meta.vehicleSkins || []), v.id]; wearVehicleSkin(v); });
   } else if (b.dataset.skin) {
     $('panelOverlay').hidden = true; wearSkin(OUTFITS.find(o => o.id === b.dataset.skin));
   } else if (b.dataset.skinad) {
@@ -3725,6 +3766,7 @@ $('panelList').addEventListener('click', e => {
 $('panelClose').addEventListener('click', () => { $('panelOverlay').hidden = true; });
 $('starsBtn').addEventListener('click', () => openPanel('stars'));
 $('skinBtn').addEventListener('click', () => { S.meta.skinNew = false; openPanel('skins'); });
+$('vskinBtn').addEventListener('click', () => { S.meta.vskinNew = false; openPanel('vskins'); });
 $('achvBtn').addEventListener('click', () => openPanel('achv'));
 $('chestBtn').addEventListener('click', () => openPanel('chest'));
 $('adGrow').addEventListener('click', () => {
