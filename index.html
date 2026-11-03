@@ -288,7 +288,71 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
 .gridbar p { margin: 0 0 8px; font-weight: 800; font-size: .92rem; text-align: center; }
 .gridbar button.off { opacity: .5; }
 #buildBtn.on { background: linear-gradient(#5cc46a, #2f8f3f); }
-#buildBtn { position: absolute; right: max(16px, env(safe-area-inset-right, 0px)); top: calc(62px + env(safe-area-inset-top, 0px)); }
+/* Right edge: map view, drag, tractor and build buttons in a column under the top row */
+.sidebtns { position: absolute; right: max(16px, env(safe-area-inset-right, 0px)); top: calc(62px + env(safe-area-inset-top, 0px)); display: flex; flex-direction: column; align-items: flex-end; gap: 8px; pointer-events: none; }
+.lvl { flex: none; }
+/* Narrow phones upright: smaller top row, and the left column keeps clear of the right buttons and of the middle of the screen */
+@media (max-width: 430px) {
+  .hud { gap: 6px; padding-left: max(10px, env(safe-area-inset-left, 0px)); padding-right: max(10px, env(safe-area-inset-right, 0px)); }
+  .hudrow { gap: 5px; }
+  .pill { font-size: 1.2rem; padding: 2px 11px 2px 3px; min-width: 0; }
+  .pill .coin { width: 24px; height: 24px; }
+  .iconbtn { height: 38px; min-width: 38px; padding: 0 8px; font-size: .92rem; }
+  .lvl { width: 38px; height: 38px; padding: 3px; }
+  .lvl b { font-size: .92rem; }
+  .sidebtns { right: max(10px, env(safe-area-inset-right, 0px)); top: calc(54px + env(safe-area-inset-top, 0px)); gap: 6px; }
+  .menu { top: calc(54px + env(safe-area-inset-top, 0px)); }
+  .moodbar { width: min(200px, calc(100% - 50px)); padding: 2px 10px 2px 4px; }
+  .moodbar .mf { font-size: 1.1rem; }
+  .moodbar .ml, .moodbar .mp { font-size: .8rem; }
+  .drawtab { height: 30px; font-size: .85rem; }
+  .drawer { max-width: calc(100% - 50px); max-height: 38vh; max-height: 38dvh; overflow-y: auto; pointer-events: auto; gap: 6px; }
+  .mission, .order, .news { max-width: min(250px, calc(100% - 50px)); padding: 4px 9px 6px; border-width: 2px; box-shadow: 0 2px 0 var(--ink); }
+  .order { box-shadow: 0 2px 0 var(--gold-dark); }
+  .mission .mx, .order .ox { font-size: .86rem; }
+  .mission .mk, .order .mk, .news .nk { font-size: .64rem; }
+  .news { font-size: .8rem; }
+  .chip { font-size: .76rem; padding: 2px 8px; }
+  .chips { max-width: calc(100% - 50px); }
+  .drawer .chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+}
+/* Phone lying sideways: little height, so everything on screen gets smaller and the side column scrolls instead of covering the farm */
+@media (orientation: landscape) and (max-height: 520px) {
+  .hud { gap: 5px; padding-top: calc(6px + env(safe-area-inset-top, 0px)); }
+  .hudrow { gap: 6px; }
+  .pill { font-size: 1.15rem; padding: 2px 12px 2px 3px; }
+  .pill .coin { width: 24px; height: 24px; }
+  .iconbtn { height: 36px; min-width: 36px; padding: 0 9px; font-size: .95rem; }
+  .lvl { width: 36px; height: 36px; padding: 3px; }
+  .lvl b { font-size: .9rem; }
+  .sidebtns { top: calc(48px + env(safe-area-inset-top, 0px)); gap: 6px; }
+  .menu { top: calc(48px + env(safe-area-inset-top, 0px)); max-height: calc(100vh - 60px); max-height: calc(100dvh - 60px); overflow-y: auto; }
+  .moodbar { width: min(200px, 100%); padding: 2px 10px 2px 4px; }
+  .moodbar .mf { font-size: 1.05rem; }
+  .moodbar .ml, .moodbar .mp { font-size: .78rem; }
+  .drawtab { height: 28px; font-size: .82rem; }
+  .drawer { max-width: 240px; max-height: calc(100vh - 150px); max-height: calc(100dvh - 150px); overflow-y: auto; pointer-events: auto; gap: 5px; }
+  .mission, .order, .news { max-width: 240px; padding: 4px 8px 5px; border-width: 2px; box-shadow: 0 2px 0 var(--ink); }
+  .order { box-shadow: 0 2px 0 var(--gold-dark); }
+  .mission .mx, .order .ox { font-size: .82rem; }
+  .mission .mk, .order .mk, .news .nk { font-size: .62rem; }
+  .news { font-size: .78rem; }
+  .chip { font-size: .74rem; padding: 2px 8px; }
+  .banner { font-size: 1.4rem; padding: 6px 18px 8px max(16px, env(safe-area-inset-left, 0px)); top: calc(48px + env(safe-area-inset-top, 0px)); }
+  .toast { bottom: calc(14px + env(safe-area-inset-bottom, 0px)); font-size: .82rem; padding: 6px 12px; }
+  .hint { bottom: calc(10px + env(safe-area-inset-bottom, 0px)); font-size: .82rem; padding: 6px 12px; }
+  /* Windows (end of day, level up, ads…) fit the height and scroll if they still don't */
+  .overlay { padding: 10px; }
+  .adbox { max-height: calc(100vh - 20px); max-height: calc(100dvh - 20px); overflow-y: auto; padding: 12px 16px; gap: 7px; border-radius: 16px; }
+  .adbox h3 { font-size: 1.2rem; }
+  .adbox p { font-size: .82rem; }
+  .adbox button { padding: 7px 12px; font-size: 1rem; }
+  .adbox .bigface { font-size: 2.2rem; }
+  .lvlbig { width: 62px; height: 62px; font-size: 2rem; }
+  .dstats { padding: 6px 10px; gap: 3px 10px; font-size: .82rem; }
+  .gridbar { bottom: calc(8px + env(safe-area-inset-bottom, 0px)); padding: 6px 10px; }
+  .gridbar p { margin-bottom: 5px; font-size: .82rem; }
+}
 </style>
 
 <div id="game"></div>
@@ -300,11 +364,8 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
     <div class="pill" id="coinsPill"><span class="coin" id="hudCoin"></span><span id="coinsTxt">0</span></div>
     <button class="lvl" id="lvlPill" aria-label="Nivel"><b id="lvlNum">1</b></button>
     <div class="spacer"></div>
-    <button class="iconbtn" id="tractorBtn" hidden aria-label="Subir o bajar del tractor">🚜</button>
     <button class="iconbtn chest" id="chestBtn" hidden aria-label="Cofre diario">🎁</button>
     <button class="iconbtn boost" id="boostBtn" aria-label="Ver anuncio para ganar el doble">📺 ×2</button>
-    <button class="iconbtn" id="panBtn" hidden aria-label="Arrastrar el mapa sin mover al personaje">✋</button>
-    <button class="iconbtn" id="viewBtn" aria-label="Cambiar a vista desde arriba">🗺️</button>
     <button class="iconbtn" id="menuBtn" aria-label="Menú">☰</button>
   </div>
   <div class="moodbar" id="moodBar" hidden title="Enfado de los clientes">
@@ -317,7 +378,13 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
     <div class="ox" id="orderTxt"></div>
     <div class="mb"><i id="orderBar"></i></div>
   </div>
-  <button class="iconbtn" id="buildBtn" hidden aria-label="Mover edificios">🏗️</button>
+  <!-- Round buttons down the right edge, so the top row fits on narrow phones -->
+  <div class="sidebtns">
+    <button class="iconbtn" id="viewBtn" aria-label="Cambiar a vista desde arriba">🗺️</button>
+    <button class="iconbtn" id="panBtn" hidden aria-label="Arrastrar el mapa sin mover al personaje">✋</button>
+    <button class="iconbtn" id="tractorBtn" hidden aria-label="Subir o bajar del tractor">🚜</button>
+    <button class="iconbtn" id="buildBtn" hidden aria-label="Mover edificios">🏗️</button>
+  </div>
   <button class="drawtab" id="drawTab" aria-label="Mostrar u ocultar el panel"><span id="drawIcon">📋</span><span id="drawBadge"></span></button>
   <div class="drawer" id="drawer">
   <div class="news" id="news" hidden></div>
@@ -642,8 +709,8 @@ const MAPS = [];
 const mapOf = n => MAPS[n % MAPS.length];
 const mapById = id => MAPS.find(m => m.id === id);
 // The version goes up with every release; the build (vite.config.js) stamps the date (while developing it says 'en pruebas')
-const GAME_VERSION = '32';
-const BUILD_DATE = '03/11/2026 17:11';
+const GAME_VERSION = '33';
+const BUILD_DATE = '03/11/2026 17:27';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -2612,6 +2679,7 @@ function completePad(pad) {
   } else if (kind === 'patch') {
     S.unlocked.push(r.id);
     plants.forEach(pl => { if (pl.patch === r) { pl.grow = 0; pl.dirty = true; } });
+    if (gridable(r)) startPlace(r, true); // on free-building maps the player chooses where the field goes
     toast(`¡Nuevo campo de ${ITEMS[r.crop].name.toLowerCase()}!`);
   } else if (kind === 'build') {
     S.built.push(pad.id); popIn(builds[pad.id].g);
@@ -3841,12 +3909,13 @@ function update(dt) {
 
   // Camera
   // The map button lifts the camera high above to see the whole farm at once
-  const portrait = innerWidth / innerHeight < .8, off = topView ? (portrait ? { y: 46, z: 7 } : { y: 34, z: 5 }) : portrait ? { y: 13, z: 12.5 } : { y: 10, z: 9.5 };
+  const portrait = innerWidth / innerHeight < .8, off = topView ? (portrait ? { y: 46, z: 7 } : { y: 34, z: 5 }) : portrait ? { y: 14.5, z: 13.8 } : { y: 10, z: 9.5 };
   const k = Math.min(1, dt * 5);
   camera.position.x += (P.x + camPan.x - camera.position.x) * k;
   camera.position.y += (off.y - camera.position.y) * k;
   camera.position.z += (P.z + camPan.z + off.z - camera.position.z) * k;
-  camera.lookAt(camera.position.x, 0, camera.position.z - off.z - .4);
+  // Upright phones show Sonia a little below the middle, so the cards at the top cover the land ahead and not her
+  camera.lookAt(camera.position.x, 0, camera.position.z - off.z - (portrait && !topView ? 2.6 : .4));
   sun.position.set(P.x + 6, 14, P.z + 6); sun.target.position.set(P.x, 0, P.z);
 }
 
@@ -4219,12 +4288,15 @@ function renderExtras() {
 /* Side drawer: everything that is not the farm itself folds into it */
 const NEWS = [];
 function addNews(txt) { NEWS.unshift(txt); NEWS.length = Math.min(NEWS.length, 4); S.meta.newsSeen = false; renderDrawer(); }
+// On a phone lying sideways there is little height, so the drawer starts folded unless the player opened it
+const shortScreen = matchMedia('(orientation: landscape) and (max-height: 520px)');
+const drawerOpen = () => S.tut < 2 || (S.meta.hudOpen ?? !shortScreen.matches);
 function renderDrawer() {
-  const open = S.meta.hudOpen !== false || S.tut < 2;
+  const open = drawerOpen();
   $('drawer').classList.toggle('shut', !open);
   $('drawTab').hidden = S.tut < 2; // during the first harvest the drawer stays open and the button would cover the banner
   const nw = $('news'); nw.hidden = !NEWS.length;
-  const nh = `<span class="nk">✨ Novedades<button id="newsClear" aria-label="Borrar novedades">✕</button></span>${NEWS.map(n => `<span>${n}</span>`).join('')}`;
+  const nh = `<span class="nk">✨ Novedades<button id="newsClear" aria-label="Borrar novedades">✕</button></span>${NEWS.slice(0, 2).map(n => `<span>${n}</span>`).join('')}`;
   if (nw._h !== nh) { nw.innerHTML = nh; nw._h = nh; }
   const n = ['mission', 'alerts', 'news'].filter(id => !$(id).hidden).length + $('chips').children.length;
   const alert = !open && (!$('alerts').hidden || (NEWS.length && !S.meta.newsSeen));
@@ -4233,7 +4305,8 @@ function renderDrawer() {
   $('drawTab').classList.toggle('alert', !!alert);
   if (open) S.meta.newsSeen = true;
 }
-$('drawTab').addEventListener('click', () => { S.meta.hudOpen = S.meta.hudOpen === false; sfx.drop(); renderDrawer(); save(); });
+$('drawTab').addEventListener('click', () => { S.meta.hudOpen = !drawerOpen(); sfx.drop(); renderDrawer(); save(); });
+shortScreen.addEventListener?.('change', renderDrawer);
 $('news').addEventListener('click', e => { if (e.target.id === 'newsClear') { NEWS.length = 0; renderDrawer(); } });
 
 /* Panels: star shop, achievements, daily chest */
@@ -4720,50 +4793,87 @@ $('adWatch').addEventListener('click', () => stat('anuncio_aceptado', { sitio: '
   $(id).addEventListener('click', () => stat('anuncio_ofrecido', { sitio })));
 
 /* ================= Free building on a grid ================= */
-// On maps with content.freeBuild (kept under content.beta while only testers have it) the buildings of the new zones go wherever the player wants:
-// after paying, the camera rises over a grid and the building can be dragged, turned and placed.
-// The 🏗️ button moves them again later. Places live in S.grid = { id: { x, z, r } } (r: quarter turns).
+// On maps with content.freeBuild (kept under content.beta while only testers have it) the workshops, pens, fields and shops
+// of the new zones go wherever the player wants: after paying, the camera rises over a grid and the thing can be dragged,
+// turned (workshops and pens) and placed. The 🏗️ button moves them again later.
+// Places live in S.grid = { id | 'patch:id' | 'shop:id': { x, z, r } } (r: quarter turns).
 const GRID_ON = !!MAPC.freeBuild;
-const gridable = b => GRID_ON && !b.dock && (b.area || 1) >= 6;
-const GRIDS = BUILDS.filter(gridable);
+const gridable = o => GRID_ON && !o.dock && (o.area || 1) >= 6;
+const isPatch = o => PATCHES.includes(o), isShop = o => SHOPS.includes(o);
+const GRIDS = [...BUILDS, ...PATCHES, ...SHOPS].filter(gridable);
+const gridKey = o => (isPatch(o) ? 'patch:' : isShop(o) ? 'shop:' : '') + o.id;
+const placed = o => (isPatch(o) ? unlocked(o.id) : isShop(o) ? !!o.open : isBuilt(o.id));
+const turns = o => !isPatch(o) && !isShop(o);
+const nameOf = o => (isPatch(o) ? `Campo de ${ITEMS[o.crop].name.toLowerCase()}` : o.name);
+const iconOf = o => (isPatch(o) ? ITEMS[o.crop].icon : o.output ? ITEMS[o.output].icon : o.icon);
 const ringOff = b => (ANIMALS.includes(b) ? 3 : 2.3);
-GRIDS.forEach(b => { b.home = { x: b.x, z: b.z, r: b.rot ?? (ANIMALS.includes(b) ? 0 : b.x < 0 ? 1 : 3) }; });
+GRIDS.forEach(b => { b.home = { x: b.x, z: b.z, r: turns(b) ? b.rot ?? (ANIMALS.includes(b) ? 0 : b.x < 0 ? 1 : 3) : 0 }; });
+const rotOf = o => (turns(o) ? o.rot ?? o.home.r : 0);
 const zoneRect = b => RUBBLE.find(Z => Z.a === b.area);
 
-// Moves the building, its ring and its pile; workers and labels read b.x / b.zx, so they follow by themselves
+// Moves the thing with everything that belongs to it; workers, customers and labels read its numbers, so they follow by themselves
+const nudge = (m, dx, dz) => { if (m) { m.position.x += dx; m.position.z += dz; } };
 function setSpot(b, x, z, r) {
+  if (isPatch(b)) return movePatch(b, x - b.x, z - b.z);
+  if (isShop(b)) return moveShop(b, x - b.x, z - b.z);
   const a = r * Math.PI / 2, off = ringOff(b);
   b.x = x; b.z = z; b.rot = r; b.zx = x + Math.sin(a) * off; b.zz = z + Math.cos(a) * off;
   const g = builds[b.id].g; g.position.set(x, 0, z); g.rotation.y = a;
   zoneRings[b.id].position.set(b.zx, .02, b.zz);
   (piles[b.id] || []).forEach((m, i) => m.position.copy(pileSpot(b, i)));
 }
+// A field: soil, furrows and fences, every plant, its weeds and the pad that sells it
+function movePatch(p, dx, dz) {
+  p.x += dx; p.z += dz; p.decor.forEach(m => nudge(m, dx, dz));
+  plants.forEach(pl => { if (pl.patch === p) { pl.x += dx; pl.z += dz; pl.dirty = true; } });
+  weeds.forEach(w => { if (w.patch === p) { w.x += dx; w.z += dz; w.m.position.set(w.x, .05, w.z); } });
+  pads.forEach(pd => { if (pd.id === 'patch-' + p.id) { pd.x += dx; pd.z += dz; nudge(pd.g, dx, dz); } });
+}
+// A shop: stall, plaza, path, counter, tills and cashiers, goods and banknotes, its cashier pads and the customers already there
+function moveShop(s, dx, dz) {
+  const mv = o => { if (o) { o.x += dx; o.z += dz; } };
+  [s, s.counter, s.cash, s.spawn, ...s.spots].forEach(mv);
+  [s.g, s.plaza, s.walk, s.disc.ring, s.disc.fill, s.cashDisc.ring, s.cashDisc.fill, ...s.items, ...s.bills].forEach(m => nudge(m, dx, dz));
+  s.tills.forEach(t => { [t, t.zone, t.pay].forEach(mv); [t.mesh, t.disc.ring, t.disc.fill, t.cashier && t.cashier.g].forEach(m => nudge(m, dx, dz)); });
+  pads.forEach(pd => { if (pd.ref && pd.ref.shop === s && !pd.ref.fame) { pd.x += dx; pd.z += dz; mv(pd.ref); nudge(pd.g, dx, dz); } });
+  customers.forEach(c => { if (c.shop === s) { c.x += dx; c.z += dz; } });
+}
 
-// Footprint: the building's own box (unturned: workshops 3×3 under the roof, pens their fence) plus the ring in front of its door
+// Footprint: what the thing covers. Workshops 3×3 under the roof and pens their fence (turned), plus the ring at the door;
+// a field its soil and fences; a shop its plaza with tills and cashier pads, and the path its customers walk (that may leave the zone)
 const box3 = new T.Box3();
 const measure = b => (ANIMALS.includes(b) ? [-2.35, -1.75, 2.35, 1.75] : [-1.5, -1.5, 1.5, 1.5]);
 function footprint(b, x, z, r) {
+  if (isPatch(b)) { const sp = b.spacing || SPACING, hw = (b.cols * sp + .8) / 2, hd = (b.rows * sp + .8) / 2; return [[x - hw, z - hd, x + hw, z + hd]]; }
+  if (isShop(b)) {
+    const sx = x + b.spawn.x - b.x, sz = z + b.spawn.z - b.z, walk = [sx - .95, Math.min(z, sz), sx + .95, Math.max(z, sz)];
+    walk.out = true;
+    return [[x - 4.8, z - 2.2, x + 5.9, z + 6.5], walk];
+  }
   const [x0, z0, x1, z1] = measure(b), a = r * Math.PI / 2, c = Math.round(Math.cos(a)), s = Math.round(Math.sin(a));
   const xs = [], zs = [];
   [[x0, z0], [x1, z0], [x0, z1], [x1, z1]].forEach(([lx, lz]) => { xs.push(x + lx * c + lz * s); zs.push(z - lx * s + lz * c); });
   const off = ringOff(b), rx = x + s * off, rz = z + c * off;
   return [[Math.min(...xs), Math.min(...zs), Math.max(...xs), Math.max(...zs)], [rx - 1.2, rz - 1.2, rx + 1.2, rz + 1.2]];
 }
+const inBox = (f, x, z) => x > f[0] && x < f[2] && z > f[1] && z < f[3];
 
-// Everything already standing in the world that a building must not cover
+// Everything already standing in the world that a thing must not cover
 function obstacles(b) {
   const out = [];
   const add = o => { if (!o || !o.visible) return; box3.setFromObject(o); if (!box3.isEmpty()) out.push([box3.min.x, box3.min.z, box3.max.x, box3.max.z]); };
   const circ = (x, z, r) => out.push([x - r, z - r, x + r, z + r]);
-  BUILDS.forEach(o => { if (o === b || !isBuilt(o.id)) return; if (gridable(o)) out.push(...footprint(o, o.x, o.z, o.rot ?? o.home.r)); else { add(builds[o.id].g); circ(o.zx, o.zz, 1.2); } });
+  // Fields still for sale already show their soil, so they count too
+  GRIDS.forEach(o => { if (o !== b && (placed(o) || isPatch(o))) out.push(...footprint(o, o.x, o.z, rotOf(o))); });
+  BUILDS.forEach(o => { if (gridable(o) || !isBuilt(o.id)) return; add(builds[o.id].g); circ(o.zx, o.zz, 1.2); });
   SHOPS.forEach(s => {
-    if (!s.open) return;
+    if (gridable(s) || !s.open) return;
     add(s.g); circ(s.counter.x, s.counter.z, s.counter.r); circ(s.cash.x, s.cash.z, s.cash.r);
     s.tills.forEach(t => { if (t.open) { add(t.mesh); circ(t.zone.x, t.zone.z, 1); } });
   });
-  PATCHES.forEach(p => add(p.soil));
+  PATCHES.forEach(p => { if (!gridable(p)) add(p.soil); });
   ATTRS.forEach(a => { add(a.mesh.g); add(a.disc.ring); });
-  pads.forEach(p => { if (p.g.visible && p.ref !== b) circ(p.x, p.z, .9); });
+  pads.forEach(p => { if (p.g.visible && p.ref !== b && p.id !== 'patch-' + b.id && !(p.ref && p.ref.shop === b && !p.ref.fame)) circ(p.x, p.z, .9); });
   Object.values(townMeshes).forEach(add); Object.values(gateMeshes).forEach(add);
   sellVehicles.forEach(v => add(v.g)); add(recycler);
   RUBBLE.forEach(Z => { add(Z.binMesh); add(Z.disc.ring); });
@@ -4772,18 +4882,18 @@ function obstacles(b) {
 const overlaps = (a, o) => a[0] < o[2] - .05 && a[2] > o[0] + .05 && a[1] < o[3] - .05 && a[3] > o[1] + .05;
 function fits(b, x, z, r, obs) {
   const Z = zoneRect(b), fp = footprint(b, x, z, r);
-  if (fp.some(f => f[0] < Z.x0 || f[2] > Z.x1 || f[1] < Z.z0 || f[3] > Z.z1)) return false;
+  if (fp.some(f => !f.out && (f[0] < Z.x0 || f[2] > Z.x1 || f[1] < Z.z0 || f[3] > Z.z1))) return false;
   return !fp.some(f => obs.some(o => overlaps(f, o)));
 }
 
-// Saved places come back when the farm loads (a place that no longer fits is forgotten)
+// Saved places come back when the farm loads (a place outside its zone is forgotten)
 S.grid = S.grid && typeof S.grid === 'object' ? S.grid : {};
 GRIDS.forEach(b => {
-  const g = S.grid[b.id];
-  if (!g || !isFinite(g.x) || !isFinite(g.z)) { delete S.grid[b.id]; return; }
+  const k = gridKey(b), g = S.grid[k];
+  if (!g || !isFinite(g.x) || !isFinite(g.z)) { delete S.grid[k]; return; }
   const Z = zoneRect(b);
-  if (g.x < Z.x0 || g.x > Z.x1 || g.z < Z.z0 || g.z > Z.z1) { delete S.grid[b.id]; return; }
-  setSpot(b, g.x, g.z, (g.r | 0) & 3);
+  if (g.x < Z.x0 || g.x > Z.x1 || g.z < Z.z0 || g.z > Z.z1) { delete S.grid[k]; return; }
+  setSpot(b, g.x, g.z, turns(b) ? (g.r | 0) & 3 : 0);
 });
 
 /* ----- Placing mode ----- */
@@ -4820,15 +4930,15 @@ function centerOn(x, z) { camPan.x = x - P.x; camPan.z = z - P.z; }
 function startPick() {
   if (placing.mode) return;
   enterView(); placing.mode = 'pick';
-  GRIDS.filter(b => isBuilt(b.id)).forEach(b => markBoxes(footprint(b, b.x, b.z, b.rot ?? b.home.r).slice(0, 1), fpPick));
-  $('gridTxt').textContent = 'Toca el edificio que quieras mover. Arrastra el dedo para mirar el mapa';
+  GRIDS.filter(placed).forEach(b => markBoxes(footprint(b, b.x, b.z, rotOf(b)).slice(0, 1), fpPick));
+  $('gridTxt').textContent = 'Toca lo que quieras mover: talleres, corrales, campos o tiendas. Arrastra el dedo para mirar el mapa';
   $('gridRot').hidden = $('gridOk').hidden = true; gridBar.hidden = false; sfx.drop();
 }
 // fresh: the building has just been bought, so ✖ leaves it where it was offered
 function startPlace(b, fresh) {
   if (placing.mode === 'pick') clearMarks(); else enterView();
   placing.mode = 'place'; placing.b = b; placing.fresh = fresh;
-  placing.from = { x: b.x, z: b.z, r: b.rot ?? b.home.r };
+  placing.from = { x: b.x, z: b.z, r: rotOf(b) };
   placing.x = Math.round(b.x); placing.z = Math.round(b.z); placing.r = placing.from.r;
   placing.obs = obstacles(b);
   // Start on the closest free square to where it stands
@@ -4839,8 +4949,8 @@ function startPlace(b, fresh) {
   }
   if (best) { placing.x = best.x; placing.z = best.z; }
   showGrid(b); centerOn(placing.x, placing.z); moveGhost(placing.x, placing.z, placing.r);
-  $('gridTxt').textContent = `${b.name}: arrástralo con el dedo hasta donde quieras`;
-  $('gridRot').hidden = $('gridOk').hidden = false; gridBar.hidden = false;
+  $('gridTxt').textContent = `${nameOf(b)}: arrástralo con el dedo hasta donde quieras`;
+  $('gridOk').hidden = false; $('gridRot').hidden = !turns(b); gridBar.hidden = false;
 }
 function moveGhost(x, z, r) {
   const b = placing.b; placing.x = x; placing.z = z; placing.r = r;
@@ -4855,13 +4965,13 @@ function endGrid() {
 function confirmPlace() {
   const b = placing.b;
   if (!placing.ok) { toast('Aquí no cabe: busca un sitio verde, sin tapar otras cosas'); sfx.drop(); return; }
-  S.grid[b.id] = { x: placing.x, z: placing.z, r: placing.r }; save();
+  S.grid[gridKey(b)] = { x: placing.x, z: placing.z, r: placing.r }; save();
   puff(b.x, 1, b.z, 0xf6c445, 14, 1.6, 3.5); sfx.drop();
-  toast(`${ITEMS[b.output].icon} ${b.name} colocado. Puedes moverlo cuando quieras con 🏗️`);
+  toast(`${iconOf(b)} ${nameOf(b)}: ya está en su sitio. Puedes moverlo cuando quieras con 🏗️`);
   endGrid();
 }
 function cancelGrid() {
-  if (placing.mode === 'place') { const f = placing.from; setSpot(placing.b, f.x, f.z, f.r); if (placing.fresh) toast(`${placing.b.name} se queda donde estaba. Muévelo cuando quieras con 🏗️`); }
+  if (placing.mode === 'place') { const f = placing.from; setSpot(placing.b, f.x, f.z, f.r); if (placing.fresh) toast(`${nameOf(placing.b)} se queda donde estaba. Muévelo cuando quieras con 🏗️`); }
   endGrid(); sfx.drop();
 }
 $('gridOk').addEventListener('click', confirmPlace);
@@ -4876,8 +4986,12 @@ function groundAt(e) {
   return ray.ray.intersectPlane(groundPlane, hitP) ? { x: hitP.x, z: hitP.z } : null;
 }
 function pickAt(w) {
+  // The finger on top of something picks it; otherwise the closest thing within three squares
+  const here = GRIDS.filter(placed);
+  const on = here.find(b => inBox(footprint(b, b.x, b.z, rotOf(b))[0], w.x, w.z));
+  if (on) return on;
   let best = null, bd = 9;
-  GRIDS.forEach(b => { if (!isBuilt(b.id)) return; const d = (b.x - w.x) ** 2 + (b.z - w.z) ** 2; if (d < bd) { bd = d; best = b; } });
+  here.forEach(b => { const d = (b.x - w.x) ** 2 + (b.z - w.z) ** 2; if (d < bd) { bd = d; best = b; } });
   return best;
 }
 const cvs = renderer.domElement;
@@ -4885,7 +4999,7 @@ cvs.addEventListener('pointerdown', e => {
   if (!placing.mode || placing.drag) return;
   const w = groundAt(e); if (!w) return;
   try { cvs.setPointerCapture(e.pointerId); } catch {}
-  const onIt = placing.mode === 'place' && (w.x - placing.x) ** 2 + (w.z - placing.z) ** 2 < 6.5;
+  const onIt = placing.mode === 'place' && inBox(footprint(placing.b, placing.x, placing.z, placing.r)[0], w.x, w.z);
   placing.drag = { id: e.pointerId, sx: e.clientX, sy: e.clientY, lx: e.clientX, ly: e.clientY, move: onIt, dx: placing.x - w.x, dz: placing.z - w.z };
 });
 cvs.addEventListener('pointermove', e => {
@@ -4909,7 +5023,7 @@ cvs.addEventListener('pointercancel', gridUp);
 
 function updateGrid() {
   if (!GRID_ON) return;
-  const show = GRIDS.some(b => isBuilt(b.id));
+  const show = GRIDS.some(placed);
   if ($('buildBtn').hidden === show) $('buildBtn').hidden = !show;
   $('buildBtn').classList.toggle('on', !!placing.mode);
   if (placing.mode && !topView) topView = true; // the 🗺️ button can't drop the camera mid-way
