@@ -281,6 +281,7 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
 .news .nk button { all: unset; cursor: pointer; color: var(--ink-soft); }
 .nightveil { position: fixed; inset: 0; z-index: 2; pointer-events: none; opacity: 0; transition: opacity 1s;
   background: radial-gradient(circle at 50% 52%, rgba(10,16,40,0) 0 9%, rgba(10,16,40,.45) 22%, rgba(8,12,32,.78) 55%); }
+.chip.thief { background: var(--red); animation: bump 1.2s ease-in-out infinite; }
 </style>
 
 <div id="game"></div>
@@ -295,6 +296,7 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
     <button class="iconbtn" id="tractorBtn" hidden aria-label="Subir o bajar del tractor">🚜</button>
     <button class="iconbtn chest" id="chestBtn" hidden aria-label="Cofre diario">🎁</button>
     <button class="iconbtn boost" id="boostBtn" aria-label="Ver anuncio para ganar el doble">📺 ×2</button>
+    <button class="iconbtn" id="panBtn" hidden aria-label="Arrastrar el mapa sin mover al personaje">✋</button>
     <button class="iconbtn" id="viewBtn" aria-label="Cambiar a vista desde arriba">🗺️</button>
     <button class="iconbtn" id="menuBtn" aria-label="Menú">☰</button>
   </div>
@@ -302,15 +304,16 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
     <span class="mf" id="moodFace">🙂</span><span class="ml">Enfado</span>
     <span class="mtrack"><i id="moodFill"></i></span><span class="mp" id="moodPct">0%</span>
   </div>
-  <button class="drawtab" id="drawTab" aria-label="Mostrar u ocultar el panel"><span id="drawIcon">📋</span><span id="drawBadge"></span></button>
-  <div class="drawer" id="drawer">
-  <div class="news" id="news" hidden></div>
-  <div class="chips" id="chips"></div>
+  <div class="chips" id="urgent"></div>
   <div class="order" id="order" hidden>
     <div class="mt"><span class="mk">📋 Pedido especial · <span id="orderTime">2:30</span></span><span class="mr"><span class="coin"></span><span id="orderReward">0</span></span></div>
     <div class="ox" id="orderTxt"></div>
     <div class="mb"><i id="orderBar"></i></div>
   </div>
+  <button class="drawtab" id="drawTab" aria-label="Mostrar u ocultar el panel"><span id="drawIcon">📋</span><span id="drawBadge"></span></button>
+  <div class="drawer" id="drawer">
+  <div class="news" id="news" hidden></div>
+  <div class="chips" id="chips"></div>
   <div class="mission" id="mission" hidden>
     <div class="mt"><span class="mk" id="missionNum">Misión 1</span><span class="mr"><span class="coin"></span><span id="missionReward">0</span></span></div>
     <div class="mx" id="missionTxt"></div>
@@ -673,8 +676,8 @@ const MAP_CONTENT = {
   },
 };
 // The version goes up with every release; tools/build.py stamps the build date (while developing it says 'en pruebas')
-const GAME_VERSION = '26';
-const BUILD_DATE = '03/11/2026 11:58';
+const GAME_VERSION = '27';
+const BUILD_DATE = '03/11/2026 12:30';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -3226,6 +3229,7 @@ const joy = $('joy'), knob = $('knob');
 renderer.domElement.addEventListener('pointerdown', e => {
   if (input.pid !== null) return;
   input.pid = e.pointerId; input.ox = e.clientX; input.oy = e.clientY;
+  if (panning()) { try { renderer.domElement.setPointerCapture(e.pointerId); } catch {} return; }
   joy.style.left = e.clientX + 'px'; joy.style.top = e.clientY + 'px'; joy.hidden = false; knob.style.transform = '';
   try { renderer.domElement.setPointerCapture(e.pointerId); } catch {}
   $('menu').hidden = true;
@@ -3233,6 +3237,7 @@ renderer.domElement.addEventListener('pointerdown', e => {
 });
 renderer.domElement.addEventListener('pointermove', e => {
   if (e.pointerId !== input.pid) return;
+  if (panning()) { dragMap(e.clientX - input.ox, e.clientY - input.oy); input.ox = e.clientX; input.oy = e.clientY; return; }
   let dx = e.clientX - input.ox, dy = e.clientY - input.oy; const d = Math.hypot(dx, dy), max = 50;
   if (d > max) { dx = dx / d * max; dy = dy / d * max; }
   knob.style.transform = `translate(${dx}px, ${dy}px)`;
@@ -3246,9 +3251,21 @@ addEventListener('keydown', e => { if (e.target.tagName === 'INPUT' || e.target.
 addEventListener('keyup', e => input.keys.delete(KEYMAP[e.code]));
 addEventListener('blur', () => input.keys.clear());
 /* Camera view: normal (close to the character) or from high above */
-let topView = false;
+// From above, the ✋ button lets the finger drag the map around while the character stays where it is
+let topView = false, panMode = false;
+const camPan = { x: 0, z: 0 };
+const panning = () => topView && panMode;
+function dragMap(dx, dy) {
+  const perPx = 2 * camera.position.y * Math.tan(camera.fov * Math.PI / 360) / innerHeight;
+  camPan.x = Math.max(-70, Math.min(70, camPan.x - dx * perPx)); camPan.z = Math.max(-70, Math.min(70, camPan.z - dy * perPx));
+}
+function setPan(on) {
+  panMode = on; $('panBtn').classList.toggle('boost', on); $('panBtn').classList.toggle('on', on);
+  $('panBtn').textContent = on ? '✋ Mapa' : '✋'; if (!on) camPan.x = camPan.z = 0;
+}
+$('panBtn').addEventListener('click', () => { setPan(!panMode); sfx.drop(); toast(panMode ? '✋ Arrastra el dedo para mirar el mapa. Pulsa ✋ otra vez para volver a mover al personaje' : `Vuelves a mover a ${who()}`); });
 $('viewBtn').addEventListener('click', () => {
-  topView = !topView; $('viewBtn').textContent = topView ? '🧑‍🌾' : '🗺️';
+  topView = !topView; $('viewBtn').textContent = topView ? '🧑‍🌾' : '🗺️'; $('panBtn').hidden = !topView; if (!topView) setPan(false);
   $('viewBtn').setAttribute('aria-label', topView ? 'Volver a la vista normal' : 'Cambiar a vista desde arriba'); sfx.drop();
 });
 
@@ -3590,9 +3607,9 @@ function update(dt) {
   // The map button lifts the camera high above to see the whole farm at once
   const portrait = innerWidth / innerHeight < .8, off = topView ? (portrait ? { y: 46, z: 7 } : { y: 34, z: 5 }) : portrait ? { y: 13, z: 12.5 } : { y: 10, z: 9.5 };
   const k = Math.min(1, dt * 5);
-  camera.position.x += (P.x - camera.position.x) * k;
+  camera.position.x += (P.x + camPan.x - camera.position.x) * k;
   camera.position.y += (off.y - camera.position.y) * k;
-  camera.position.z += (P.z + off.z - camera.position.z) * k;
+  camera.position.z += (P.z + camPan.z + off.z - camera.position.z) * k;
   camera.lookAt(camera.position.x, 0, camera.position.z - off.z - .4);
   sun.position.set(P.x + 6, 14, P.z + 6); sun.target.position.set(P.x, 0, P.z);
 }
@@ -3659,7 +3676,6 @@ function updateLabels(dt) {
     place(a.tag, toScreen(a.x, 3.2, a.z));
   });
   thieves.forEach(th => { if (show(th.tag, dist(th.x, th.z) < 22)) place(th.tag, toScreen(th.x, 2.1, th.z)); });
-  if (thieves.length) waits.unshift(`<span>🦹 ${thieves.length}</span>`);
   const al = $('alerts');
   if (show(al, waits.length > 0)) setHtml(al, `<b>⏳ Te esperan</b>${waits.join('')}`);
   const rec = isBuilt('recycler');
@@ -3936,7 +3952,6 @@ function renderExtras() {
   $('starsBtn').textContent = `⭐ Estrellas: ${S.stars}`;
   $('achvBtn').textContent = `🏆 Logros: ${ACHV.filter(a => S.achv[a.id]).length}/${ACHV.length}`;
   const chips = [];
-  if (EV.left > 0) chips.push(`<span class="chip ev">${EV.name} ×3 · ${fmtT(EV.left)}</span>`);
   if (dayOn()) {
     const ph = dayPhase(), left = fmtT(ph.end - S.dayT);
     if (ph.id === 'night') chips.unshift(`<span class="chip night">🌙 Día ${S.dayN} · tienda cerrada · ${left}</span><button class="chip open" id="openNow">☀️ Abrir ya</button>`);
@@ -3945,6 +3960,9 @@ function renderExtras() {
     if (ph.id === 'morning' && ph.end - S.dayT <= 12) chips.push(`<span class="chip rush">⏰ Hora punta en ${left}</span>`);
   }
   const ch = chips.join(''); if ($('chips')._h !== ch) { $('chips').innerHTML = ch; $('chips')._h = ch; }
+  // One-off events always stay on screen, outside the drawer, so they are never missed
+  const urgent = (EV.left > 0 ? `<span class="chip ev">${EV.name} ×3 · ${fmtT(EV.left)}</span>` : '') + (thieves.length ? `<span class="chip thief">🦹 ¡${thieves.length > 1 ? thieves.length + ' ladrones' : 'Un ladrón'} en la granja!</span>` : '');
+  if ($('urgent')._h !== urgent) { $('urgent').innerHTML = urgent; $('urgent')._h = urgent; }
   const ob = $('order'); ob.hidden = !ORDER;
   if (ORDER) {
     $('orderTime').textContent = fmtT(ORDER.left); $('orderReward').textContent = fmt(ORDER.reward);
@@ -3967,7 +3985,7 @@ function renderDrawer() {
   const nw = $('news'); nw.hidden = !NEWS.length;
   const nh = `<span class="nk">✨ Novedades<button id="newsClear" aria-label="Borrar novedades">✕</button></span>${NEWS.map(n => `<span>${n}</span>`).join('')}`;
   if (nw._h !== nh) { nw.innerHTML = nh; nw._h = nh; }
-  const n = ['order', 'mission', 'alerts', 'news'].filter(id => !$(id).hidden).length + $('chips').children.length;
+  const n = ['mission', 'alerts', 'news'].filter(id => !$(id).hidden).length + $('chips').children.length;
   const alert = !open && (!$('alerts').hidden || (NEWS.length && !S.meta.newsSeen));
   $('drawIcon').textContent = open ? '◀ Ocultar' : alert && !$('alerts').hidden ? '⏳' : '📋';
   $('drawBadge').textContent = open || !n ? '' : n;
