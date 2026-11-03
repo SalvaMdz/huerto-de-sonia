@@ -282,6 +282,13 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
 .nightveil { position: fixed; inset: 0; z-index: 2; pointer-events: none; opacity: 0; transition: opacity 1s;
   background: radial-gradient(circle at 50% 52%, rgba(10,16,40,0) 0 9%, rgba(10,16,40,.45) 22%, rgba(8,12,32,.78) 55%); }
 .chip.thief { background: var(--red); animation: bump 1.2s ease-in-out infinite; }
+/* Free building on a grid: the bar at the bottom while placing */
+.gridbar { position: fixed; left: 50%; bottom: max(16px, env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(420px, calc(100% - 32px)); z-index: 30; pointer-events: auto;
+  background: var(--cream); color: var(--ink); border: 3px solid var(--ink); border-radius: 18px; padding: 10px 12px; box-shadow: 0 4px 0 rgba(0,0,0,.3); }
+.gridbar p { margin: 0 0 8px; font-weight: 800; font-size: .92rem; text-align: center; }
+.gridbar button.off { opacity: .5; }
+#buildBtn.on { background: linear-gradient(#5cc46a, #2f8f3f); }
+#buildBtn { position: absolute; right: max(16px, env(safe-area-inset-right, 0px)); top: calc(62px + env(safe-area-inset-top, 0px)); }
 </style>
 
 <div id="game"></div>
@@ -310,6 +317,7 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
     <div class="ox" id="orderTxt"></div>
     <div class="mb"><i id="orderBar"></i></div>
   </div>
+  <button class="iconbtn" id="buildBtn" hidden aria-label="Mover edificios">🏗️</button>
   <button class="drawtab" id="drawTab" aria-label="Mostrar u ocultar el panel"><span id="drawIcon">📋</span><span id="drawBadge"></span></button>
   <div class="drawer" id="drawer">
   <div class="news" id="news" hidden></div>
@@ -329,6 +337,7 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
   <button id="skinBtn">👗 Aspecto</button>
   <button id="vskinBtn">🚜 Pintura del tractor</button>
   <button id="farmsBtn">🗺️ Mis granjas</button>
+  <button id="testBtn" hidden>🧪 Pruebas</button>
   <button id="starsBtn">⭐ Estrellas</button>
   <button id="achvBtn">🏆 Logros</button>
   <button id="feedbackBtn">💬 Opinión</button>
@@ -449,6 +458,10 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
 <div class="loading" id="loading">Cargando el huerto…</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<div class="gridbar" id="gridBar" hidden>
+  <p id="gridTxt"></p>
+  <div class="cbtns"><button class="ghost" id="gridNo" aria-label="Salir sin mover">✖</button><button class="ghost" id="gridRot" aria-label="Girar el edificio">⟳ Girar</button><button id="gridOk">✅ Colocar</button></div>
+</div>
 <script>
 (() => {
 'use strict';
@@ -629,8 +642,8 @@ const MAPS = [];
 const mapOf = n => MAPS[n % MAPS.length];
 const mapById = id => MAPS.find(m => m.id === id);
 // The version goes up with every release; the build (vite.config.js) stamps the date (while developing it says 'en pruebas')
-const GAME_VERSION = '29';
-const BUILD_DATE = '03/11/2026 13:21';
+const GAME_VERSION = '30';
+const BUILD_DATE = '03/11/2026 13:40';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -752,7 +765,7 @@ MAPS.push({
   // The last four zones get their own crops, animals, workshops, shops and rides.
   // Ids stay the same (missions and saves refer to them); names, products and models change.
   content: {
-    sea: true,
+    sea: true, freeBuild: 'pruebas', // the grid is still being tested
     patches: { G: { crop: 'coconut' }, H: { crop: 'bamboo' }, I: { crop: 'pineapple' } },
     procs: {
       loom: { name: 'Arrocería', input: 'mussel', output: 'paella', body: 0xfff1d6, roof: 0xf5a524 },
@@ -821,6 +834,23 @@ MAPS.push({
 
 // The saved game holds one farm per map, so moving away never loses a farm and any of them can be visited again.
 // huerto-sonia-v3 (a single farm) is read once to bring old games over, and left untouched as a backup.
+/* Testers: only people with the secret code see what is still being made */
+// A map with beta: true, or a mechanic marked 'pruebas', only exists on testers' devices.
+// The code arrives as a link (?pruebas=CODE) or typed after tapping the menu card 5 times; only its fingerprint is kept here.
+const TESTER_KEY = 'huerto-sonia-probador', TESTER_HASH = '802f8d5977e82989df047982bdd24158dd48bd53d850023c81e96e40e91681bf';
+const TESTER = (() => { try { return localStorage.getItem(TESTER_KEY) === TESTER_HASH; } catch { return false; } })();
+const forTesters = v => v === true || (v === 'pruebas' && TESTER);
+const mapOpen = m => !m.beta || TESTER;
+async function tryTesterCode(code) {
+  const norm = String(code || '').trim().toUpperCase();
+  if (!norm || !crypto.subtle) return false;
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(norm));
+  const hex = [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+  if (hex !== TESTER_HASH) return false;
+  try { localStorage.setItem(TESTER_KEY, hex); } catch {}
+  return true;
+}
+function leaveTesting() { try { localStorage.removeItem(TESTER_KEY); } catch {} }
 const SAVE_KEY = 'huerto-sonia-v4', OLD_SAVE_KEY = 'huerto-sonia-v3';
 // What belongs to the player and goes with them to every map; everything else belongs to one farm
 const PLAYER_KEYS = ['meta', 'stars', 'perks', 'achv', 'chestDay', 'life', 'sound', 'boostUntil'];
@@ -863,7 +893,7 @@ function loadSave() {
   return null;
 }
 function loadWorld() {
-  try { const w = JSON.parse(localStorage.getItem(SAVE_KEY)); if (w && w.farms && mapById(w.map)) return w; } catch {}
+  try { const w = JSON.parse(localStorage.getItem(SAVE_KEY)); if (w && w.farms && mapById(w.map)) { if (!mapOpen(mapById(w.map))) w.map = 'valle'; return w; } } catch {}
   const old = loadSave(), w = { map: 'valle', player: {}, farms: {} };
   if (!old) return w;
   // An old single-farm game becomes the farm of the map it was on
@@ -2141,6 +2171,8 @@ const zoneRings = {};
 BUILDS.forEach(b => { zoneRings[b.id] = flat(new T.RingGeometry(1.06, 1.2, 40), M.zoneRing, b.zx, .02, b.zz); });
 const piles = {};
 function pileSpot(b, i) {
+  // Buildings placed on the grid keep their pile beside the ring, whichever way they face
+  if (b.rot !== undefined) { const a = b.rot * Math.PI / 2, fx = Math.sin(a), fz = Math.cos(a), k = (i % 3 - 1) * .5, row = Math.floor(i / 3) % 2 * .4, side = 1.6 + row; return new T.Vector3(b.zx + fz * side + fx * k, Math.floor(i / 6) * .21 + .1, b.zz - fx * side + fz * k); }
   const animal = ANIMALS.includes(b), side = b.x < 0 ? 1 : -1;
   const baseX = b.zx + (animal ? 1.6 : side * .2), baseZ = b.zz + (animal ? 0 : 1.6);
   return new T.Vector3(baseX + (i % 3 - 1) * .5, Math.floor(i / 6) * .21 + .1, baseZ + (Math.floor(i / 3) % 2) * .4);
@@ -2367,7 +2399,7 @@ function padInfoBase(pad) {
   if (pad.kind === 'move') {
     // Once the next map has a farm of its own, the lorry takes Sonia there for free
     const next = mapOf((S.farm || 0) + 1), there = !!WORLD.farms[next.id];
-    return { active: S.mission >= MOVE_AFTER, cost: there ? 0 : MOVE.cost, name: there ? 'Viajar a tu granja' : 'Mudarse de granja', icon: '🚚', sub: next.name };
+    return { active: S.mission >= MOVE_AFTER && mapOpen(next), cost: there ? 0 : MOVE.cost, name: there ? 'Viajar a tu granja' : 'Mudarse de granja', icon: '🚚', sub: next.name };
   }
   if (pad.kind === 'upg') {
     const l = S.lv[pad.id];
@@ -2452,6 +2484,7 @@ function completePad(pad) {
     toast(`¡Nuevo campo de ${ITEMS[r.crop].name.toLowerCase()}!`);
   } else if (kind === 'build') {
     S.built.push(pad.id); popIn(builds[pad.id].g);
+    if (gridable(r)) startPlace(r, true); // on free-building maps the player chooses its place
     toast(r.dock ? `${r.name}: ponte en el círculo para pescar ${ITEMS[r.output].name.toLowerCase()}` : r.input ? `${r.name}: trae ${ITEMS[r.input].name.toLowerCase()} y te da ${ITEMS[r.output].name.toLowerCase()}` : `${r.name}: recoge aquí ${ITEMS[r.output].name.toLowerCase()}`);
   } else if (kind === 'sell') {
     S.built.push(pad.id); toast(`${r.name}: vende aquí al momento`);
@@ -3297,7 +3330,7 @@ function checkMission() {
 const input = { jx: 0, jz: 0, keys: new Set(), pid: null, ox: 0, oy: 0 };
 const joy = $('joy'), knob = $('knob');
 renderer.domElement.addEventListener('pointerdown', e => {
-  if (input.pid !== null) return;
+  if (input.pid !== null || placing.mode) return;
   input.pid = e.pointerId; input.ox = e.clientX; input.oy = e.clientY;
   if (panning()) { try { renderer.domElement.setPointerCapture(e.pointerId); } catch {} return; }
   joy.style.left = e.clientX + 'px'; joy.style.top = e.clientY + 'px'; joy.hidden = false; knob.style.transform = '';
@@ -4085,11 +4118,18 @@ function openPanel(kind) {
     }).join('');
   } else if (kind === 'farms') {
     title = '🗺️ Mis granjas'; sub = 'Cada mapa guarda su propia granja tal como la dejaste. Puedes volver a cualquiera cuando quieras.';
-    rows = MAPS.map(m => {
+    rows = MAPS.filter(mapOpen).map(m => {
       const f = WORLD.farms[m.id], here = m.id === THEME.id;
       const btn = here ? '<button disabled>Estás aquí</button>' : f ? `<button data-map="${m.id}">Viajar</button>` : '<button disabled>🔒</button>';
       return `<div class="prow ${here ? 'done' : f ? '' : 'locked'}"><span class="pi">${f ? m.icon : '🔒'}</span><span class="pt2"><b>${m.name}</b>${f ? m.mechanic : 'Se abre mudándote desde la granja anterior'}${f && !here ? `<br><small>💰 ${fmt(f.coins || 0)} · misión ${(f.mission || 0) + 1}</small>` : ''}</span>${btn}</div>`;
     }).join('');
+  } else if (kind === 'tests') {
+    // Testers jump to any map at once, even the ones nobody else can see yet
+    title = '🧪 Modo pruebas'; sub = 'Solo lo ves tú en este móvil. Puedes ir a cualquier mapa sin mudarte, y ver lo que aún está en pruebas.';
+    rows = MAPS.map(m => {
+      const f = WORLD.farms[m.id], here = m.id === THEME.id;
+      return `<div class="prow ${here ? 'done' : ''}"><span class="pi">${m.icon}</span><span class="pt2"><b>${m.name}${m.beta ? ' · 🚧 en pruebas' : ''}</b>${m.mechanic}<br><small>${f ? 'Ya tienes granja aquí' : 'Empiezas una granja nueva'}</small></span>${here ? '<button disabled>Estás aquí</button>' : `<button data-map="${m.id}">Ir</button>`}</div>`;
+    }).join('') + '<div class="prow"><span class="pi">🚪</span><span class="pt2"><b>Salir del modo pruebas</b>Vuelves a ver el juego como los demás</span><button data-leavetest="1">Salir</button></div>';
   } else if (kind === 'achv') {
     title = '🏆 Logros'; sub = 'Cada logro da un premio en monedas en cuanto lo consigues.';
     rows = ACHV.map(a => {
@@ -4154,6 +4194,8 @@ $('panelList').addEventListener('click', e => {
     showAd(() => { S.meta.skins = [...(S.meta.skins || []), o.id]; wearSkin(o); }, 'ropa');
   } else if (b.dataset.map) {
     $('panelOverlay').hidden = true; toast(`🚚 Viajando a ${mapById(b.dataset.map).name}…`); setTimeout(() => goToMap(b.dataset.map), 400);
+  } else if (b.dataset.leavetest) {
+    leaveTesting(); $('panelOverlay').hidden = true; toast('Has salido del modo pruebas'); save(); setTimeout(() => location.reload(), 600);
   } else if (b.dataset.chest) {
     $('panelOverlay').hidden = true;
     if (b.dataset.chest === '2') showAd(() => openChest(2), 'cofre'); else openChest(1);
@@ -4165,6 +4207,7 @@ $('skinBtn').addEventListener('click', () => { S.meta.skinNew = false; openPanel
 $('vskinBtn').addEventListener('click', () => { S.meta.vskinNew = false; openPanel('vskins'); });
 $('achvBtn').addEventListener('click', () => openPanel('achv'));
 $('farmsBtn').addEventListener('click', () => openPanel('farms'));
+$('testBtn').addEventListener('click', () => openPanel('tests'));
 $('chestBtn').addEventListener('click', () => openPanel('chest'));
 $('adGrow').addEventListener('click', () => {
   if (Date.now() < growCdUntil) { toast(`🌱 Podrás volver a usarlo en ${fmtT((growCdUntil - Date.now()) / 1000)}`); return; }
@@ -4328,7 +4371,7 @@ function frame(now) {
   const dt = Math.min(.1, (now - last) / 1000); last = now;
   if (creatorOn) creatorView(dt);
   else if (!S.over && $('dayOverlay').hidden && $('tutOverlay').hidden) {
-    S.meta.playT = (S.meta.playT || 0) + dt; update(dt); updateDay(dt); updateMood(dt); updateExtras(dt); }
+    S.meta.playT = (S.meta.playT || 0) + dt; update(dt); updateDay(dt); updateMood(dt); updateExtras(dt); updateGrid(); }
   renderer.render(scene, camera); updateLabels(dt);
   uiT += dt; if (uiT > .25) { uiT = 0; refreshWorld(); checkMission(); renderMood(); renderExtras(); }
   saveT += dt; if (saveT > 4) { saveT = 0; saveCleared(); save(); }
@@ -4507,7 +4550,7 @@ const statsId = (() => {
 function stat(event, props) {
   const properties = {
     version: GAME_VERSION, mapa: THEME.id, granja: (S.farm || 0) + 1, nivel: S.meta.level || 1, dia: S.dayN || 1,
-    movil: matchMedia('(pointer: coarse)').matches, ...props
+    movil: matchMedia('(pointer: coarse)').matches, probador: TESTER, ...props
   };
   if (STATS_TEST) { console.log('[stats]', event, properties); return; }
   if (!STATS_KEY) return;
@@ -4543,6 +4586,227 @@ $('adWatch').addEventListener('click', () => stat('anuncio_aceptado', { sitio: '
 });
 [['skinBtn', 'ropa'], ['vskinBtn', 'pintura'], ['chestBtn', 'cofre']].forEach(([id, sitio]) =>
   $(id).addEventListener('click', () => stat('anuncio_ofrecido', { sitio })));
+
+/* ================= Free building on a grid ================= */
+// On maps with content.freeBuild (true, or 'pruebas' for testers only) the buildings of the new zones go wherever the player wants:
+// after paying, the camera rises over a grid and the building can be dragged, turned and placed.
+// The 🏗️ button moves them again later. Places live in S.grid = { id: { x, z, r } } (r: quarter turns).
+const GRID_ON = forTesters(MAPC.freeBuild);
+const gridable = b => GRID_ON && !b.dock && (b.area || 1) >= 6;
+const GRIDS = BUILDS.filter(gridable);
+const ringOff = b => (ANIMALS.includes(b) ? 3 : 2.3);
+GRIDS.forEach(b => { b.home = { x: b.x, z: b.z, r: ANIMALS.includes(b) ? 0 : b.x < 0 ? 1 : 3 }; });
+const zoneRect = b => RUBBLE.find(Z => Z.a === b.area);
+
+// Moves the building, its ring and its pile; workers and labels read b.x / b.zx, so they follow by themselves
+function setSpot(b, x, z, r) {
+  const a = r * Math.PI / 2, off = ringOff(b);
+  b.x = x; b.z = z; b.rot = r; b.zx = x + Math.sin(a) * off; b.zz = z + Math.cos(a) * off;
+  const g = builds[b.id].g; g.position.set(x, 0, z); g.rotation.y = a;
+  zoneRings[b.id].position.set(b.zx, .02, b.zz);
+  (piles[b.id] || []).forEach((m, i) => m.position.copy(pileSpot(b, i)));
+}
+
+// Footprint: the building's own box (unturned: workshops 3×3 under the roof, pens their fence) plus the ring in front of its door
+const box3 = new T.Box3();
+const measure = b => (ANIMALS.includes(b) ? [-2.35, -1.75, 2.35, 1.75] : [-1.5, -1.5, 1.5, 1.5]);
+function footprint(b, x, z, r) {
+  const [x0, z0, x1, z1] = measure(b), a = r * Math.PI / 2, c = Math.round(Math.cos(a)), s = Math.round(Math.sin(a));
+  const xs = [], zs = [];
+  [[x0, z0], [x1, z0], [x0, z1], [x1, z1]].forEach(([lx, lz]) => { xs.push(x + lx * c + lz * s); zs.push(z - lx * s + lz * c); });
+  const off = ringOff(b), rx = x + s * off, rz = z + c * off;
+  return [[Math.min(...xs), Math.min(...zs), Math.max(...xs), Math.max(...zs)], [rx - 1.2, rz - 1.2, rx + 1.2, rz + 1.2]];
+}
+
+// Everything already standing in the world that a building must not cover
+function obstacles(b) {
+  const out = [];
+  const add = o => { if (!o || !o.visible) return; box3.setFromObject(o); if (!box3.isEmpty()) out.push([box3.min.x, box3.min.z, box3.max.x, box3.max.z]); };
+  const circ = (x, z, r) => out.push([x - r, z - r, x + r, z + r]);
+  BUILDS.forEach(o => { if (o === b || !isBuilt(o.id)) return; if (gridable(o)) out.push(...footprint(o, o.x, o.z, o.rot ?? o.home.r)); else { add(builds[o.id].g); circ(o.zx, o.zz, 1.2); } });
+  SHOPS.forEach(s => {
+    if (!s.open) return;
+    add(s.g); circ(s.counter.x, s.counter.z, s.counter.r); circ(s.cash.x, s.cash.z, s.cash.r);
+    s.tills.forEach(t => { if (t.open) { add(t.mesh); circ(t.zone.x, t.zone.z, 1); } });
+  });
+  PATCHES.forEach(p => add(p.soil));
+  ATTRS.forEach(a => { add(a.mesh.g); add(a.disc.ring); });
+  pads.forEach(p => { if (p.g.visible && p.ref !== b) circ(p.x, p.z, .9); });
+  Object.values(townMeshes).forEach(add); Object.values(gateMeshes).forEach(add);
+  sellVehicles.forEach(v => add(v.g)); add(recycler);
+  RUBBLE.forEach(Z => { add(Z.binMesh); add(Z.disc.ring); });
+  return out;
+}
+const overlaps = (a, o) => a[0] < o[2] - .05 && a[2] > o[0] + .05 && a[1] < o[3] - .05 && a[3] > o[1] + .05;
+function fits(b, x, z, r, obs) {
+  const Z = zoneRect(b), fp = footprint(b, x, z, r);
+  if (fp.some(f => f[0] < Z.x0 || f[2] > Z.x1 || f[1] < Z.z0 || f[3] > Z.z1)) return false;
+  return !fp.some(f => obs.some(o => overlaps(f, o)));
+}
+
+// Saved places come back when the farm loads (a place that no longer fits is forgotten)
+S.grid = S.grid && typeof S.grid === 'object' ? S.grid : {};
+GRIDS.forEach(b => {
+  const g = S.grid[b.id];
+  if (!g || !isFinite(g.x) || !isFinite(g.z)) { delete S.grid[b.id]; return; }
+  const Z = zoneRect(b);
+  if (g.x < Z.x0 || g.x > Z.x1 || g.z < Z.z0 || g.z > Z.z1) { delete S.grid[b.id]; return; }
+  setSpot(b, g.x, g.z, (g.r | 0) & 3);
+});
+
+/* ----- Placing mode ----- */
+// 'pick': tap a building to move it · 'place': drag it, turn it and confirm
+const placing = { mode: null, b: null, x: 0, z: 0, r: 0, ok: true, from: null, obs: [], fresh: false, drag: null, view: false, shown: [] };
+const gridMat = new T.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: .45 });
+const fpGeo = new T.PlaneGeometry(1, 1);
+const fpOk = new T.MeshBasicMaterial({ color: 0x5cc46a, transparent: true, opacity: .4, depthWrite: false, depthTest: false });
+const fpBad = new T.MeshBasicMaterial({ color: 0xe8384a, transparent: true, opacity: .5, depthWrite: false, depthTest: false });
+const fpPick = new T.MeshBasicMaterial({ color: 0xf6c445, transparent: true, opacity: .4, depthWrite: false, depthTest: false });
+let gridLines = null;
+function showGrid(b) {
+  hideGrid();
+  const Z = zoneRect(b), pts = [];
+  for (let x = Math.ceil(Z.x0); x <= Z.x1; x++) pts.push(x, .03, Z.z0, x, .03, Z.z1);
+  for (let z = Math.ceil(Z.z0); z <= Z.z1; z++) pts.push(Z.x0, .03, z, Z.x1, .03, z);
+  const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.Float32BufferAttribute(pts, 3));
+  gridLines = new T.LineSegments(geo, gridMat); scene.add(gridLines);
+}
+function hideGrid() { if (gridLines) { scene.remove(gridLines); gridLines.geometry.dispose(); gridLines = null; } }
+function clearMarks() { placing.shown.forEach(m => scene.remove(m)); placing.shown = []; }
+function markBoxes(boxes, material) {
+  boxes.forEach(([x0, z0, x1, z1]) => {
+    const m = new T.Mesh(fpGeo, material); m.rotation.x = -Math.PI / 2;
+    m.scale.set(x1 - x0, z1 - z0, 1); m.position.set((x0 + x1) / 2, .05, (z0 + z1) / 2); scene.add(m); placing.shown.push(m);
+  });
+}
+
+const gridBar = $('gridBar');
+function enterView() { placing.view = topView; topView = true; setPan(false); }
+function leaveView() { topView = placing.view; camPan.x = camPan.z = 0; }
+function centerOn(x, z) { camPan.x = x - P.x; camPan.z = z - P.z; }
+
+function startPick() {
+  if (placing.mode) return;
+  enterView(); placing.mode = 'pick';
+  GRIDS.filter(b => isBuilt(b.id)).forEach(b => markBoxes(footprint(b, b.x, b.z, b.rot ?? b.home.r).slice(0, 1), fpPick));
+  $('gridTxt').textContent = 'Toca el edificio que quieras mover. Arrastra el dedo para mirar el mapa';
+  $('gridRot').hidden = $('gridOk').hidden = true; gridBar.hidden = false; sfx.drop();
+}
+// fresh: the building has just been bought, so ✖ leaves it where it was offered
+function startPlace(b, fresh) {
+  if (placing.mode === 'pick') clearMarks(); else enterView();
+  placing.mode = 'place'; placing.b = b; placing.fresh = fresh;
+  placing.from = { x: b.x, z: b.z, r: b.rot ?? b.home.r };
+  placing.x = Math.round(b.x); placing.z = Math.round(b.z); placing.r = placing.from.r;
+  placing.obs = obstacles(b);
+  // Start on the closest free square to where it stands
+  let best = null;
+  for (let dx = -3; dx <= 3; dx++) for (let dz = -3; dz <= 3; dz++) {
+    const x = placing.x + dx, z = placing.z + dz;
+    if ((!best || dx * dx + dz * dz < best.d) && fits(b, x, z, placing.r, placing.obs)) best = { x, z, d: dx * dx + dz * dz };
+  }
+  if (best) { placing.x = best.x; placing.z = best.z; }
+  showGrid(b); centerOn(placing.x, placing.z); moveGhost(placing.x, placing.z, placing.r);
+  $('gridTxt').textContent = `${b.name}: arrástralo con el dedo hasta donde quieras`;
+  $('gridRot').hidden = $('gridOk').hidden = false; gridBar.hidden = false;
+}
+function moveGhost(x, z, r) {
+  const b = placing.b; placing.x = x; placing.z = z; placing.r = r;
+  setSpot(b, x, z, r); placing.ok = fits(b, x, z, r, placing.obs);
+  clearMarks(); markBoxes(footprint(b, x, z, r), placing.ok ? fpOk : fpBad);
+  $('gridOk').classList.toggle('off', !placing.ok);
+}
+function endGrid() {
+  placing.mode = null; placing.b = null; placing.drag = null;
+  clearMarks(); hideGrid(); gridBar.hidden = true; leaveView();
+}
+function confirmPlace() {
+  const b = placing.b;
+  if (!placing.ok) { toast('Aquí no cabe: busca un sitio verde, sin tapar otras cosas'); sfx.drop(); return; }
+  S.grid[b.id] = { x: placing.x, z: placing.z, r: placing.r }; save();
+  puff(b.x, 1, b.z, 0xf6c445, 14, 1.6, 3.5); sfx.drop();
+  toast(`${ITEMS[b.output].icon} ${b.name} colocado. Puedes moverlo cuando quieras con 🏗️`);
+  endGrid();
+}
+function cancelGrid() {
+  if (placing.mode === 'place') { const f = placing.from; setSpot(placing.b, f.x, f.z, f.r); if (placing.fresh) toast(`${placing.b.name} se queda donde estaba. Muévelo cuando quieras con 🏗️`); }
+  endGrid(); sfx.drop();
+}
+$('gridOk').addEventListener('click', confirmPlace);
+$('gridRot').addEventListener('click', () => { moveGhost(placing.x, placing.z, (placing.r + 1) & 3); sfx.drop(); });
+$('gridNo').addEventListener('click', cancelGrid);
+$('buildBtn').addEventListener('click', () => { if (placing.mode === 'pick') cancelGrid(); else if (!placing.mode) startPick(); });
+
+// The finger drags the building when it starts on it, and the map otherwise
+const ray = new T.Raycaster(), ndc = new T.Vector2(), groundPlane = new T.Plane(new T.Vector3(0, 1, 0), 0), hitP = new T.Vector3();
+function groundAt(e) {
+  ndc.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera);
+  return ray.ray.intersectPlane(groundPlane, hitP) ? { x: hitP.x, z: hitP.z } : null;
+}
+function pickAt(w) {
+  let best = null, bd = 9;
+  GRIDS.forEach(b => { if (!isBuilt(b.id)) return; const d = (b.x - w.x) ** 2 + (b.z - w.z) ** 2; if (d < bd) { bd = d; best = b; } });
+  return best;
+}
+const cvs = renderer.domElement;
+cvs.addEventListener('pointerdown', e => {
+  if (!placing.mode || placing.drag) return;
+  const w = groundAt(e); if (!w) return;
+  try { cvs.setPointerCapture(e.pointerId); } catch {}
+  const onIt = placing.mode === 'place' && (w.x - placing.x) ** 2 + (w.z - placing.z) ** 2 < 6.5;
+  placing.drag = { id: e.pointerId, sx: e.clientX, sy: e.clientY, lx: e.clientX, ly: e.clientY, move: onIt, dx: placing.x - w.x, dz: placing.z - w.z };
+});
+cvs.addEventListener('pointermove', e => {
+  const d = placing.drag; if (!d || d.id !== e.pointerId) return;
+  if (d.move) {
+    const w = groundAt(e); if (!w) return;
+    const x = Math.round(w.x + d.dx), z = Math.round(w.z + d.dz);
+    if (x !== placing.x || z !== placing.z) moveGhost(x, z, placing.r);
+  } else {
+    const perPx = 2 * camera.position.y * Math.tan(camera.fov * Math.PI / 360) / innerHeight;
+    camPan.x -= (e.clientX - d.lx) * perPx; camPan.z -= (e.clientY - d.ly) * perPx; d.lx = e.clientX; d.ly = e.clientY;
+  }
+});
+const gridUp = e => {
+  const d = placing.drag; if (!d || d.id !== e.pointerId) return;
+  placing.drag = null;
+  if (placing.mode === 'pick' && Math.hypot(e.clientX - d.sx, e.clientY - d.sy) < 10) { const w = groundAt(e), b = w && pickAt(w); if (b) { sfx.drop(); startPlace(b, false); } }
+};
+cvs.addEventListener('pointerup', gridUp);
+cvs.addEventListener('pointercancel', gridUp);
+
+function updateGrid() {
+  if (!GRID_ON) return;
+  const show = GRIDS.some(b => isBuilt(b.id));
+  if ($('buildBtn').hidden === show) $('buildBtn').hidden = !show;
+  $('buildBtn').classList.toggle('on', !!placing.mode);
+  if (placing.mode && !topView) topView = true; // the 🗺️ button can't drop the camera mid-way
+}
+
+/* ================= Testers ================= */
+// The 🧪 button only shows on testers' devices. The code comes in a link (?pruebas=CODE) or, tapping the menu card 5 times, typed by hand
+$('testBtn').hidden = !TESTER;
+async function enterTesting(code) {
+  if (TESTER) { toast('🧪 Ya estás en modo pruebas'); return; }
+  if (await tryTesterCode(code)) { toast('🧪 ¡Modo pruebas activado!'); save(); setTimeout(() => location.reload(), 900); }
+  else toast('Código incorrecto');
+}
+(() => {
+  const url = new URL(location.href), code = url.searchParams.get('pruebas');
+  if (code === null) return;
+  url.searchParams.delete('pruebas');
+  try { history.replaceState(null, '', url.pathname + url.search + url.hash); } catch {} // the code doesn't stay in the address bar
+  enterTesting(code);
+})();
+let testTaps = 0, testTapT = 0;
+$('stats').addEventListener('click', () => {
+  const now = performance.now(); testTaps = now - testTapT < 600 ? testTaps + 1 : 1; testTapT = now;
+  if (testTaps < 5) return;
+  testTaps = 0;
+  if (TESTER) { openPanel('tests'); return; }
+  const code = prompt('Código de probador:');
+  if (code) enterTesting(code);
+});
 })();
 </script>
 </body>
