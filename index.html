@@ -629,8 +629,8 @@ const MAPS = [];
 const mapOf = n => MAPS[n % MAPS.length];
 const mapById = id => MAPS.find(m => m.id === id);
 // The version goes up with every release; the build (vite.config.js) stamps the date (while developing it says 'en pruebas')
-const GAME_VERSION = '28';
-const BUILD_DATE = '03/11/2026 13:03';
+const GAME_VERSION = '29';
+const BUILD_DATE = '03/11/2026 13:21';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -3810,7 +3810,7 @@ $('adWatch').addEventListener('click', () => {
   clearInterval(adTimer);
   adTimer = setInterval(() => {
     n--; $('adCount').textContent = n;
-    if (n <= 0) { clearInterval(adTimer); $('adOverlay').hidden = true; S.boostUntil = Date.now() + 3 * 60 * 1000; save(); toast('¡Ganancias ×2 durante 3 minutos!'); sfx.mission(); }
+    if (n <= 0) { clearInterval(adTimer); $('adOverlay').hidden = true; S.boostUntil = Date.now() + 3 * 60 * 1000; stat('anuncio_visto', { sitio: 'x2' }); save(); toast('¡Ganancias ×2 durante 3 minutos!'); sfx.mission(); }
   }, 1000);
 });
 // The vehicle button goes round on foot → tractor → mower, skipping the ones not bought yet
@@ -3837,7 +3837,7 @@ function moveFarm(headStart) {
   location.reload();
 }
 $('moveYes').addEventListener('click', () => moveFarm(false));
-$('moveAd').addEventListener('click', () => { $('moveOverlay').hidden = true; showAd(() => moveFarm(true)); });
+$('moveAd').addEventListener('click', () => { $('moveOverlay').hidden = true; showAd(() => moveFarm(true), 'mudanza'); });
 $('moveNo').addEventListener('click', () => {
   S.coins += S.paid.move || 0; delete S.paid.move; $('coinsTxt').textContent = fmt(S.coins);
   $('moveOverlay').hidden = true; P.moveBlock = 4; refreshWorld();
@@ -3998,7 +3998,7 @@ function confetti() {
   }
 }
 $('lvlOk').addEventListener('click', () => claimLevel(false));
-$('lvlAd').addEventListener('click', () => { $('levelOverlay').hidden = true; showAd(() => claimLevel(true)); });
+$('lvlAd').addEventListener('click', () => { $('levelOverlay').hidden = true; showAd(() => claimLevel(true), 'nivel'); });
 $('lvlPill').addEventListener('click', () => toast(`⭐ Nivel ${S.meta.level || 1}: te faltan ${xpNeed(S.meta.level || 1) - (S.meta.xp || 0)} puntos para el siguiente`));
 const chestValue = () => Math.round(Math.max(1000, Math.sqrt(S.earned + 100) * 80) * fscale());
 const chestReady = () => S.tut >= 2 && S.chestDay !== todayKey();
@@ -4127,11 +4127,12 @@ function openChest(times) {
   addCoins(v); flyCoins(P.x, 1.5, P.z, 12); burst(P.x, 2.2, P.z, '🎁 +' + fmt(v)); sfx.mission(); puff(P.x, 1, P.z, 0xf6c445, 16, 1.5, 3.5);
   toast(`🎁 ¡Cofre abierto! +${fmt(v)} monedas`); save();
 }
-function showAd(done) {
+function showAd(done, sitio) {
+  stat('anuncio_aceptado', { sitio });
   $('adOverlay').hidden = false; $('adOffer').hidden = true; $('adPlaying').hidden = false;
   let n = 3; $('adCount').textContent = n;
   clearInterval(adTimer);
-  adTimer = setInterval(() => { n--; $('adCount').textContent = n; if (n <= 0) { clearInterval(adTimer); $('adOverlay').hidden = true; done(); } }, 1000);
+  adTimer = setInterval(() => { n--; $('adCount').textContent = n; if (n <= 0) { clearInterval(adTimer); $('adOverlay').hidden = true; stat('anuncio_visto', { sitio }); done(); } }, 1000);
 }
 $('panelList').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b || b.disabled) return;
@@ -4144,18 +4145,18 @@ $('panelList').addEventListener('click', e => {
   } else if (b.dataset.vskinad) {
     const v = VEHICLE_SKINS.find(x => x.id === b.dataset.vskinad);
     $('panelOverlay').hidden = true;
-    showAd(() => { S.meta.vehicleSkins = [...(S.meta.vehicleSkins || []), v.id]; wearVehicleSkin(v); });
+    showAd(() => { S.meta.vehicleSkins = [...(S.meta.vehicleSkins || []), v.id]; wearVehicleSkin(v); }, 'pintura');
   } else if (b.dataset.skin) {
     $('panelOverlay').hidden = true; wearSkin(OUTFITS.find(o => o.id === b.dataset.skin));
   } else if (b.dataset.skinad) {
     const o = OUTFITS.find(x => x.id === b.dataset.skinad);
     $('panelOverlay').hidden = true;
-    showAd(() => { S.meta.skins = [...(S.meta.skins || []), o.id]; wearSkin(o); });
+    showAd(() => { S.meta.skins = [...(S.meta.skins || []), o.id]; wearSkin(o); }, 'ropa');
   } else if (b.dataset.map) {
     $('panelOverlay').hidden = true; toast(`🚚 Viajando a ${mapById(b.dataset.map).name}…`); setTimeout(() => goToMap(b.dataset.map), 400);
   } else if (b.dataset.chest) {
     $('panelOverlay').hidden = true;
-    if (b.dataset.chest === '2') showAd(() => openChest(2)); else openChest(1);
+    if (b.dataset.chest === '2') showAd(() => openChest(2), 'cofre'); else openChest(1);
   }
 });
 $('panelClose').addEventListener('click', () => { $('panelOverlay').hidden = true; });
@@ -4171,7 +4172,7 @@ $('adGrow').addEventListener('click', () => {
     growCdUntil = Date.now() + 90 * 1000;
     let n = 0; plants.forEach(pl => { if (unlocked(pl.patch.id) && pl.grow < 1) { pl.grow = 1; pl.pop = 1; pl.dirty = true; n++; } });
     sfx.mission(); toast(n ? `🌱 ¡${n} plantas listas para cosechar!` : '🌱 Todo estaba ya crecido');
-  });
+  }, 'crecer');
 });
 
 /* ---------- Customer anger: if it reaches 100% the game is over ---------- */
@@ -4313,7 +4314,7 @@ function newDay() {
   sfx.bell(); toast(`☀️ Día ${S.dayN}: ¡la tienda abre!`); save();
 }
 $('dayOk').addEventListener('click', () => claimSummary(false));
-$('dayAd').addEventListener('click', () => { $('dayOverlay').hidden = true; showAd(() => claimSummary(true)); });
+$('dayAd').addEventListener('click', () => { $('dayOverlay').hidden = true; showAd(() => claimSummary(true), 'dia'); });
 $('chips').addEventListener('click', e => { if (e.target.id === 'openNow') { S.dayT = DAY_LEN; newDay(); } });
 
 /* ================= Loop ================= */
@@ -4489,6 +4490,59 @@ renderMood(); if (S.over) gameOver(); else if (S.pendingSum) showSummary();
 $('hint').lastChild.textContent = ' Arrastra el dedo para mover a ' + who();
 if (S.tut === 0 && !S.meta.avatar) openCreator();
 requestAnimationFrame(frame);
+
+/* ================= Anonymous play stats (PostHog) =================
+   Measures how long friends play and which ad buttons they use. Each phone gets a random id,
+   no names. Nothing is sent until STATS_KEY holds the PostHog project key, nor while testing on localhost. */
+const STATS_KEY = 'phc_BbbWMLBKBHnHxVfhRysg2moEjmvuatYt48AVTSwk4Kyz';
+const STATS_HOST = 'https://eu.i.posthog.com';
+const STATS_TEST = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+const statsId = (() => {
+  try {
+    let id = localStorage.getItem('huerto-stats-id');
+    if (!id) { id = Date.now().toString(36) + Math.random().toString(36).slice(2, 10); localStorage.setItem('huerto-stats-id', id); }
+    return id;
+  } catch { return 'sin-id'; }
+})();
+function stat(event, props) {
+  const properties = {
+    version: GAME_VERSION, mapa: THEME.id, granja: (S.farm || 0) + 1, nivel: S.meta.level || 1, dia: S.dayN || 1,
+    movil: matchMedia('(pointer: coarse)').matches, ...props
+  };
+  if (STATS_TEST) { console.log('[stats]', event, properties); return; }
+  if (!STATS_KEY) return;
+  try {
+    fetch(STATS_HOST + '/i/v0/e/', {
+      method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ api_key: STATS_KEY, event, distinct_id: statsId, properties, timestamp: new Date().toISOString() })
+    }).catch(() => {});
+  } catch {}
+}
+
+// Time played: counted only while the game is on screen, sent every 2 minutes and when the player leaves
+let playFrom = document.hidden ? 0 : Date.now();
+function flushPlay() {
+  if (!playFrom) return;
+  const s = Math.round((Date.now() - playFrom) / 1000);
+  playFrom = document.hidden ? 0 : Date.now();
+  if (s >= 1) stat('tiempo_jugado', { segundos: s });
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) flushPlay(); else playFrom = Date.now(); });
+addEventListener('pagehide', flushPlay);
+setInterval(flushPlay, 2 * 60 * 1000);
+stat('abrir_juego', { nuevo: S.tut === 0 });
+
+// Ads offered: the ×2 window, the end-of-day and level-up windows, the move offer and the panels with ad prizes
+$('boostBtn').addEventListener('click', () => { if (!boosted()) stat('anuncio_ofrecido', { sitio: 'x2' }); });
+$('adCancel').addEventListener('click', () => stat('anuncio_rechazado', { sitio: 'x2' }));
+$('adWatch').addEventListener('click', () => stat('anuncio_aceptado', { sitio: 'x2' }));
+[['levelOverlay', 'nivel'], ['dayOverlay', 'dia'], ['moveOverlay', 'mudanza']].forEach(([id, sitio]) => {
+  const el = $(id), seen = () => { if (!el.hidden) stat('anuncio_ofrecido', { sitio }); };
+  new MutationObserver(seen).observe(el, { attributes: true, attributeFilter: ['hidden'] });
+  seen();
+});
+[['skinBtn', 'ropa'], ['vskinBtn', 'pintura'], ['chestBtn', 'cofre']].forEach(([id, sitio]) =>
+  $(id).addEventListener('click', () => stat('anuncio_ofrecido', { sitio })));
 })();
 </script>
 </body>
