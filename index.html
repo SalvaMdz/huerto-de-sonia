@@ -264,10 +264,28 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
 @keyframes rise { 0% { opacity: 0; margin-top: 0; } 15% { opacity: 1; } 100% { opacity: 0; margin-top: -55px; } }
 @keyframes swipe { 0%,100% { transform: translateX(-10px); } 50% { transform: translateX(10px); } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; } }
+/* Side drawer: missions, orders and alerts fold away so they do not cover the farm */
+.drawtab {
+  pointer-events: auto; align-self: flex-start; display: flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; cursor: pointer;
+  border-radius: 999px; background: linear-gradient(#5a4232, #3b2a1e); border: 2px solid rgba(255, 248, 231, .35); color: var(--cream);
+  font-family: var(--font-display); font-size: .95rem; box-shadow: 0 3px 0 rgba(0,0,0,.28);
+}
+.drawtab #drawBadge:empty { display: none; }
+.drawtab #drawBadge { background: rgba(255,255,255,.2); border-radius: 999px; padding: 0 7px; font-size: .8rem; }
+.drawtab.alert { background: var(--red); animation: bump 1.2s ease-in-out infinite; }
+.drawer { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; max-width: min(340px, 100%); }
+.drawer.shut { display: none; }
+.news { pointer-events: auto; display: flex; flex-direction: column; gap: 4px; background: linear-gradient(#fffdf6, #fff3d9); border: 3px solid var(--ink);
+  border-radius: 14px; box-shadow: 0 3px 0 var(--ink); padding: 6px 10px; font-weight: 900; font-size: .85rem; max-width: min(320px, 100%); }
+.news .nk { font-size: .7rem; letter-spacing: .6px; text-transform: uppercase; color: var(--ink-soft); display: flex; justify-content: space-between; gap: 10px; }
+.news .nk button { all: unset; cursor: pointer; color: var(--ink-soft); }
+.nightveil { position: fixed; inset: 0; z-index: 2; pointer-events: none; opacity: 0; transition: opacity 1s;
+  background: radial-gradient(circle at 50% 52%, rgba(10,16,40,0) 0 9%, rgba(10,16,40,.45) 22%, rgba(8,12,32,.78) 55%); }
 </style>
 
 <div id="game"></div>
 <div class="vignette"></div>
+<div class="nightveil" id="nightVeil"></div>
 <div id="labels"></div>
 <div class="hud">
   <div class="hudrow">
@@ -277,12 +295,16 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
     <button class="iconbtn" id="tractorBtn" hidden aria-label="Subir o bajar del tractor">🚜</button>
     <button class="iconbtn chest" id="chestBtn" hidden aria-label="Cofre diario">🎁</button>
     <button class="iconbtn boost" id="boostBtn" aria-label="Ver anuncio para ganar el doble">📺 ×2</button>
+    <button class="iconbtn" id="viewBtn" aria-label="Cambiar a vista desde arriba">🗺️</button>
     <button class="iconbtn" id="menuBtn" aria-label="Menú">☰</button>
   </div>
   <div class="moodbar" id="moodBar" hidden title="Enfado de los clientes">
     <span class="mf" id="moodFace">🙂</span><span class="ml">Enfado</span>
     <span class="mtrack"><i id="moodFill"></i></span><span class="mp" id="moodPct">0%</span>
   </div>
+  <button class="drawtab" id="drawTab" aria-label="Mostrar u ocultar el panel"><span id="drawIcon">📋</span><span id="drawBadge"></span></button>
+  <div class="drawer" id="drawer">
+  <div class="news" id="news" hidden></div>
   <div class="chips" id="chips"></div>
   <div class="order" id="order" hidden>
     <div class="mt"><span class="mk">📋 Pedido especial · <span id="orderTime">2:30</span></span><span class="mr"><span class="coin"></span><span id="orderReward">0</span></span></div>
@@ -295,6 +317,7 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
     <div class="mb"><i id="missionBar"></i></div>
   </div>
   <div class="alerts" id="alerts" hidden></div>
+  </div>
 </div>
 <div class="banner" id="banner">¡Recoge la cosecha!</div>
 <div class="menu" id="menu" hidden>
@@ -330,7 +353,7 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
   <div class="adbox over" id="overBox">
     <div class="bigface">😡</div>
     <h3>¡Los clientes se han hartado!</h3>
-    <p>El enfado ha llegado al 100%. Si cierras la tienda por hoy, pierdes la medalla y el premio del día.</p>
+    <p>El enfado ha llegado al 100%. Si cierras la tienda por hoy, pierdes la medalla, el premio y <b>todo el dinero ganado hoy</b>.</p>
     <button id="overAd">📺 Ver anuncio: otra oportunidad</button>
     <button class="ghost" id="overRestart">Cerrar la tienda por hoy</button>
   </div>
@@ -359,6 +382,16 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
     <div class="lvlrewards" id="lvlRewards"></div>
     <button id="lvlAd">📺 Doblar las monedas</button>
     <button class="ghost" id="lvlOk">¡Genial!</button>
+  </div>
+</div>
+<div class="overlay" id="tutOverlay" hidden>
+  <div class="adbox tutbox">
+    <p class="dsub" id="tutStep">1 de 5</p>
+    <div class="bigface" id="tutIcon">👆</div>
+    <h3 id="tutTitle"></h3>
+    <p id="tutText"></p>
+    <button id="tutNext">Siguiente ▶</button>
+    <button class="ghost" id="tutSkip">Ya he jugado: saltar tutorial</button>
   </div>
 </div>
 <div id="confetti" aria-hidden="true"></div>
@@ -402,6 +435,7 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
     <div class="crow"><span>Color del pelo</span><div class="opts" id="avColor"></div></div>
     <div class="crow"><span>Piel</span><div class="opts" id="avSkin"></div></div>
     <div class="crow"><span>Detalles</span><div class="opts" id="avExtra"></div></div>
+    <div class="crow"><span>Gorro</span><div class="opts" id="avHat"></div></div>
     <div class="cbtns"><button class="ghost" id="avRandom" aria-label="Personaje al azar">🎲</button><button id="avOk">¡A jugar!</button></div>
   </div>
 </div>
@@ -548,6 +582,7 @@ const UPGRADES = {
   mower:     { name: 'Cortacésped',  icon: '🌿', x: 7, z: -37.5, max: 1, cost: () => 15000, area: 2 },
   gardener:  { name: 'Jardinero',    icon: '🧑‍🌾', x: 10, z: -37.5, max: 4, cost: l => Math.round(8000 * 2.3 ** l), area: 2 },
   mechanic:  { name: 'Mecánico',     icon: '🔧', x: 21.5, z: 33,  max: 3, cost: l => Math.round(900000 * 2.6 ** l), area: 8 },
+  animator:  { name: 'Animador',     icon: '🤡', x: 24.5, z: 33,  max: 3, cost: l => Math.round(250000 * 2.4 ** l), area: 8 },
 };
 // Rides: each one is bought and levelled on its own pad; it sells tickets into a pile next to it and breaks down now and then
 const ATTRS = [
@@ -638,8 +673,8 @@ const MAP_CONTENT = {
   },
 };
 // The version goes up with every release; tools/build.py stamps the build date (while developing it says 'en pruebas')
-const GAME_VERSION = '25';
-const BUILD_DATE = '02/11/2026 17:38';
+const GAME_VERSION = '26';
+const BUILD_DATE = '03/11/2026 11:58';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -809,7 +844,9 @@ const townCount = () => TOWN.filter(t => isBuilt(t.id)).length;
 const houses = () => TOWN.filter(t => t.kind === 'house' && isBuilt(t.id)).length;
 // A shop's fame upgrade raises the price of everything it sells
 const fameOf = k => { const sh = shopFor(k); return 1 + .15 * ((sh && S.lv['fame_' + sh.id]) || 0); };
-const priceF = () => priceOf(S.lv.sign) * (isBuilt('townhall') ? 1.25 : 1) * (1 + .1 * (S.perks.price || 0));
+// Easy start: once the first cashier is hired the market gets tougher and everything pays 40% less
+const earlyF = () => (S.lv.cashier > 0 ? .6 : 1);
+const priceF = () => earlyF() * priceOf(S.lv.sign) * (isBuilt('townhall') ? 1.25 : 1) * (1 + .1 * (S.perks.price || 0));
 const fishersOn = () => ANIMALS.filter(a => a.dock && isBuilt(a.id)).slice(0, S.lv.fisher);
 // The vehicle Sonia rides: the tractor harvests more at once, the mower cuts down weeds; S.vehicle 'none' means on foot
 const vehicleNow = () => (S.vehicle === 'mower' && S.lv.mower ? 'mower' : S.vehicle !== 'none' && S.vehicle !== 'mower' && S.lv.tractor && S.tractorOn ? 'tractor' : null);
@@ -1319,7 +1356,7 @@ function updatePlants(dt) {
   const touched = new Set(), gm = growOf(S.lv.water);
   for (const pl of plants) {
     if (!unlocked(pl.patch.id)) { if (pl.dirty) { writePlant(pl, 0); touched.add(pl.patch); pl.dirty = false; } continue; }
-    if (pl.grow < 1) { pl.grow = Math.min(1, pl.grow + dt * gm * Math.max(.4, 1 - .1 * (pl.patch.weeds || 0)) / pl.patch.regrow); if (pl.grow >= 1) pl.pop = 1; pl.dirty = true; }
+    if (pl.grow < 1) { pl.grow = Math.min(1, pl.grow + dt * gm * Math.max(0, 1 - .2 * (pl.patch.weeds || 0)) / pl.patch.regrow); if (pl.grow >= 1) pl.pop = 1; pl.dirty = true; }
     if (pl.pop > 0) { pl.pop = Math.max(0, pl.pop - dt * 3); pl.dirty = true; }
     if (pl.dirty) { writePlant(pl, pl.grow < 1 ? .12 + .55 * pl.grow : 1 + Math.sin(pl.pop * Math.PI) * .25); touched.add(pl.patch); pl.dirty = false; }
   }
@@ -1748,9 +1785,11 @@ function makeSonia(id) {
   const av = avatar(), hair = mat(AVATAR_COLORS[av.color] ?? AVATAR_COLORS[0]), skin = mat(AVATAR_SKINS[av.skin] ?? AVATAR_SKINS[0]);
   const hair2 = new LitMat({ color: hair.color.clone().multiplyScalar(.78) });
   const o = (OUTFITS.find(x => x.id === id) || OUTFITS[0]).look, L = v => (v === 'skin' ? skin : typeof v === 'number' ? mat(v) : M[v]);
+  // The player may swap the hat for one from another outfit, or take it off
+  const hatO = av.hat === 'none' ? null : av.hat ? (OUTFITS.find(x => x.id === av.hat) || OUTFITS[0]).look : o;
   const p = makePerson({ shirt: L(o.shirt), pants: L(o.pants), bib: o.bib && L(o.bib), skirt: o.skirt && L(o.skirt), skirtLong: o.skirtLong, shorts: o.shorts && L(o.shorts), skin,
     hair, hair2, curly: av.hair === 'curly', long: av.hair === 'long', bun: av.hair === 'bun', afro: av.hair === 'afro', shortBack: av.hair === 'short' || av.hair === 'bun',
-    freckles: av.freckles, beard: av.beard, hat: o.hat, hatColor: o.hatColor, cap: o.cap && L(o.cap), kerchief: o.kerchief, badge: o.badge, glasses: o.glasses, boot: L(o.boot) });
+    freckles: av.freckles, beard: av.beard, hat: hatO ? hatO.hat : null, hatColor: hatO && hatO.hatColor, cap: o.cap && L(o.cap), kerchief: o.kerchief, badge: o.badge, glasses: o.glasses, boot: L(o.boot) });
   const sickle = new T.Group(); sickle.position.set(0, -.32, .08); p.arm.add(sickle);
   const handle = mesh(new T.CylinderGeometry(.03, .03, .3, 6), M.woodDark); handle.rotation.x = Math.PI / 2; handle.position.z = .14; sickle.add(handle);
   const blade = mesh(new T.TorusGeometry(.19, .025, 5, 14, Math.PI * 1.1), M.metal); blade.position.set(-.17, 0, .3); blade.rotation.x = Math.PI / 2; sickle.add(blade);
@@ -2154,10 +2193,12 @@ ATTRS.forEach(a => {
   a.mats = []; a.fade = 1;
   a.mesh.g.traverse(o => { if (o.isMesh) { o.material = o.material.clone(); o.material.userData.op = o.material.opacity; o.material.transparent = true; a.mats.push(o.material); } }); a.disc = zoneDisc(a.cash, 0xf6c445);
   a.warn = iconSprite('⚠️', 1, '#d8402f'); a.warn.position.set(a.x, 4.6, a.z); a.warn.visible = false; scene.add(a.warn);
-  a.breakT = 70 + Math.random() * 90; a.broken = false; a.fixT = 0; a.auto = 0; a.tag = mk('blabel'); a.tag.hidden = true;
+  a.breakT = 40 + Math.random() * 50; a.broken = false; a.fixT = 0; a.auto = 0; a.tag = mk('blabel'); a.tag.hidden = true;
 });
 const ticketMult = () => mult() * (THEME.bonus?.kind === 'tickets' ? 2 : 1) * (THEME.bonus?.kind === 'all' ? 1.5 : 1);
-const attrCap = a => a.rate * S.lv[a.id] * ticketMult() * 180; // a pile holds about 3 minutes of tickets
+// Without entertainers few people queue: rides sell at 40%, and each entertainer adds 20%
+const animatorMult = () => .4 + .2 * (S.lv.animator || 0);
+const attrCap = a => a.rate * S.lv[a.id] * ticketMult() * 60; // a pile holds about 1 minute of tickets, so it has to be collected often
 function updateAttrs(dt) {
   const t = performance.now() / 1000;
   ATTRS.forEach(a => {
@@ -2167,7 +2208,7 @@ function updateAttrs(dt) {
     if (Math.abs(a.fade - want) > .01) { a.fade += (want - a.fade) * Math.min(1, dt * 8); a.mats.forEach(m => { m.opacity = a.fade * (m.userData.op || 1); m.depthWrite = a.fade > .9; }); }
     if (!a.broken) {
       animAttr(a, dt, t);
-      { const before = S.tick[a.id] || 0; S.tick[a.id] = Math.min(attrCap(a), before + a.rate * lv * ticketMult() * dt); S.today.sales += S.tick[a.id] - before; }
+      { const before = S.tick[a.id] || 0; S.tick[a.id] = Math.min(attrCap(a), before + a.rate * lv * ticketMult() * animatorMult() * dt); S.today.sales += S.tick[a.id] - before; }
       a.breakT -= dt;
       if (a.breakT <= 0) { a.broken = true; a.fixT = 0; a.auto = S.lv.mechanic ? 16 - 4 * S.lv.mechanic : 0; a.warn.visible = true; if (Math.hypot(a.x - P.x, a.z - P.z) < 18) { sfx.full(); toast(`⚠️ ¡${a.name} se ha averiado! Ponte en su círculo para arreglarla`); } }
     } else {
@@ -2178,7 +2219,7 @@ function updateAttrs(dt) {
       a.fixT = here ? a.fixT + dt : 0;
       if (a.auto > 0) a.auto -= dt;
       if (a.fixT >= 1.2 || (S.lv.mechanic && a.auto <= 0)) {
-        a.broken = false; a.warn.visible = false; a.breakT = 80 + Math.random() * 100; addMood(-3);
+        a.broken = false; a.warn.visible = false; a.breakT = 45 + Math.random() * 60; addMood(-3);
         if (here) { burst(a.x, 2.5, a.z, '🔧', 'white'); sfx.buy(); toast(`🔧 ${a.name} vuelve a funcionar`); }
       }
     }
@@ -2329,7 +2370,7 @@ function completePad(pad) {
       broom: `Nueva herramienta: ${BROOM_NAMES[S.lv.broom]}. Limpias más espacio`, bin: `Saco más grande: caben ${sackOf(S.lv.bin)} kilos`,
       belt: 'La cinta va más rápido', compactor: 'Cada kilo reciclado vale más', robots: 'Un robot barrendero limpia por ti',
       rod: 'Pescas más rápido', fisher: 'Un pescador pesca solo en un muelle',
-      mechanic: 'El mecánico arregla solo las atracciones averiadas', mower: '🌿 ¡Cortacésped! Cambia de vehículo con el botón de arriba y pasa por encima de las malas hierbas',
+      mechanic: 'El mecánico arregla solo las atracciones averiadas', animator: `🤡 Más público en la feria: las atracciones venden al ${Math.round(animatorMult() * 100)}%`, mower: '🌿 ¡Cortacésped! Cambia de vehículo con el botón de arriba y pasa por encima de las malas hierbas',
       gardener: '🧑‍🌾 Un jardinero arranca las malas hierbas por ti', patrol: 'Otro policía patrulla las tiendas',
     }[pad.id] || (r.fame ? `⭐ ${r.fame.name}: todo se vende un ${15 * S.lv[pad.id]}% más caro` : r.shop ? `La cajera ya cobra en ${r.shop.name}` : ''));
   } else if (kind === 'patch') {
@@ -2580,7 +2621,7 @@ function customerLeaves(c, angry) {
   if (angry) {
     if (c.got) { const st = S.shops[s.id].stock; st[c.want] = (st[c.want] || 0) + c.got; s.dirty = true; }
     c.m.stack.clear(); c.angry = true; S.angry++; S.today.angry++; puff(c.x, 1.9, c.z, 0xd8402f, 6, .6, 2);
-    addMood((c.type === 'critic' ? 40 : c.vip ? 35 : c.type === 'kid' ? 18 : 22) * (s === FARM ? 1 : .6)); S.meta.streak = 0;
+    addMood((c.type === 'critic' ? 45 : c.vip ? 40 : c.type === 'kid' ? 22 : 28) * (s === FARM ? 1 : .6)); S.meta.streak = 0;
     if (c.type === 'critic') toast(`🧐 ¡El crítico se ha ido enfadado de ${s.name}! Mala reseña: +40% de enfado`);
     if (nearShop(s, 16)) { sfx.angry(); burst(c.x, 2.2, c.z, '😡', 'red'); }
     else if (performance.now() - angryToastT > 7000) { angryToastT = performance.now(); toast(`😡 ${s.icon} ${s.name}: un cliente se ha ido sin pagar`); }
@@ -2946,19 +2987,28 @@ function updateLitter(dt) {
     if ((l.x - P.x) ** 2 + (l.z - P.z) ** 2 < 1.2 && S.sack < sackOf(S.lv.bin)) { removeLitter(l); S.sack++; sfx.sweep(); }
   }
 }
-const skyNight = new T.Color(0x2a3a6a), skyNow = new T.Color();
+const skyNight = new T.Color(0x0f1631), skyNow = new T.Color(), nightVeil = $('nightVeil');
 let nightNow = 0;
+// At night Sonia carries a warm lantern so the farm around her can still be seen
+const lantern = new T.PointLight(0xffc98a, 0, 10, 1.6); lantern.position.y = 2.4; scene.add(lantern);
 function updateSky() {
   const day = dayLight();
   const nightF = 1 - day; nightNow = nightF;
-  sun.intensity = LIGHT.sun * (.35 + .65 * day); hemi.intensity = LIGHT.hemi * (.6 + .4 * day);
-  skyNow.setHex(THEME.sky).lerp(skyNight, nightF * .62);
+  sun.intensity = LIGHT.sun * (.1 + .9 * day); hemi.intensity = LIGHT.hemi * (.3 + .7 * day);
+  hemi.color.setHex(0xdff0ff).lerp(skyNight, nightF * .5);
+  skyNow.setHex(THEME.sky).lerp(skyNight, nightF * .9);
   scene.background.copy(skyNow); scene.fog.color.copy(skyNow);
+  lantern.intensity = Math.max(0, nightF - .3) * 2.2; lantern.position.x = P.x; lantern.position.z = P.z;
+  // A dark veil over the screen with a pool of light around Sonia: the night shows even on unlit ground
+  const veil = (Math.round(nightF * 20) / 20).toFixed(2); if (nightVeil.style.opacity !== veil) nightVeil.style.opacity = veil;
+  // Seen from above, the fog moves back so the whole farm shows
+  const far = topView ? 95 : 52; if (scene.fog.far !== far) { scene.fog.far = far; scene.fog.near = topView ? 60 : 26; }
   const glow = Math.max(0, nightF - .45) * 1.8;
   M.lamp.emissiveIntensity = glow; M.window.emissiveIntensity = glow * .6;
 }
 /* ---------- Weeds ---------- */
-// Once the forest is clean, weeds sprout in the fields. Each one slows its field down by 10% (down to 40%).
+// Once the forest is clean, weeds sprout in the fields. Each one slows its field down by 20%: with 5 it stops growing,
+// and a farm full of weeds annoys the customers.
 // Sonia pulls them out by standing on them for a moment, the mower cuts them on the way, and gardeners pull them for her.
 const weeds = [];
 let weedT = 25, weedWarnT = 0;
@@ -2992,10 +3042,11 @@ function updateWeeds(dt) {
     if (!mowing && d2 < .55 && still) { w.pull += dt; w.m.rotation.z = Math.sin(w.pull * 40) * .25; if (w.pull > .5) { removeWeed(w, true); P.swing = 1; } }
     else if (w.pull) { w.pull = 0; w.m.rotation.z = 0; }
   }
-  const worst = PATCHES.find(p => (p.weeds || 0) >= 4);
+  if (weeds.length > 4) addMood((weeds.length - 4) * .05 * dt);
+  const worst = PATCHES.find(p => (p.weeds || 0) >= 3);
   if (worst && performance.now() - weedWarnT > 45000) {
     weedWarnT = performance.now();
-    toast(`🌿 Las malas hierbas frenan el campo de ${ITEMS[worst.crop].name.toLowerCase()}. Quédate encima para arrancarlas, o usa el cortacésped o jardineros`);
+    toast(`🌿 ${(worst.weeds || 0) >= 5 ? '¡El campo de ' + ITEMS[worst.crop].name.toLowerCase() + ' ya no crece!' : 'Las malas hierbas frenan el campo de ' + ITEMS[worst.crop].name.toLowerCase() + ' y enfadan a los clientes.'} Quédate encima para arrancarlas, o usa el cortacésped o jardineros`);
   }
 }
 
@@ -3194,6 +3245,12 @@ const KEYMAP = { ArrowUp: 'u', KeyW: 'u', ArrowDown: 'd', KeyS: 'd', ArrowLeft: 
 addEventListener('keydown', e => { if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return; if (KEYMAP[e.code]) { input.keys.add(KEYMAP[e.code]); e.preventDefault(); } });
 addEventListener('keyup', e => input.keys.delete(KEYMAP[e.code]));
 addEventListener('blur', () => input.keys.clear());
+/* Camera view: normal (close to the character) or from high above */
+let topView = false;
+$('viewBtn').addEventListener('click', () => {
+  topView = !topView; $('viewBtn').textContent = topView ? '🧑‍🌾' : '🗺️';
+  $('viewBtn').setAttribute('aria-label', topView ? 'Volver a la vista normal' : 'Cambiar a vista desde arriba'); sfx.drop();
+});
 
 /* ================= Game logic ================= */
 function lerpAngle(a, b, t) { let d = ((b - a + Math.PI) % (Math.PI * 2)) - Math.PI; if (d < -Math.PI) d += Math.PI * 2; return a + d * t; }
@@ -3312,9 +3369,9 @@ function update(dt) {
   const cap = capOf(S.lv.bag), full = P.stack.length >= cap;
   P.cutT -= dt;
   if (!full && P.cutT <= 0) {
-    const reach = riding ? 1.5 : 1.05, off = riding ? .9 : .35, fx = P.x + Math.sin(P.face) * off, fz = P.z + Math.cos(P.face) * off;
+    const reach = riding ? 1.35 : .85, off = riding ? .9 : .35, fx = P.x + Math.sin(P.face) * off, fz = P.z + Math.cos(P.face) * off;
     // Only the field the cutting point is over gets harvested, so driving along the path between two fields picks nothing
-    const field = PATCHES.find(p => { const sp = p.spacing || SPACING; return Math.abs(fx - p.x) < p.cols * sp / 2 + .45 && Math.abs(fz - p.z) < p.rows * sp / 2 + .45; });
+    const field = PATCHES.find(p => { const sp = p.spacing || SPACING; return Math.abs(fx - p.x) < p.cols * sp / 2 + .1 && Math.abs(fz - p.z) < p.rows * sp / 2 + .1; });
     for (const pl of field ? plants : []) {
       if (pl.patch !== field || pl.grow < 1 || !unlocked(pl.patch.id) || pl.claimed) continue;
       if ((pl.x - fx) ** 2 + (pl.z - fz) ** 2 < reach * reach) { pickUp(pl); P.swing = 1; P.cutT = riding ? .025 : .05; break; }
@@ -3530,7 +3587,8 @@ function update(dt) {
   if (target) { arrow.position.set(target.x, 1.6 + Math.sin(performance.now() / 220) * .2, target.z); arrow.rotation.y += dt * 2; }
 
   // Camera
-  const portrait = innerWidth / innerHeight < .8, off = portrait ? { y: 13, z: 12.5 } : { y: 10, z: 9.5 };
+  // The map button lifts the camera high above to see the whole farm at once
+  const portrait = innerWidth / innerHeight < .8, off = topView ? (portrait ? { y: 46, z: 7 } : { y: 34, z: 5 }) : portrait ? { y: 13, z: 12.5 } : { y: 10, z: 9.5 };
   const k = Math.min(1, dt * 5);
   camera.position.x += (P.x - camera.position.x) * k;
   camera.position.y += (off.y - camera.position.y) * k;
@@ -3826,6 +3884,12 @@ function levelUp(l) {
   const next = [...OUTFITS, ...VEHICLE_SKINS].filter(o => o.lvl > l).sort((p, q) => p.lvl - q.lvl)[0];
   lvlCoins = Math.round(Math.sqrt(S.earned + 100) * 15 * fscale() * (1 + l * .05));
   if (star) { S.stars++; S.meta.starsTotal = (S.meta.starsTotal || 0) + 1; }
+  // Only every 5th level gets the big poster; the others pay quietly and leave a note in the side drawer
+  if (!star) {
+    const v = lvlCoins; lvlCoins = 0; addCoins(v); burst(P.x, 2.2, P.z, '⭐ Nivel ' + l); sfx.coin();
+    addNews(`⭐ Nivel ${l}: +${fmt(v)} monedas${gifts.map(g => ` · 🎁 ${g.icon} ${g.name}`).join('')}`);
+    save(); return;
+  }
   $('lvlBig').textContent = l; $('lvlTitle').textContent = `¡Nivel ${l}!`;
   $('lvlRewards').innerHTML = `<span>💰 ${fmt(lvlCoins)} monedas</span>${star ? '<span>⭐ 1 estrella para mejoras permanentes</span>' : ''}${gifts.map(g => `<span>🎁 ${g.icon} ${g.name}</span>`).join('')}`
     + (next ? `<span style="color:var(--ink-soft);font-weight:800">Próximo regalo en el nivel ${next.lvl}: ${next.icon} ${next.name}</span>` : '');
@@ -3890,7 +3954,28 @@ function renderExtras() {
     ob.classList.toggle('late', ORDER.left < 30);
   }
   if (!$('panelOverlay').hidden && panelKind !== 'chest') openPanel(panelKind);
+  renderDrawer();
 }
+
+/* Side drawer: everything that is not the farm itself folds into it */
+const NEWS = [];
+function addNews(txt) { NEWS.unshift(txt); NEWS.length = Math.min(NEWS.length, 4); S.meta.newsSeen = false; renderDrawer(); }
+function renderDrawer() {
+  const open = S.meta.hudOpen !== false || S.tut < 2;
+  $('drawer').classList.toggle('shut', !open);
+  $('drawTab').hidden = S.tut < 2; // during the first harvest the drawer stays open and the button would cover the banner
+  const nw = $('news'); nw.hidden = !NEWS.length;
+  const nh = `<span class="nk">✨ Novedades<button id="newsClear" aria-label="Borrar novedades">✕</button></span>${NEWS.map(n => `<span>${n}</span>`).join('')}`;
+  if (nw._h !== nh) { nw.innerHTML = nh; nw._h = nh; }
+  const n = ['order', 'mission', 'alerts', 'news'].filter(id => !$(id).hidden).length + $('chips').children.length;
+  const alert = !open && (!$('alerts').hidden || (NEWS.length && !S.meta.newsSeen));
+  $('drawIcon').textContent = open ? '◀ Ocultar' : alert && !$('alerts').hidden ? '⏳' : '📋';
+  $('drawBadge').textContent = open || !n ? '' : n;
+  $('drawTab').classList.toggle('alert', !!alert);
+  if (open) S.meta.newsSeen = true;
+}
+$('drawTab').addEventListener('click', () => { S.meta.hudOpen = S.meta.hudOpen === false; sfx.drop(); renderDrawer(); save(); });
+$('news').addEventListener('click', e => { if (e.target.id === 'newsClear') { NEWS.length = 0; renderDrawer(); } });
 
 /* Panels: star shop, achievements, daily chest */
 let panelKind = '';
@@ -4001,11 +4086,11 @@ function updateMood(dt) {
   S.dayPeak = Math.max(S.dayPeak || 0, S.mood || 0);
   let rise = 0;
   // Customers far away in the other zones' shops weigh half as much: Sonia cannot be everywhere at once
-  customers.forEach(c => { if (c.state !== 'leave' && c.pat < c.patMax * .5) rise += (c.vip ? 1.3 : .8) * (c.shop === FARM ? 1 : .5); });
+  customers.forEach(c => { if (c.state !== 'leave' && c.pat < c.patMax * .6) rise += (c.vip ? 1.7 : 1.1) * (c.shop === FARM ? 1 : .5); });
   if (litter.length > 4) rise += (litter.length - 4) * .07;
   const calm = (isBuilt('fountain') ? .25 : 0) + (isBuilt('music') ? .4 : 0);
   if (rise > calm) addMood((rise - calm) * dt);
-  else if (S.mood > 0) S.mood = Math.max(0, S.mood - (rise > 0 ? calm - rise : .35 + calm) * dt);
+  else if (S.mood > 0) S.mood = Math.max(0, S.mood - (rise > 0 ? calm - rise : .25 + calm) * dt);
   if (S.mood >= 70 && performance.now() - moodWarnT > 12000) { moodWarnT = performance.now(); sfx.full(); toast('😠 ¡Los clientes se están enfadando! Atiende la caja y repón el mostrador'); }
 }
 function renderMood() {
@@ -4039,6 +4124,8 @@ $('overAd').addEventListener('click', () => {
   }, 1000);
 });
 $('overRestart').addEventListener('click', () => {
+  const lost = Math.min(S.coins, Math.round(S.today.sales || 0));
+  if (lost > 0) { S.coins -= lost; $('coinsTxt').textContent = fmt(S.coins); toast(`😡 Has cerrado enfadado: pierdes ${fmt(lost)} monedas`); }
   S.over = false; S.dayClosed = true; $('overOverlay').hidden = true; last = performance.now();
   S.dayT = DAY_OPEN_END; endDay();
 });
@@ -4135,7 +4222,7 @@ let last = performance.now(), saveT = 0, uiT = 0;
 function frame(now) {
   const dt = Math.min(.1, (now - last) / 1000); last = now;
   if (creatorOn) creatorView(dt);
-  else if (!S.over && $('dayOverlay').hidden) {
+  else if (!S.over && $('dayOverlay').hidden && $('tutOverlay').hidden) {
     S.meta.playT = (S.meta.playT || 0) + dt; update(dt); updateDay(dt); updateMood(dt); updateExtras(dt); }
   renderer.render(scene, camera); updateLabels(dt);
   uiT += dt; if (uiT > .25) { uiT = 0; refreshWorld(); checkMission(); renderMood(); renderExtras(); }
@@ -4202,6 +4289,10 @@ function renderCreator() {
   $('avColor').innerHTML = AVATAR_COLORS.map((c, i) => `<button class="sw${on(draft.color === i)}" data-color="${i}" style="background:${hex(c)}" aria-label="Color de pelo ${i + 1}"></button>`).join('');
   $('avSkin').innerHTML = AVATAR_SKINS.map((c, i) => `<button class="sw${on(draft.skin === i)}" data-skin="${i}" style="background:${hex(c)}" aria-label="Tono de piel ${i + 1}"></button>`).join('');
   $('avExtra').innerHTML = `<button class="opt${on(draft.freckles)}" data-extra="freckles">Pecas</button><button class="opt${on(draft.beard)}" data-extra="beard">Barba</button>`;
+  // Hats: the outfit's own, none at all, or any hat from an outfit already won
+  const hats = [...new Map(OUTFITS.filter(o => skinGot(o) && o.look.hat).map(o => [o.look.hat === true ? 'straw' : o.look.hat, o])).values()];
+  $('avHat').innerHTML = `<button class="opt${on(!draft.hat)}" data-hat="">Del conjunto</button><button class="opt${on(draft.hat === 'none')}" data-hat="none">Sin gorro</button>`
+    + hats.map(o => `<button class="opt${on(draft.hat === o.id)}" data-hat="${o.id}">${o.icon}</button>`).join('');
 }
 function applyDraft() { S.meta.avatar = { ...draft }; dressSonia(S.meta.skin); beep(700 + Math.random() * 200, .06, 'triangle', .04, 1.4); }
 function closeCreator() {
@@ -4211,6 +4302,7 @@ function closeCreator() {
   $('hint').lastChild.textContent = ' Arrastra el dedo para mover a ' + who();
   $('hint').hidden = $('banner').hidden = false; pads.forEach(p => { p.icon.visible = true; });
   last = performance.now(); sfx.mission(); toast(`¡Hola, ${who()}! Te damos la bienvenida al huerto`);
+  if (S.tut === 0 && !S.meta.tutSeen) openTutorial();
 }
 // While the creator is open the game is paused: only the close-up camera, a gentle turn of the character and the sparkles move
 function creatorView(dt) {
@@ -4232,6 +4324,7 @@ $('creator').addEventListener('click', e => {
   else if (b.dataset.color) draft.color = +b.dataset.color;
   else if (b.dataset.skin) draft.skin = +b.dataset.skin;
   else if (b.dataset.extra) draft[b.dataset.extra] = !draft[b.dataset.extra];
+  else if (b.dataset.hat !== undefined) draft.hat = b.dataset.hat || undefined;
   else if (b.id === 'avRandom') Object.assign(draft, { hair: pick(AVATAR_HAIR).id, color: Math.floor(Math.random() * AVATAR_COLORS.length), skin: Math.floor(Math.random() * AVATAR_SKINS.length), freckles: Math.random() < .5, beard: Math.random() < .25 });
   else if (b.id === 'avOk') { closeCreator(); return; }
   else return;
@@ -4240,6 +4333,31 @@ $('creator').addEventListener('click', e => {
 $('avName').addEventListener('input', () => { draft.name = $('avName').value.trim().slice(0, 12); });
 $('avName').addEventListener('keydown', e => { if (e.key === 'Enter') $('avName').blur(); });
 $('avatarBtn').addEventListener('click', openCreator);
+/* ================= First-time tutorial ================= */
+// A few cards right after creating the character. Players who already know the game can skip it.
+const TUTORIAL = [
+  { icon: '👆', title: 'Muévete', text: 'Arrastra el dedo por la pantalla para caminar por la granja.' },
+  { icon: '🌷', title: 'Cosecha', text: 'Pasa por encima de un campo con flores maduras para recogerlas.' },
+  { icon: '🧺', title: 'Vende', text: 'Lleva la cosecha al mostrador. Los clientes pagan en la caja: ponte en ella para cobrar.' },
+  { icon: '😠', title: 'Cuidado con el enfado', text: 'Si los clientes esperan demasiado se enfadan. Si llega al 100 % y cierras, pierdes el dinero del día.' },
+  { icon: '📋', title: 'Tus herramientas', text: 'Las misiones y avisos están en el panel de la izquierda (puedes ocultarlo). Con 🗺️ ves toda la granja desde arriba.' },
+];
+let tutI = 0;
+function openTutorial() { tutI = 0; showTutCard(); $('tutOverlay').hidden = false; }
+function showTutCard() {
+  const c = TUTORIAL[tutI], lastCard = tutI === TUTORIAL.length - 1;
+  $('tutStep').textContent = `${tutI + 1} de ${TUTORIAL.length}`; $('tutIcon').textContent = c.icon;
+  $('tutTitle').textContent = c.title; $('tutText').textContent = c.text;
+  $('tutNext').textContent = lastCard ? '¡A jugar!' : 'Siguiente ▶'; $('tutSkip').hidden = lastCard;
+}
+function closeTutorial(skip) {
+  $('tutOverlay').hidden = true; S.meta.tutSeen = true; last = performance.now();
+  // Skipping jumps past the guided first harvest: the missions keep guiding from there
+  if (skip && S.tut < 2) { S.tut = 2; $('banner').classList.add('gone'); toast('Tutorial saltado. ¡Sigue las misiones del panel!'); }
+  save();
+}
+$('tutNext').addEventListener('click', () => { sfx.drop(); if (tutI < TUTORIAL.length - 1) { tutI++; showTutCard(); } else closeTutorial(false); });
+$('tutSkip').addEventListener('click', () => closeTutorial(true));
 
 /* ================= Start ================= */
 $('coinsTxt').textContent = fmt(S.coins);
