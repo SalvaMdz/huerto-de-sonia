@@ -642,8 +642,8 @@ const MAPS = [];
 const mapOf = n => MAPS[n % MAPS.length];
 const mapById = id => MAPS.find(m => m.id === id);
 // The version goes up with every release; the build (vite.config.js) stamps the date (while developing it says 'en pruebas')
-const GAME_VERSION = '31';
-const BUILD_DATE = '03/11/2026 13:58';
+const GAME_VERSION = '32';
+const BUILD_DATE = '03/11/2026 17:11';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -773,11 +773,25 @@ MAPS.push({
       layout: {
         seaEast: true,
         shift: { 6: [96.7, 0], 7: [-9.3, 32.6] },
+        // The landing: the village up by the woods, market and workshops in the middle, fields down by the beach
+        beachStart: true,
         doors: {
+          gate3: { x0: 11.6, x1: 12.9, z0: 12.2, z1: 14.6, pad: [10.2, 13.4] },
+          gate4: { x0: -12.9, x1: -11.6, z0: -1.6, z1: 1, pad: [-10.2, -.3] },
           gate5: { x0: 34.3, x1: 35.7, z0: .6, z1: 3.4, pad: [33.2, 2] },
           gate6: { x0: 39, x1: 41.4, z0: 17.2, z1: 19.4, pad: [40.2, 15.6] },
         },
-        pos: { loom: [57, 3.5, 3] },
+        pos: {
+          loom: [57, 3.5, 3],
+          'shop:farm': [-1.4, 4.2], 'spawn:farm': [-3, 21.2],
+          A: [-8, 16.6], B: [1.8, 16.6], C: [8.3, 16.6],
+          florist: [9.6, 0, 3], mill: [9.6, 5.2, 3], kitchen: [9.6, 10.4, 3],
+          bag: [-5, 2.6], boots: [-7.6, 2.6], sign: [-10.2, 2.6], helper: [-5, 5.4], carrier: [-7.6, 5.4], workers: [-10.2, 5.4],
+          cashier: [-5, 8.2], cashier2: [-7.6, 8.2], dog: [-10.2, 8.2], patrol: [-5, 11], move: [-7.6, 11],
+          house1: [-9.2, -10.8], cafe: [-4.6, -10.8], house2: [4.6, -10.8], park: [9.2, -10.8],
+          house3: [-9.2, -6.9], house4: [-4.6, -6.9], hotel: [4.6, -6.9], house5: [9.2, -6.9],
+          police: [-9.2, -3.2], bank: [-4.6, -3.2], townhall: [4.6, -3.2], music: [9.2, -3.2], fountain: [0, .4],
+        },
       },
     },
     patches: { G: { crop: 'coconut' }, H: { crop: 'bamboo' }, I: { crop: 'pineapple' } },
@@ -983,11 +997,24 @@ if (LAYOUT) {
     });
   });
   Object.entries(LAYOUT.doors || {}).forEach(([id, d]) => { DOORS[id] = { x0: d.x0, x1: d.x1, z0: d.z0, z1: d.z1 }; if (d.pad) { const g = GATES.find(x => x.id === id); g.x = d.pad[0]; g.z = d.pad[1]; } });
-  // Single places for a building: [x, z, quarter turns]
+  // Single places: workshops and pens [x, z, quarter turns]; fields, houses, pads and the lorry [x, z]; a shop with 'shop:id'
   Object.entries(LAYOUT.pos || {}).forEach(([id, [x, z, r]]) => {
-    const b = PROCS.find(p => p.id === id) || ANIMALS.find(p => p.id === id); if (!b) return;
-    const off = PROCS.includes(b) ? 2.3 : 3, a = (r ?? b.rot ?? 0) * Math.PI / 2;
-    b.x = x; b.z = z; if (r !== undefined || PROCS.includes(b)) b.rot = r ?? b.rot; b.zx = x + Math.sin(a) * off; b.zz = z + Math.cos(a) * off;
+    if (id.startsWith('shop:')) {
+      const s = SHOPS.find(q => q.id === id.slice(5)), dx = x - s.x, dz = z - s.z;
+      [s, s.counter, s.cash, s.spawn, ...s.spots].forEach(o => move(o, dx, dz));
+      s.tills.forEach(t => { move(t, dx, dz); move(t.zone, dx, dz); move(t.pay, dx, dz); const sp = SPECIAL.find(q => q.id === t.id); if (sp) { sp.x = t.zone.x; sp.z = t.zone.z; } });
+      if (s === FARM) { const t2 = SPECIAL.find(q => q.id === 'till2'); t2.x = s.tills[1].zone.x; t2.z = s.tills[1].zone.z; }
+      return;
+    }
+    if (id === 'spawn:farm') { FARM.spawn.x = x; FARM.spawn.z = z; return; }
+    const b = PROCS.find(p => p.id === id) || ANIMALS.find(p => p.id === id);
+    if (b) {
+      const off = PROCS.includes(b) ? 2.3 : 3, a = (r ?? b.rot ?? 0) * Math.PI / 2;
+      b.x = x; b.z = z; if (r !== undefined || PROCS.includes(b)) b.rot = r ?? b.rot; b.zx = x + Math.sin(a) * off; b.zz = z + Math.cos(a) * off;
+      return;
+    }
+    const o = id === 'move' ? MOVE : UPGRADES[id] || [...PATCHES, ...TOWN, ...SPECIAL].find(q => q.id === id);
+    if (o) { o.x = x; o.z = z; }
   });
 }
 const inRect = (r, x, z) => x >= r.x0 && x <= r.x1 && z >= r.z0 && z <= r.z1;
@@ -1162,6 +1189,19 @@ flat(new T.PlaneGeometry(3, 22.5), M.path, 2.25, .006, 33.6);
 flat(new T.PlaneGeometry(48, 2.6), M.path, 0, .006, 32.5);
 const tileTex = canvasTex(64, 64, (g, w, h) => { g.fillStyle = '#f4f1ea'; g.fillRect(0, 0, w, h); g.fillStyle = '#d9e8ee'; g.fillRect(0, 0, w / 2, h / 2); g.fillRect(w / 2, h / 2, w / 2, h / 2); g.strokeStyle = 'rgba(120,140,150,.35)'; g.strokeRect(0, 0, w, h); }, 24, 10);
 flat(new T.PlaneGeometry(49, 19.6), new LitMat({ map: tileTex }), 0, .005, 55);
+if (LAYOUT && LAYOUT.beachStart) {
+  // The Costa's landing: sand instead of lawn, a plaza at the market and a wooden boardwalk from the beach, no road
+  for (let i = -9; i < -3; i++) flat(new T.PlaneGeometry(23, 2.2), M.grassDark, 0, .002, i * 4.4);
+  flat(new T.PlaneGeometry(22, 21.6), M.meadow, 23.6, .003, -3);
+  flat(new T.PlaneGeometry(3, 20), M.path, 0, .006, -23); flat(new T.PlaneGeometry(4, 21.6), M.path, 14.6, .006, -3);
+  const A = AREAS[1]; flat(new T.PlaneGeometry(A.x1 - A.x0 + 1.6, A.z1 - A.z0 + 1.6), M.sand, (A.x0 + A.x1) / 2, .004, (A.z0 + A.z1) / 2);
+  flat(new T.PlaneGeometry(3, 13), M.path, 0, .006, -7.2);
+  flat(new T.PlaneGeometry(9, 9.5), M.path, FARM.x + .3, .006, FARM.z + 2.4);
+  const walkZ0 = FARM.z + 7, walkZ1 = A.z1 + .6;
+  flat(new T.PlaneGeometry(2, walkZ1 - walkZ0), M.wood, FARM.spawn.x, .007, (walkZ0 + walkZ1) / 2);
+  for (let z = walkZ0 + .25; z < walkZ1; z += .5) flat(new T.PlaneGeometry(2.02, .05), M.woodDark, FARM.spawn.x, .008, z);
+  Object.values(DOORS).forEach(d => flat(new T.PlaneGeometry(d.x1 - d.x0 + 1.4, d.z1 - d.z0 + 1.4), M.path, (d.x0 + d.x1) / 2, .006, (d.z0 + d.z1) / 2));
+} else {
 for (let i = -9; i < 4; i++) flat(new T.PlaneGeometry(23, 2.2), M.grassDark, 0, .002, i * 4.4);
 flat(new T.PlaneGeometry(22, 21.6), M.meadow, 23.6, .003, -3);
 flat(new T.PlaneGeometry(24, 8), M.path, 0, .005, 4.3);
@@ -1174,6 +1214,7 @@ flat(new T.PlaneGeometry(24.6, 2.6), M.road, 0, .008, 12);
 flat(new T.PlaneGeometry(24.6, .8), M.sidewalk, 0, .009, 10.3);
 flat(new T.PlaneGeometry(24.6, .8), M.sidewalk, 0, .009, 13.7);
 for (let x = -11.5; x < 12; x += 2) flat(new T.PlaneGeometry(1, .12), M.roadLine, x, .01, 12);
+}
 function roundTree(x, z, s = 1, parent = scene) {
   const g = new T.Group();
   const t = mesh(new T.CylinderGeometry(.12 * s, .17 * s, 1 * s, 6), M.trunk); t.position.y = .5 * s; g.add(t);
@@ -1312,6 +1353,7 @@ const gateMeshes = LAYOUT ? Object.fromEntries(Object.entries(DOORS).map(([id, d
 // Grass tufts and wild flowers scattered where nothing else stands
 {
   const free = (x, z) => {
+    if (LAYOUT && LAYOUT.beachStart && inRect(AREAS[1], x, z)) return false;
     const boxes = [[-11.6, -13.3, 11.6, 0], [-11, 0, 11, 8], [-11.6, 9.4, 11.6, 14.4], [-11.6, 14, 11.6, 21.8]];
     if (z > -13.3 && z < 8.2 && Math.abs(x) < 11.6) {
       if (PATCHES.some(p => Math.abs(x - p.x) < p.cols * SPACING / 2 + .8 && Math.abs(z - p.z) < p.rows * SPACING / 2 + .8)) return false;
@@ -2415,11 +2457,12 @@ function updateAttrs(dt) {
 }
 
 /* ---------- Town life: lamps and cars ---------- */
-for (let x = -10; x <= 10; x += 5) {
+const ROAD = !(LAYOUT && LAYOUT.beachStart);
+if (ROAD) for (let x = -10; x <= 10; x += 5) {
   const pole = mesh(new T.CylinderGeometry(.05, .06, 2, 6), M.dark); pole.position.set(x, 1, 10.3); scene.add(pole);
   const lamp = mesh(new T.SphereGeometry(.16, 8, 6), M.lamp, false); lamp.position.set(x, 2.05, 10.3); scene.add(lamp);
 }
-const cars = [0, 1, 2, 3].map(i => {
+const cars = (ROAD ? [0, 1, 2, 3] : []).map(i => {
   const g = new T.Group(), color = pick([0xd8402f, 0x3f7fd0, 0xf5c518, 0x3fa34d, 0xfdf6ea]);
   const body = mesh(new T.BoxGeometry(1.6, .42, .85), mat(color)); body.position.y = .38; g.add(body);
   const cab = mesh(new T.BoxGeometry(.85, .36, .75), mat(color)); cab.position.set(-.1, .76, 0); g.add(cab);
@@ -4011,7 +4054,7 @@ function updateExtras(dt) {
   if (fo && fo.visible && fo.userData.jet) fo.userData.jet.scale.y = 1 + Math.sin(tt * 6) * .15;
   if (mu && mu.visible && mu.userData.horn) mu.userData.horn.rotation.z = Math.sin(tt * 5) * .2;
   decoT -= dt;
-  if (decoT <= 0) { decoT = .7; if (mu && mu.visible) puff(7.5, 1.9, 8.8, pick([0xf6c445, 0xf06aa8, 0x3f7fd0]), 1, .4, 1.6); if (fo && fo.visible) puff(2.5, 1.7, 8.8, 0xa8dcf0, 2, .3, 1.2); }
+  if (decoT <= 0) { decoT = .7; if (mu && mu.visible) puff(mu.position.x, 1.9, mu.position.z, pick([0xf6c445, 0xf06aa8, 0x3f7fd0]), 1, .4, 1.6); if (fo && fo.visible) puff(fo.position.x, 1.7, fo.position.z, 0xa8dcf0, 2, .3, 1.2); }
 
   // Petting the dog: stand still next to it
   const still = !(input.jx || input.jz || input.keys.size);
