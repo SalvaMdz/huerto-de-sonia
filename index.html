@@ -642,8 +642,8 @@ const MAPS = [];
 const mapOf = n => MAPS[n % MAPS.length];
 const mapById = id => MAPS.find(m => m.id === id);
 // The version goes up with every release; the build (vite.config.js) stamps the date (while developing it says 'en pruebas')
-const GAME_VERSION = '30';
-const BUILD_DATE = '03/11/2026 13:40';
+const GAME_VERSION = '31';
+const BUILD_DATE = '03/11/2026 13:58';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -765,7 +765,21 @@ MAPS.push({
   // The last four zones get their own crops, animals, workshops, shops and rides.
   // Ids stay the same (missions and saves refer to them); names, products and models change.
   content: {
-    sea: true, freeBuild: 'pruebas', // the grid is still being tested
+    sea: true,
+    // Still being made: only testers get the Costa's own plan and building on the grid
+    beta: {
+      freeBuild: true,
+      // The fishing port goes east, by the sea, and the shipyard down to the south-east shore; the west is left wild
+      layout: {
+        seaEast: true,
+        shift: { 6: [96.7, 0], 7: [-9.3, 32.6] },
+        doors: {
+          gate5: { x0: 34.3, x1: 35.7, z0: .6, z1: 3.4, pad: [33.2, 2] },
+          gate6: { x0: 39, x1: 41.4, z0: 17.2, z1: 19.4, pad: [40.2, 15.6] },
+        },
+        pos: { loom: [57, 3.5, 3] },
+      },
+    },
     patches: { G: { crop: 'coconut' }, H: { crop: 'bamboo' }, I: { crop: 'pineapple' } },
     procs: {
       loom: { name: 'Arrocería', input: 'mussel', output: 'paella', body: 0xfff1d6, roof: 0xf5a524 },
@@ -835,11 +849,10 @@ MAPS.push({
 // The saved game holds one farm per map, so moving away never loses a farm and any of them can be visited again.
 // huerto-sonia-v3 (a single farm) is read once to bring old games over, and left untouched as a backup.
 /* Testers: only people with the secret code see what is still being made */
-// A map with beta: true, or a mechanic marked 'pruebas', only exists on testers' devices.
+// A map with beta: true, or whatever a map keeps under content.beta, only exists on testers' devices.
 // The code arrives as a link (?pruebas=CODE) or typed after tapping the menu card 5 times; only its fingerprint is kept here.
 const TESTER_KEY = 'huerto-sonia-probador', TESTER_HASH = '802f8d5977e82989df047982bdd24158dd48bd53d850023c81e96e40e91681bf';
 const TESTER = (() => { try { return localStorage.getItem(TESTER_KEY) === TESTER_HASH; } catch { return false; } })();
-const forTesters = v => v === true || (v === 'pruebas' && TESTER);
 const mapOpen = m => !m.beta || TESTER;
 async function tryTesterCode(code) {
   const norm = String(code || '').trim().toUpperCase();
@@ -929,12 +942,55 @@ const fscale = () => 1.6 ** (S.farm || 0);
 const mult = () => (boosted() ? 2 : 1) * 2 ** (S.farm || 0);
 const THEME = mapById(WORLD.map);
 // The current map's own zones replace the names, products and colours of the shared ones before the world is built
-const MAPC = THEME.content || {};
+// Whatever a map keeps under content.beta only exists for testers
+const MAPC = { ...(THEME.content || {}), ...(TESTER ? THEME.content?.beta : null) };
 {
   const put = (list, over) => Object.entries(over || {}).forEach(([id, o]) => Object.assign(list.find(x => x.id === id), o));
   put(PATCHES, MAPC.patches); put(PROCS, MAPC.procs); put(ANIMALS, MAPC.animals); put(SHOPS, MAPC.shops); put(GATES, MAPC.gates);
   Object.entries(MAPC.rides || {}).forEach(([id, [name, icon]]) => { const a = ATTRS.find(x => x.id === id); a.name = UPGRADES[id].name = name; a.icon = UPGRADES[id].icon = icon; });
 }
+/* ---------- Plan of the map: zones and doors described as data ---------- */
+// Each zone is the rectangle where one can walk; each door joins two zones and opens with its gate.
+// These are the Valle's. A map with content.layout moves whole zones (shift) and puts doors where it likes;
+// hedges, trees and gate fences are then drawn from these rectangles instead of by hand.
+const AREAS = {
+  1: { x0: -11.6, x1: 11.6, z0: -13.3, z1: 21.5 }, 2: { x0: -11.6, x1: 11.6, z0: -41.2, z1: -14.65 },
+  3: { x0: 12.9, x1: 34.3, z0: -13.2, z1: 17.2 }, 4: { x0: -34.3, x1: -12.9, z0: -13.2, z1: 17.2 },
+  6: { x0: -61, x1: -35.7, z0: -13.2, z1: 17.2 }, 7: { x0: 35.7, x1: 61, z0: -13.2, z1: 17.2 },
+  8: { x0: -24.2, x1: 24.2, z0: 23.2, z1: 44.3 }, 9: { x0: -24.2, x1: 24.2, z0: 45.6, z1: 64.2 },
+};
+const DOORS = {
+  gate: { x0: -1.5, x1: 1.5, z0: -14.65, z1: -13.3 }, gate3: { x0: 11.6, x1: 12.9, z0: -.3, z1: 2.3 }, gate4: { x0: -12.9, x1: -11.6, z0: -9.8, z1: -7.2 },
+  gate5: { x0: -35.7, x1: -34.3, z0: .6, z1: 3.4 }, gate6: { x0: 34.3, x1: 35.7, z0: .6, z1: 3.4 }, gate7: { x0: 1.5, x1: 3, z0: 21.5, z1: 23.2 }, gate8: { x0: -.9, x1: .9, z0: 44.3, z1: 45.6 },
+};
+const LAYOUT = MAPC.layout || null;
+const areaShift = a => (LAYOUT && LAYOUT.shift && LAYOUT.shift[a]) || null;
+if (LAYOUT) {
+  // Workshops remember which way they faced before moving, so their door still looks at their ring
+  PROCS.forEach(p => { p.rot = p.x < 0 ? 1 : 3; });
+  const move = (o, dx, dz) => {
+    if (!o) return;
+    ['x', 'zx', 'ex', 'tx'].forEach(k => { if (typeof o[k] === 'number') o[k] += dx; });
+    ['z', 'zz', 'ez', 'tz'].forEach(k => { if (typeof o[k] === 'number') o[k] += dz; });
+  };
+  Object.entries(LAYOUT.shift || {}).forEach(([a, [dx, dz]]) => {
+    a = +a; const r = AREAS[a]; r.x0 += dx; r.x1 += dx; r.z0 += dz; r.z1 += dz;
+    [...PATCHES, ...PROCS, ...ANIMALS, ...SPECIAL, ...TOWN, ...ATTRS, ...SELLS, ...Object.values(UPGRADES)].forEach(o => { if (o.area === a) move(o, dx, dz); });
+    SHOPS.forEach(s => {
+      if (s.area !== a) return;
+      [s, s.counter, s.cash, s.spawn, ...s.spots].forEach(o => move(o, dx, dz));
+      s.tills.forEach(t => { move(t, dx, dz); move(t.zone, dx, dz); move(t.pay, dx, dz); });
+    });
+  });
+  Object.entries(LAYOUT.doors || {}).forEach(([id, d]) => { DOORS[id] = { x0: d.x0, x1: d.x1, z0: d.z0, z1: d.z1 }; if (d.pad) { const g = GATES.find(x => x.id === id); g.x = d.pad[0]; g.z = d.pad[1]; } });
+  // Single places for a building: [x, z, quarter turns]
+  Object.entries(LAYOUT.pos || {}).forEach(([id, [x, z, r]]) => {
+    const b = PROCS.find(p => p.id === id) || ANIMALS.find(p => p.id === id); if (!b) return;
+    const off = PROCS.includes(b) ? 2.3 : 3, a = (r ?? b.rot ?? 0) * Math.PI / 2;
+    b.x = x; b.z = z; if (r !== undefined || PROCS.includes(b)) b.rot = r ?? b.rot; b.zx = x + Math.sin(a) * off; b.zz = z + Math.cos(a) * off;
+  });
+}
+const inRect = (r, x, z) => x >= r.x0 && x <= r.x1 && z >= r.z0 && z <= r.z1;
 // The map's bonus multiplies the price of some goods (or of everything)
 const FISH = ['sardine', 'trout', 'crab', 'can'], WOOD = ['log', 'plank', 'furniture'];
 const mapPrice = k => { const b = THEME.bonus; if (!b) return 1; return b.kind === 'all' ? 1.5 : (b.kind === 'fish' && FISH.includes(k)) || (b.kind === 'wood' && WOOD.includes(k)) ? 3 : 1; };
@@ -1191,19 +1247,23 @@ function plantTrees() {
   });
 }
 const rr = () => Math.random();
+if (!LAYOUT) {
 for (let x = -15; x <= 15; x += 1.8) { tree(x + rr() * .5, -43 - rr(), 1 + rr() * .4); tree(x + .8, -45.1, 1.2); }
 for (let z = -42; z <= -15; z += 2.3) { tree(-13.4 - rr(), z, 1 + rr() * .3); tree(13.4 + rr(), z, 1 + rr() * .3); }
 for (let x = 14; x <= 62; x += 2.2) { tree(x, -15.6 - rr() * .5, 1 + rr() * .3); tree(-x, -15.6 - rr() * .5, 1 + rr() * .3); tree(x + 1, 19.6 + rr() * .5, 1 + rr() * .3); tree(-x - 1, 19.6 + rr() * .5, 1 + rr() * .3); }
 for (let z = -15; z <= 19; z += 2.2) { tree(63 + rr(), z, 1.1 + rr() * .3); tree(-63 - rr(), z, 1.1 + rr() * .3); }
 for (let z = 23; z <= 66; z += 2.3) { tree(26.5 + rr(), z, 1 + rr() * .3); tree(-26.5 - rr(), z, 1 + rr() * .3); }
+}
 if (MAPC.sea) {
   // On the coast the far end of the pools opens onto a beach and the sea
   flat(new T.PlaneGeometry(260, 5), M.sand, 0, .012, 67.6);
   flat(new T.PlaneGeometry(260, 90), M.water, 0, .03, 115);
   for (let x = -24; x <= 24; x += 6) { const um = mesh(new T.ConeGeometry(.7, .35, 10), mat(pick([0xe8384a, 0x2fb5a0, 0xf5c518]))); um.position.set(x + rr(), 1.5, 67.4); scene.add(um); const pole = mesh(new T.CylinderGeometry(.03, .03, 1.5, 5), M.white); pole.position.set(um.position.x, .75, 67.4); scene.add(pole); }
+  if (LAYOUT && LAYOUT.seaEast) { flat(new T.PlaneGeometry(5, 200), M.sand, 64.6, .012, 10); flat(new T.PlaneGeometry(90, 260), M.water, 112, .03, 10); }
 } else for (let x = -25; x <= 25; x += 2) tree(x + rr(), 66.6 + rr(), 1 + rr() * .3);
-for (let x = -11; x <= 11; x += 2.4) if (Math.abs(x) > 2.5) tree(x, -15.2 - rr() * .4, .8 + rr() * .3);
 function hedge(x, z, w, d) { const h = mesh(new T.BoxGeometry(w, .8, d), M.hedge); h.position.set(x, .4, z); scene.add(h); return h; }
+if (!LAYOUT) {
+for (let x = -11; x <= 11; x += 2.4) if (Math.abs(x) > 2.5) tree(x, -15.2 - rr() * .4, .8 + rr() * .3);
 hedge(-7.25, -14, 10.5, .9); hedge(7.25, -14, 10.5, .9); hedge(0, -41.9, 25.7, .9);
 hedge(12.4, -21.4, .9, 42); hedge(12.4, 12.15, .9, 19.7); hedge(-12.4, -26.1, .9, 32.6); hedge(-12.4, 7.4, .9, 29.2);
 hedge(23.6, -14, 23, .9); hedge(23.6, 17.9, 23, .9); hedge(-23.6, -14, 23, .9); hedge(-23.6, 17.9, 23, .9);
@@ -1215,6 +1275,29 @@ hedge(-5.825, 22.4, 14.05, .9); hedge(8.075, 22.4, 9.55, .9);
 hedge(-18.875, 22.4, 12.05, .9); hedge(18.875, 22.4, 12.05, .9);
 [-24.9, 24.9].forEach(x => hedge(x, 43.65, .9, 42.5));
 hedge(-12.95, 44.9, 23.9, .9); hedge(12.95, 44.9, 23.9, .9); hedge(0, 64.9, 50.7, .9);
+} else {
+  // Own plan: a hedge round every zone, open where a door is, and trees outside where nothing else stands
+  const doors = Object.values(DOORS), rects = Object.values(AREAS), o = .65, ext = 1.1;
+  const busy = (x, z) => rects.some(r => x > r.x0 - 1.6 && x < r.x1 + 1.6 && z > r.z0 - 1.6 && z < r.z1 + 1.6) || (MAPC.sea && z > 65.5) || (LAYOUT.seaEast && x > 62.5);
+  const run = (horiz, at, a, b) => {
+    // Cut the line where doors cross it, then plant hedge pieces on what is left
+    const cuts = doors.filter(d => horiz ? at > d.z0 - .05 && at < d.z1 + .05 : at > d.x0 - .05 && at < d.x1 + .05).map(d => horiz ? [d.x0, d.x1] : [d.z0, d.z1]).sort((p, q) => p[0] - q[0]);
+    let from = a;
+    [...cuts, [b, b]].forEach(([c0, c1]) => {
+      const to = Math.min(c0, b);
+      if (to - from > .2) { const m = (from + to) / 2, len = to - from; horiz ? hedge(m, at, len, .9) : hedge(at, m, .9, len); }
+      from = Math.max(from, c1);
+    });
+  };
+  rects.forEach(r => {
+    run(true, r.z0 - o, r.x0 - ext, r.x1 + ext); run(true, r.z1 + o, r.x0 - ext, r.x1 + ext);
+    run(false, r.x0 - o, r.z0 - ext, r.z1 + ext); run(false, r.x1 + o, r.z0 - ext, r.z1 + ext);
+    for (let x = r.x0 - 1; x <= r.x1 + 1; x += 2.2) [r.z0 - 2.4 - rr() * .6, r.z1 + 2.4 + rr() * .6].forEach(z => { if (!busy(x, z)) tree(x + rr() * .5, z, 1 + rr() * .3); });
+    for (let z = r.z0 - 1; z <= r.z1 + 1; z += 2.2) [r.x0 - 2.4 - rr() * .6, r.x1 + 2.4 + rr() * .6].forEach(x => { if (!busy(x, z)) tree(x, z + rr() * .5, 1 + rr() * .3); });
+  });
+  // Wild land beyond the zones: a few clumps so the empty corners are not bare
+  for (let i = 0; i < 420; i++) { const x = (rr() - .5) * 170, z = -55 + rr() * 125; if (!busy(x, z)) tree(x, z, .9 + rr() * .5); }
+}
 plantTrees();
 function fence(x, z, w, rotY, parent = scene) {
   const g = new T.Group();
@@ -1222,7 +1305,9 @@ function fence(x, z, w, rotY, parent = scene) {
   for (let px = -w / 2 + .05; px <= w / 2; px += .6) { const post = mesh(new T.BoxGeometry(.1, .75, .1), M.woodDark); post.position.set(px, .37, 0); g.add(post); }
   g.position.set(x, 0, z); g.rotation.y = rotY; parent.add(g); return g;
 }
-const gateMeshes = { gate: fence(0, -14, 4, 0), gate3: fence(12.4, 1, 2.8, Math.PI / 2), gate4: fence(-12.4, -8.5, 2.8, Math.PI / 2),
+// With its own plan, each gate's fence fills its door
+const gateMeshes = LAYOUT ? Object.fromEntries(Object.entries(DOORS).map(([id, d]) => { const wide = d.x1 - d.x0 > d.z1 - d.z0; return [id, fence((d.x0 + d.x1) / 2, (d.z0 + d.z1) / 2, (wide ? d.x1 - d.x0 : d.z1 - d.z0) + .3, wide ? 0 : Math.PI / 2)]; }))
+  : { gate: fence(0, -14, 4, 0), gate3: fence(12.4, 1, 2.8, Math.PI / 2), gate4: fence(-12.4, -8.5, 2.8, Math.PI / 2),
   gate5: fence(-35, 2, 2.8, Math.PI / 2), gate6: fence(35, 2, 2.8, Math.PI / 2), gate7: fence(2.25, 22.4, 2.1, 0), gate8: fence(0, 44.9, 2, 0) };
 // Grass tufts and wild flowers scattered where nothing else stands
 {
@@ -1616,7 +1701,10 @@ const RUBBLE = [
   { a: 9, name: 'las piscinas',          x0: -24,   x1: 24,    z0: 46,    z1: 63.8, n: 260, bin: { x: 6.5, z: 46.6 } },
 ];
 const RUBBLE_CLEAN = .85;
-RUBBLE.forEach(Z => { if (MAPC.zones && MAPC.zones[Z.a]) Z.name = MAPC.zones[Z.a]; });
+RUBBLE.forEach(Z => {
+  if (MAPC.zones && MAPC.zones[Z.a]) Z.name = MAPC.zones[Z.a];
+  const sh = areaShift(Z.a); if (sh) { Z.x0 += sh[0]; Z.x1 += sh[0]; Z.z0 += sh[1]; Z.z1 += sh[1]; Z.bin.x += sh[0]; Z.bin.z += sh[1]; }
+});
 {
   // Spots that must stay free: fields, buildings, pens, rides, shop squares, the lake and every pad
   const spots = [...Object.values(UPGRADES), ...PATCHES, ...GATES, ...SPECIAL, ...TOWN, ...SELLS].map(p => [p.x, p.z]).concat(PROCS.map(p => [p.zx, p.zz]), ANIMALS.map(a => [a.zx, a.zz]));
@@ -2034,7 +2122,7 @@ function makeBuilding(p) {
     const bench = mesh(new T.BoxGeometry(1.6, .5, .7), M.woodDark); bench.position.set(-.3, .25, 1.6); g.add(bench);
   } else { const ch = mesh(new T.BoxGeometry(.35, .9, .35), M.dark); ch.position.set(.7, 2.6, -.4); g.add(ch); }
   const sign = iconSprite(ITEMS[p.output].icon, .85); sign.position.set(0, 3.05, 0); g.add(sign);
-  g.position.set(p.x, 0, p.z); g.rotation.y = p.x < 0 ? Math.PI / 2 : -Math.PI / 2;
+  g.position.set(p.x, 0, p.z); g.rotation.y = p.rot !== undefined ? p.rot * Math.PI / 2 : p.x < 0 ? Math.PI / 2 : -Math.PI / 2;
   scene.add(g);
   return { g, spin };
 }
@@ -2076,7 +2164,7 @@ function makePen(a) {
       m.position.set(st.x, 0, st.z); g.add(m); animals.push(st);
     }
   }
-  g.position.set(a.x, 0, a.z); scene.add(g);
+  g.position.set(a.x, 0, a.z); if (a.rot !== undefined && !a.dock) g.rotation.y = a.rot * Math.PI / 2; scene.add(g);
   return { g, animals };
 }
 function makeTown(t) {
@@ -3415,6 +3503,7 @@ function sellAtVehicle(s) {
   return true;
 }
 function inArea(x, z) {
+  if (LAYOUT) return Object.entries(AREAS).some(([a, r]) => areaOpen(+a) && inRect(r, x, z)) || Object.entries(DOORS).some(([g, r]) => S[g] && inRect(r, x, z));
   if (z > 21.5) {
     if (!S.gate7) return false;
     if (z <= 23.2) return x > 1.5 && x < 3;
@@ -3433,7 +3522,7 @@ function inArea(x, z) {
 }
 function blocked(x, z) {
   const box = (bx, bz, hx, hz) => Math.abs(x - bx) < hx && Math.abs(z - bz) < hz;
-  if (z < -13.35 && z > -14.65 && Math.abs(x) < 12.4 && Math.abs(x) > 1.5) return true;
+  if (!LAYOUT && z < -13.35 && z > -14.65 && Math.abs(x) < 12.4 && Math.abs(x) > 1.5) return true;
   if (((x - LAKE.x) / LAKE.rx) ** 2 + ((z - LAKE.z) / LAKE.rz) ** 2 < 1) return true;
   if (SHOPS.some(s => s.open && (box(s.x, s.z, 1, 1.6) || s.tills.some(t => t.open && box(t.x, t.z, .75, .6))))) return true;
   if (SELLS.some(s => sellActive(s) && box(s.tx, s.tz, 1, 2.1))) return true;
@@ -4588,14 +4677,14 @@ $('adWatch').addEventListener('click', () => stat('anuncio_aceptado', { sitio: '
   $(id).addEventListener('click', () => stat('anuncio_ofrecido', { sitio })));
 
 /* ================= Free building on a grid ================= */
-// On maps with content.freeBuild (true, or 'pruebas' for testers only) the buildings of the new zones go wherever the player wants:
+// On maps with content.freeBuild (kept under content.beta while only testers have it) the buildings of the new zones go wherever the player wants:
 // after paying, the camera rises over a grid and the building can be dragged, turned and placed.
 // The 🏗️ button moves them again later. Places live in S.grid = { id: { x, z, r } } (r: quarter turns).
-const GRID_ON = forTesters(MAPC.freeBuild);
+const GRID_ON = !!MAPC.freeBuild;
 const gridable = b => GRID_ON && !b.dock && (b.area || 1) >= 6;
 const GRIDS = BUILDS.filter(gridable);
 const ringOff = b => (ANIMALS.includes(b) ? 3 : 2.3);
-GRIDS.forEach(b => { b.home = { x: b.x, z: b.z, r: ANIMALS.includes(b) ? 0 : b.x < 0 ? 1 : 3 }; });
+GRIDS.forEach(b => { b.home = { x: b.x, z: b.z, r: b.rot ?? (ANIMALS.includes(b) ? 0 : b.x < 0 ? 1 : 3) }; });
 const zoneRect = b => RUBBLE.find(Z => Z.a === b.area);
 
 // Moves the building, its ring and its pile; workers and labels read b.x / b.zx, so they follow by themselves
