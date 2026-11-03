@@ -328,6 +328,7 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
   <button id="avatarBtn">🧑‍🎨 Personaje</button>
   <button id="skinBtn">👗 Aspecto</button>
   <button id="vskinBtn">🚜 Pintura del tractor</button>
+  <button id="farmsBtn">🗺️ Mis granjas</button>
   <button id="starsBtn">⭐ Estrellas</button>
   <button id="achvBtn">🏆 Logros</button>
   <button id="feedbackBtn">💬 Opinión</button>
@@ -623,61 +624,13 @@ const TOWN = [
   { id: 'music',    kind: 'music',    name: 'Quiosco de música', x: 7.5, z: 8.8, cost: 400000, hx: 1.05, hz: 1.05 },
 ];
 TOWN.forEach(t => { t.area = 5; t.icon = { house: '🏠', cafe: '☕', park: '🌳', hotel: '🏨', townhall: '🏛️', bank: '🏦', fountain: '⛲', music: '🎺', police: '🚓' }[t.kind]; });
-// Moving takes Sonia to a whole new map: its own landscape, trees, weather and a bonus of its own
-const MAPS = [
-  { name: 'Valle Verde',        icon: '🌷', sky: 0xa8dcf0, grass: 0x7cc451, grassDark: 0x6fba45, pine: 0x2f8a45, pine2: 0x3fa356, hedge: 0x3f9a3a, meadow: 0xa3a85a, leaves: 0x5fb04a, path: 0xe6c690, water: 0x5cbcf0, trees: 'mix',      weather: 'petals', bonus: null },
-  { name: 'Costa Dorada',       icon: '🏖️', sky: 0x8fd8ff, grass: 0xa8d05a, grassDark: 0x9cc650, pine: 0x3f9a3a, pine2: 0x6fbf4a, hedge: 0x4faa3a, meadow: 0xd8c890, leaves: 0x6fbf4a, path: 0xf3e2b0, water: 0x2fd0d8, trees: 'palm',     weather: 'none',   bonus: { kind: 'fish',    text: 'El pescado y las conservas valen ×3' } },
-  { name: 'Bosque Otoñal',      icon: '🍁', sky: 0xf3d9b0, grass: 0xc8a64a, grassDark: 0xbb963c, pine: 0xc9541f, pine2: 0xe08a2a, hedge: 0x9a6a2a, meadow: 0xa88a4a, leaves: 0xd86a24, path: 0xd8b07a, water: 0x4a98c8, trees: 'round',    weather: 'leaves', bonus: { kind: 'wood',    text: 'Madera, tablones y muebles valen ×3' } },
-  { name: 'Montaña Nevada',     icon: '🏔️', sky: 0xcfe3f0, grass: 0xeef4f7, grassDark: 0xe2ebf0, pine: 0x2f6a55, pine2: 0x3f7f66, hedge: 0x5f8f7a, meadow: 0xd8dccf, leaves: 0xe8f0f4, path: 0xc8c0b8, water: 0x7ab8e0, trees: 'snowpine', weather: 'snow',   bonus: { kind: 'tickets', text: 'Las atracciones venden el doble de entradas' } },
-  { name: 'Cañón del Desierto', icon: '🌵', sky: 0xffd9a0, grass: 0xe0b070, grassDark: 0xd4a464, pine: 0x4f8a3a, pine2: 0x6aa04a, hedge: 0xb07a4a, meadow: 0xd8a868, leaves: 0x8aa84a, path: 0xf0c890, water: 0x3fb0c8, trees: 'cactus',   weather: 'none',   bonus: { kind: 'crops',   text: 'Los cultivos crecen el doble de rápido' } },
-  { name: 'Isla Tropical',      icon: '🏝️', sky: 0x7fd0ff, grass: 0x6fcf5a, grassDark: 0x62c24e, pine: 0x2f9a45, pine2: 0x4fbf5a, hedge: 0x2f9a45, meadow: 0x9ac860, leaves: 0x3fbf5a, path: 0xf7eac0, water: 0x22d8c8, trees: 'palm',     weather: 'none',   bonus: { kind: 'all',     text: 'Todo se vende un 50% más caro' } },
-];
+// Maps: each one lives in its own file in src/maps/ and adds itself to this list (the order of index.html is the map order)
+const MAPS = [];
 const mapOf = n => MAPS[n % MAPS.length];
-// What a map changes beyond its looks: the last four zones get their own crops, animals, workshops, shops and rides.
-// Ids stay the same (missions and saves refer to them); names, products and models change.
-const MAP_CONTENT = {
-  'Costa Dorada': {
-    sea: true,
-    patches: { G: { crop: 'coconut' }, H: { crop: 'bamboo' }, I: { crop: 'pineapple' } },
-    procs: {
-      loom: { name: 'Arrocería', input: 'mussel', output: 'paella', body: 0xfff1d6, roof: 0xf5a524 },
-      sawmill: { name: 'Taller de tablas de surf', input: 'bamboo', output: 'surfboard', body: 0xbfe6ff, roof: 0x2fb5a0 },
-      carpentry: { name: 'Astillero de veleros', input: 'surfboard', output: 'sailboat', body: 0xfdf6ea, roof: 0x3f7fd0 },
-      popstand: { name: 'Coctelería', input: 'coconut', output: 'cocktail', body: 0xfff3c4, roof: 0x2fb5a0 },
-      lemonbar: { name: 'Batidería', input: 'pineapple', output: 'smoothie', body: 0xfde3c3, roof: 0xf5a524 },
-    },
-    animals: {
-      sheep: { name: 'Bateas de mejillones', output: 'mussel', look: 'mussel' },
-      pigs: { name: 'Vivero de pulpos', output: 'octopus', look: 'octopus' },
-      goats: { name: 'Vivero de gambas', output: 'shrimp', look: 'shrimp' },
-    },
-    shops: {
-      barn: { name: 'Lonja', icon: '🦐', awning: 0x3f7fd0, goods: ['coconut', 'mussel', 'shrimp', 'octopus', 'paella'] },
-      lumber: { name: 'Tienda náutica', icon: '⛵', awning: 0x2fb5a0, goods: ['bamboo', 'surfboard', 'sailboat'] },
-      fair: { name: 'Puesto del paseo', icon: '🍹', awning: 0xf5a524, goods: ['cocktail'] },
-      beach: { name: 'Chiringuito', icon: '🍍', awning: 0xe8384a, goods: ['pineapple', 'smoothie', 'icecream'] },
-    },
-    gates: { gate5: { name: 'Abrir el puerto pesquero', icon: '⚓' }, gate6: { name: 'Abrir el astillero', icon: '⛵' }, gate7: { name: 'Abrir el paseo marítimo', icon: '🎡' }, gate8: { name: 'Abrir la playa', icon: '🏖️' } },
-    gateToasts: { gate5: '⚓ ¡Puerto pesquero! Mejillones, gambas, pulpos y cocos', gate6: '⛵ ¡Astillero! Bambú, tablas de surf y veleros', gate7: '🎡 ¡Paseo marítimo! Atracciones junto al mar', gate8: '🏖️ ¡La playa! Piñas, batidos y surf' },
-    zones: { 6: 'el puerto pesquero', 7: 'el astillero', 8: 'el paseo marítimo', 9: 'la playa' },
-    rides: { carousel: ['Tiovivo marinero', '🎠'], haunted: ['Barco fantasma', '🏴‍☠️'], bumper: ['Lanchas de choque', '🚤'], ferris: ['Noria del puerto', '🎡'], coaster: ['Montaña rusa del acantilado', '🎢'], pool: ['Piscina natural', '🏊'], slide: ['Tobogán acuático', '🛝'], waves: ['Escuela de surf', '🏄'] },
-    missions: {
-      'Abre la granja de animales': 'Abre el puerto pesquero', 'Compra las ovejas': 'Pon las bateas de mejillones', 'Planta el maizal': 'Planta los cocoteros',
-      'Construye el telar': 'Construye la arrocería', 'Compra las cabras': 'Pon el vivero de gambas', 'Compra los cerdos trufferos': 'Pon el vivero de pulpos',
-      'Contrata una cajera en la tienda de la granja': 'Contrata una cajera en la lonja', 'Abre el aserradero': 'Abre el astillero', 'Planta el bosque para talar': 'Planta el bambú',
-      'Construye el aserradero': 'Construye el taller de tablas de surf', 'Construye la carpintería': 'Construye el astillero de veleros',
-      'Contrata una cajera en la tienda de muebles': 'Contrata una cajera en la tienda náutica', 'Abre la feria': 'Abre el paseo marítimo',
-      'Construye el tiovivo': 'Construye el tiovivo marinero', 'Construye la palomitería': 'Construye la coctelería', 'Construye la casa del terror': 'Construye el barco fantasma',
-      'Contrata al mecánico de la feria': 'Contrata al mecánico del paseo', 'Construye los autos de choque': 'Construye las lanchas de choque', 'Construye la noria': 'Construye la noria del puerto',
-      'Sube el tiovivo al nivel 3': 'Sube el tiovivo marinero al nivel 3', 'Construye la montaña rusa': 'Construye la montaña rusa del acantilado', 'Abre las piscinas': 'Abre la playa',
-      'Construye la piscina': 'Construye la piscina natural', 'Planta los limoneros': 'Planta las piñas', 'Construye la limonadería': 'Construye la batidería',
-      'Construye el tobogán': 'Construye el tobogán acuático', 'Construye la piscina de olas': 'Construye la escuela de surf',
-    },
-  },
-};
-// The version goes up with every release; tools/build.py stamps the build date (while developing it says 'en pruebas')
-const GAME_VERSION = '27';
-const BUILD_DATE = '03/11/2026 12:30';
+const mapById = id => MAPS.find(m => m.id === id);
+// The version goes up with every release; the build (vite.config.js) stamps the date (while developing it says 'en pruebas')
+const GAME_VERSION = '28';
+const BUILD_DATE = '03/11/2026 13:03';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -687,7 +640,7 @@ const VEHICLE_SKINS = [
   { id: 'black',  name: 'Noche',         icon: '⚫', body: 0x2a2a30, mower: 0x2a2a30, hub: 0xe8384a, need: 'Atrapa a 10 ladrones', goal: 10, prog: () => S.meta.thieves || 0 },
   { id: 'purple', name: 'Feriante',      icon: '🟣', body: 0x8e3bb0, mower: 0x8e3bb0, hub: 0xf6c445, need: 'Abre la feria', goal: 1, prog: () => +S.gate7 },
   { id: 'gold',   name: 'Oro puro',      icon: '🥇', body: 0xf6c445, mower: 0xf6c445, hub: 0xfdf6ea, metal: true, need: 'Consigue 10 medallas de oro', goal: 10, prog: () => S.meta.golds || 0 },
-  { id: 'coral',  name: 'Coral',         icon: '🪸', body: 0xff7f6a, mower: 0xff7f6a, hub: 0xfdf6ea, need: 'Abre el astillero en la Costa Dorada', goal: 1, prog: () => +((S.farm || 0) % MAPS.length === 1 && S.gate6) },
+  { id: 'coral',  name: 'Coral',         icon: '🪸', body: 0xff7f6a, mower: 0xff7f6a, hub: 0xfdf6ea, need: 'Abre el astillero en la Costa Dorada', goal: 1, prog: () => +(THEME.id === 'costa' && S.gate6) },
   { id: 'police', name: 'Patrulla',      icon: '🚓', body: 0x2f4f8f, mower: 0x2f4f8f, hub: 0xfdfdfd, need: 'Llega al nivel 8', goal: 8, lvl: 8, prog: () => S.meta.level || 1 },
   { id: 'camo',   name: 'Camuflaje',     icon: '🪖', body: 0x5a6a32, mower: 0x5a6a32, hub: 0x2a2a2a, need: 'Llega al nivel 12', goal: 12, lvl: 12, prog: () => S.meta.level || 1 },
   { id: 'galaxy', name: 'Galaxia',       icon: '🌌', body: 0x3a2a7a, mower: 0x3a2a7a, hub: 0xf5e01f, metal: true, need: 'Llega al nivel 20', goal: 20, lvl: 20, prog: () => S.meta.level || 1 },
@@ -724,9 +677,9 @@ const OUTFITS = [
     look: { shirt: 'gold', pants: 0xc98f12, bib: 0xc98f12, hat: 'straw', hatColor: 0xf6c445, kerchief: true, boot: 0xc98f12 } },
   { id: 'queen',   name: 'Reina del huerto', icon: '👑', text: 'Vestido largo y corona', need: 'Múdate a una granja nueva', goal: 1, prog: () => +(S.farm > 0),
     look: { shirt: 0x8e5bd0, skirt: 0x6a2fb4, skirtLong: true, pants: 'skin', hat: 'crown', boot: 0x6a2fb4 } },
-  { id: 'sailor',  name: 'Marinera',         icon: '⚓', text: 'Camiseta de rayas y gorra de marinera', need: 'Abre el puerto pesquero en la Costa Dorada', goal: 1, prog: () => +((S.farm || 0) % MAPS.length === 1 && S.gate5),
+  { id: 'sailor',  name: 'Marinera',         icon: '⚓', text: 'Camiseta de rayas y gorra de marinera', need: 'Abre el puerto pesquero en la Costa Dorada', goal: 1, prog: () => +(THEME.id === 'costa' && S.gate5),
     look: { shirt: 'stripes', pants: 0x2f4f8f, hat: 'sailor', kerchief: true, boot: 0xfdfdfd } },
-  { id: 'surfer',  name: 'Surfera',          icon: '🏄', text: 'Neopreno, visera y gafas de sol', need: 'Abre la playa en la Costa Dorada', goal: 1, prog: () => +((S.farm || 0) % MAPS.length === 1 && S.gate8),
+  { id: 'surfer',  name: 'Surfera',          icon: '🏄', text: 'Neopreno, visera y gafas de sol', need: 'Abre la playa en la Costa Dorada', goal: 1, prog: () => +(THEME.id === 'costa' && S.gate8),
     look: { shirt: 0x2fb5a0, pants: 0x2a2a30, hat: 'visor', hatColor: 0xf5c518, glasses: true, boot: 0x2a2a30 } },
   { id: 'explorer', name: 'Exploradora',     icon: '🧭', text: 'Ropa de safari y sombrero', need: 'Llega al nivel 5', goal: 5, lvl: 5, prog: () => S.meta.level || 1,
     look: { shirt: 0xc9a76a, pants: 0x6b5a3a, hat: 'straw', hatColor: 0xc9a76a, kerchief: true, boot: 0x5a3a22 } },
@@ -784,7 +737,93 @@ const MEADOW = { x0: 16.8, x1: 33.8, z0: -13.2, z1: 7.2, sp: .55, midX: 25.3, mi
 const REC = { hopper: { x: 13.7, z: 5.8 }, zone: { x: 15.3, z: 5.8, r: 1 }, beltX: 13.7, beltZ0: 5.2, beltZ1: -8.6, gapZ0: -.7, gapZ1: 2.7, plant: { x: 14.2, z: -9.6 }, cash: { x: 16.0, z: -9.6, r: .8 } };
 const MOVE = { x: -9.4, z: -6.4, cost: 25000000 };
 
-const SAVE_KEY = 'huerto-sonia-v3';
+/* ---------- Map 1: Valle Verde ---------- */
+// Each map is described here as data: its look, its bonus, the mechanic it adds and what it changes in the zones.
+MAPS.push({
+  id: 'valle', mechanic: 'La granja de siempre: cosechar, vender y abrir zonas',
+  name: 'Valle Verde',        icon: '🌷', sky: 0xa8dcf0, grass: 0x7cc451, grassDark: 0x6fba45, pine: 0x2f8a45, pine2: 0x3fa356, hedge: 0x3f9a3a, meadow: 0xa3a85a, leaves: 0x5fb04a, path: 0xe6c690, water: 0x5cbcf0, trees: 'mix',      weather: 'petals', bonus: null,
+});
+
+/* ---------- Map 2: Costa Dorada ---------- */
+// Each map is described here as data: its look, its bonus, the mechanic it adds and what it changes in the zones.
+MAPS.push({
+  id: 'costa', mechanic: 'Construcción libre: tú eliges dónde va cada cosa',
+  name: 'Costa Dorada',       icon: '🏖️', sky: 0x8fd8ff, grass: 0xa8d05a, grassDark: 0x9cc650, pine: 0x3f9a3a, pine2: 0x6fbf4a, hedge: 0x4faa3a, meadow: 0xd8c890, leaves: 0x6fbf4a, path: 0xf3e2b0, water: 0x2fd0d8, trees: 'palm',     weather: 'none',   bonus: { kind: 'fish',    text: 'El pescado y las conservas valen ×3' },
+  // The last four zones get their own crops, animals, workshops, shops and rides.
+  // Ids stay the same (missions and saves refer to them); names, products and models change.
+  content: {
+    sea: true,
+    patches: { G: { crop: 'coconut' }, H: { crop: 'bamboo' }, I: { crop: 'pineapple' } },
+    procs: {
+      loom: { name: 'Arrocería', input: 'mussel', output: 'paella', body: 0xfff1d6, roof: 0xf5a524 },
+      sawmill: { name: 'Taller de tablas de surf', input: 'bamboo', output: 'surfboard', body: 0xbfe6ff, roof: 0x2fb5a0 },
+      carpentry: { name: 'Astillero de veleros', input: 'surfboard', output: 'sailboat', body: 0xfdf6ea, roof: 0x3f7fd0 },
+      popstand: { name: 'Coctelería', input: 'coconut', output: 'cocktail', body: 0xfff3c4, roof: 0x2fb5a0 },
+      lemonbar: { name: 'Batidería', input: 'pineapple', output: 'smoothie', body: 0xfde3c3, roof: 0xf5a524 },
+    },
+    animals: {
+      sheep: { name: 'Bateas de mejillones', output: 'mussel', look: 'mussel' },
+      pigs: { name: 'Vivero de pulpos', output: 'octopus', look: 'octopus' },
+      goats: { name: 'Vivero de gambas', output: 'shrimp', look: 'shrimp' },
+    },
+    shops: {
+      barn: { name: 'Lonja', icon: '🦐', awning: 0x3f7fd0, goods: ['coconut', 'mussel', 'shrimp', 'octopus', 'paella'] },
+      lumber: { name: 'Tienda náutica', icon: '⛵', awning: 0x2fb5a0, goods: ['bamboo', 'surfboard', 'sailboat'] },
+      fair: { name: 'Puesto del paseo', icon: '🍹', awning: 0xf5a524, goods: ['cocktail'] },
+      beach: { name: 'Chiringuito', icon: '🍍', awning: 0xe8384a, goods: ['pineapple', 'smoothie', 'icecream'] },
+    },
+    gates: { gate5: { name: 'Abrir el puerto pesquero', icon: '⚓' }, gate6: { name: 'Abrir el astillero', icon: '⛵' }, gate7: { name: 'Abrir el paseo marítimo', icon: '🎡' }, gate8: { name: 'Abrir la playa', icon: '🏖️' } },
+    gateToasts: { gate5: '⚓ ¡Puerto pesquero! Mejillones, gambas, pulpos y cocos', gate6: '⛵ ¡Astillero! Bambú, tablas de surf y veleros', gate7: '🎡 ¡Paseo marítimo! Atracciones junto al mar', gate8: '🏖️ ¡La playa! Piñas, batidos y surf' },
+    zones: { 6: 'el puerto pesquero', 7: 'el astillero', 8: 'el paseo marítimo', 9: 'la playa' },
+    rides: { carousel: ['Tiovivo marinero', '🎠'], haunted: ['Barco fantasma', '🏴‍☠️'], bumper: ['Lanchas de choque', '🚤'], ferris: ['Noria del puerto', '🎡'], coaster: ['Montaña rusa del acantilado', '🎢'], pool: ['Piscina natural', '🏊'], slide: ['Tobogán acuático', '🛝'], waves: ['Escuela de surf', '🏄'] },
+    missions: {
+      'Abre la granja de animales': 'Abre el puerto pesquero', 'Compra las ovejas': 'Pon las bateas de mejillones', 'Planta el maizal': 'Planta los cocoteros',
+      'Construye el telar': 'Construye la arrocería', 'Compra las cabras': 'Pon el vivero de gambas', 'Compra los cerdos trufferos': 'Pon el vivero de pulpos',
+      'Contrata una cajera en la tienda de la granja': 'Contrata una cajera en la lonja', 'Abre el aserradero': 'Abre el astillero', 'Planta el bosque para talar': 'Planta el bambú',
+      'Construye el aserradero': 'Construye el taller de tablas de surf', 'Construye la carpintería': 'Construye el astillero de veleros',
+      'Contrata una cajera en la tienda de muebles': 'Contrata una cajera en la tienda náutica', 'Abre la feria': 'Abre el paseo marítimo',
+      'Construye el tiovivo': 'Construye el tiovivo marinero', 'Construye la palomitería': 'Construye la coctelería', 'Construye la casa del terror': 'Construye el barco fantasma',
+      'Contrata al mecánico de la feria': 'Contrata al mecánico del paseo', 'Construye los autos de choque': 'Construye las lanchas de choque', 'Construye la noria': 'Construye la noria del puerto',
+      'Sube el tiovivo al nivel 3': 'Sube el tiovivo marinero al nivel 3', 'Construye la montaña rusa': 'Construye la montaña rusa del acantilado', 'Abre las piscinas': 'Abre la playa',
+      'Construye la piscina': 'Construye la piscina natural', 'Planta los limoneros': 'Planta las piñas', 'Construye la limonadería': 'Construye la batidería',
+      'Construye el tobogán': 'Construye el tobogán acuático', 'Construye la piscina de olas': 'Construye la escuela de surf',
+    },
+  },
+});
+
+/* ---------- Map 3: Bosque Otoñal ---------- */
+// Each map is described here as data: its look, its bonus, the mechanic it adds and what it changes in the zones.
+MAPS.push({
+  id: 'bosque', mechanic: 'Felicidad de los trabajadores: casa, descanso y sueldo',
+  name: 'Bosque Otoñal',      icon: '🍁', sky: 0xf3d9b0, grass: 0xc8a64a, grassDark: 0xbb963c, pine: 0xc9541f, pine2: 0xe08a2a, hedge: 0x9a6a2a, meadow: 0xa88a4a, leaves: 0xd86a24, path: 0xd8b07a, water: 0x4a98c8, trees: 'round',    weather: 'leaves', bonus: { kind: 'wood',    text: 'Madera, tablones y muebles valen ×3' },
+});
+
+/* ---------- Map 4: Montaña Nevada ---------- */
+// Each map is described here as data: its look, its bonus, the mechanic it adds and what it changes in the zones.
+MAPS.push({
+  id: 'montana', mechanic: 'Estaciones y clima',
+  name: 'Montaña Nevada',     icon: '🏔️', sky: 0xcfe3f0, grass: 0xeef4f7, grassDark: 0xe2ebf0, pine: 0x2f6a55, pine2: 0x3f7f66, hedge: 0x5f8f7a, meadow: 0xd8dccf, leaves: 0xe8f0f4, path: 0xc8c0b8, water: 0x7ab8e0, trees: 'snowpine', weather: 'snow',   bonus: { kind: 'tickets', text: 'Las atracciones venden el doble de entradas' },
+});
+
+/* ---------- Map 5: Cañón del Desierto ---------- */
+// Each map is described here as data: its look, its bonus, the mechanic it adds and what it changes in the zones.
+MAPS.push({
+  id: 'desierto', mechanic: 'Agua y riego',
+  name: 'Cañón del Desierto', icon: '🌵', sky: 0xffd9a0, grass: 0xe0b070, grassDark: 0xd4a464, pine: 0x4f8a3a, pine2: 0x6aa04a, hedge: 0xb07a4a, meadow: 0xd8a868, leaves: 0x8aa84a, path: 0xf0c890, water: 0x3fb0c8, trees: 'cactus',   weather: 'none',   bonus: { kind: 'crops',   text: 'Los cultivos crecen el doble de rápido' },
+});
+
+/* ---------- Map 6: Isla Tropical ---------- */
+// Each map is described here as data: its look, its bonus, the mechanic it adds and what it changes in the zones.
+MAPS.push({
+  id: 'isla', mechanic: 'Habitantes y decisiones',
+  name: 'Isla Tropical',      icon: '🏝️', sky: 0x7fd0ff, grass: 0x6fcf5a, grassDark: 0x62c24e, pine: 0x2f9a45, pine2: 0x4fbf5a, hedge: 0x2f9a45, meadow: 0x9ac860, leaves: 0x3fbf5a, path: 0xf7eac0, water: 0x22d8c8, trees: 'palm',     weather: 'none',   bonus: { kind: 'all',     text: 'Todo se vende un 50% más caro' },
+});
+
+// The saved game holds one farm per map, so moving away never loses a farm and any of them can be visited again.
+// huerto-sonia-v3 (a single farm) is read once to bring old games over, and left untouched as a backup.
+const SAVE_KEY = 'huerto-sonia-v4', OLD_SAVE_KEY = 'huerto-sonia-v3';
+// What belongs to the player and goes with them to every map; everything else belongs to one farm
+const PLAYER_KEYS = ['meta', 'stars', 'perks', 'achv', 'chestDay', 'life', 'sound', 'boostUntil'];
 
 const fresh = () => ({
   coins: 0, earned: 0, lv: Object.fromEntries(Object.keys(UPGRADES).map(k => [k, 0])),
@@ -816,15 +855,41 @@ function sanitize(s) {
 }
 function loadSave() {
   try {
-    const now = JSON.parse(localStorage.getItem(SAVE_KEY));
+    const now = JSON.parse(localStorage.getItem(OLD_SAVE_KEY));
     if (now) return now;
     const old = JSON.parse(localStorage.getItem('huerto-tito-3d-v2')); // keep progress from the first 3D version
     if (old) { old.mission = 0; return old; }
   } catch {}
   return null;
 }
-let S = sanitize(window.claude?.hot?.data?.state || loadSave());
-const save = () => { S.t = Date.now(); try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch {} };
+function loadWorld() {
+  try { const w = JSON.parse(localStorage.getItem(SAVE_KEY)); if (w && w.farms && mapById(w.map)) return w; } catch {}
+  const old = loadSave(), w = { map: 'valle', player: {}, farms: {} };
+  if (!old) return w;
+  // An old single-farm game becomes the farm of the map it was on
+  const farm = { ...old }; w.map = mapOf(old.farm || 0).id;
+  PLAYER_KEYS.forEach(k => { if (k in farm) { w.player[k] = farm[k]; delete farm[k]; } });
+  w.farms[w.map] = farm;
+  return w;
+}
+const WORLD = loadWorld();
+const mapIndex = id => MAPS.findIndex(m => m.id === id);
+let S = sanitize(window.claude?.hot?.data?.state || { farm: mapIndex(WORLD.map), ...WORLD.farms[WORLD.map], ...WORLD.player });
+let leaving = false; // set while going to another map, so nothing writes this farm into the next map's place
+function save() {
+  if (leaving) return;
+  S.t = Date.now(); WORLD.player = {}; const farm = {};
+  Object.entries(S).forEach(([k, v]) => { if (PLAYER_KEYS.includes(k)) WORLD.player[k] = v; else farm[k] = v; });
+  WORLD.farms[WORLD.map] = farm;
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(WORLD)); } catch {}
+}
+// Goes to another map: this farm is saved as it is and the page starts again on the other one
+function goToMap(id) {
+  save(); leaving = true; WORLD.map = id;
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(WORLD)); } catch {}
+  location.reload();
+}
+const visitedMaps = () => MAPS.filter(m => WORLD.farms[m.id]);
 try { window.claude?.hot?.snapshot?.(() => ({ state: S })); } catch {}
 const pstate = id => (S.procs[id] = S.procs[id] || { in: 0, out: 0, t: 0 });
 const isBuilt = id => S.built.includes(id);
@@ -832,9 +897,9 @@ const unlocked = id => S.unlocked.includes(id);
 const boosted = () => Date.now() < S.boostUntil;
 const fscale = () => 1.6 ** (S.farm || 0);
 const mult = () => (boosted() ? 2 : 1) * 2 ** (S.farm || 0);
-const THEME = mapOf(S.farm || 0);
+const THEME = mapById(WORLD.map);
 // The current map's own zones replace the names, products and colours of the shared ones before the world is built
-const MAPC = MAP_CONTENT[THEME.name] || {};
+const MAPC = THEME.content || {};
 {
   const put = (list, over) => Object.entries(over || {}).forEach(([id, o]) => Object.assign(list.find(x => x.id === id), o));
   put(PATCHES, MAPC.patches); put(PROCS, MAPC.procs); put(ANIMALS, MAPC.animals); put(SHOPS, MAPC.shops); put(GATES, MAPC.gates);
@@ -2299,7 +2364,11 @@ const reachable = ref => areaOpen(ref.area || 1) && zoneClean(ref.area || 1) && 
 let MOVE_AFTER = 999;
 function padInfoBase(pad) {
   const r = pad.ref;
-  if (pad.kind === 'move') return { active: S.mission >= MOVE_AFTER, cost: MOVE.cost, name: 'Mudarse de granja', icon: '🚚', sub: mapOf((S.farm || 0) + 1).name };
+  if (pad.kind === 'move') {
+    // Once the next map has a farm of its own, the lorry takes Sonia there for free
+    const next = mapOf((S.farm || 0) + 1), there = !!WORLD.farms[next.id];
+    return { active: S.mission >= MOVE_AFTER, cost: there ? 0 : MOVE.cost, name: there ? 'Viajar a tu granja' : 'Mudarse de granja', icon: '🚚', sub: next.name };
+  }
   if (pad.kind === 'upg') {
     const l = S.lv[pad.id];
     const name = pad.id === 'broom' ? BROOM_NAMES[Math.min(l + 1, BROOM_NAMES.length - 1)] : r.name;
@@ -2311,18 +2380,18 @@ function padInfoBase(pad) {
   if (pad.kind === 'special') return { active: reachable(r) && !isBuilt(pad.id), cost: r.cost, name: r.name, icon: r.icon, sub: '' };
   return { active: !S[pad.id] && (!r.needs || S[r.needs]), cost: r.cost, name: r.name, icon: r.icon, sub: '' };
 }
-function padInfo(pad) { const i = padInfoBase(pad); i.cost = Math.max(1, Math.round(i.cost * fscale())); return i; }
+function padInfo(pad) { const i = padInfoBase(pad); i.cost = i.cost && Math.max(1, Math.round(i.cost * fscale())); return i; } // 0 stays free
 function refreshWorld() {
   pads.forEach(pad => {
     const info = padInfo(pad);
     pad.g.visible = info.active; pad.info = info;
     if (!info.active) return;
     const paid = S.paid[pad.id] || 0, left = info.cost - paid;
-    const html = `<div class="nm">${info.name}${info.sub ? ' · ' + info.sub : ''}</div><div class="pr"><span class="coin"></span>${fmt(left)}</div>`;
+    const html = `<div class="nm">${info.name}${info.sub ? ' · ' + info.sub : ''}</div>${info.cost ? `<div class="pr"><span class="coin"></span>${fmt(left)}</div>` : '<div class="pr">Gratis</div>'}`;
     if (pad.iconKey !== info.icon) { pad.iconKey = info.icon; pad.icon.material.map = iconTex(info.icon, '#c98f12'); pad.icon.material.needsUpdate = true; }
     if (pad.label._html !== html) { pad.label.innerHTML = html; pad.label._html = html; }
     pad.label.classList.toggle('cant', S.coins <= 0);
-    const prog = paid / info.cost;
+    const prog = info.cost ? paid / info.cost : 1;
     if (Math.abs(prog - pad.lastP) > .005) { pad.fill.geometry.dispose(); pad.fill.geometry = new T.RingGeometry(.6, .76, 40, 1, 0, Math.max(.001, prog * Math.PI * 2)); pad.lastP = prog; }
   });
   PATCHES.forEach(p => { const show = p.area !== 3 || sectorClean(p.sector); p.decor.forEach(d => { d.visible = show; }); p.soil.material = unlocked(p.id) ? M.dirt : M.dirtLocked; });
@@ -2349,6 +2418,7 @@ function refreshWorld() {
 function completePad(pad) {
   if (pad.kind === 'move') {
     const n = (S.farm || 0) + 1, th = mapOf(n);
+    if (WORLD.farms[th.id]) { toast(`🚚 Viajando a ${th.name}…`); goToMap(th.id); return; }
     $('moveMap').textContent = `${th.icon} ${th.name}`;
     $('moveBonus').textContent = th.bonus ? `✨ ${th.bonus.text}` : '';
     $('moveTxt').textContent = `Granja ${n + 1}: un mapa nuevo. Todo se venderá ×${2 ** n} y las mejoras costarán algo más. Ganas ⭐ ${starGain()} estrellas para mejoras permanentes.`;
@@ -3553,6 +3623,7 @@ function update(dt) {
     const on = pad === under;
     pad.g.position.y = on ? -.02 : 0;
     pad.g.scale.setScalar(on && P.padHold < .6 ? 1 + Math.sin(P.padHold * 18) * .05 : 1);
+    if (on && P.padHold >= .6 && !pad.info.cost && pad.info.active) { P.padHold = -2; completePad(pad); continue; } // free pads just happen
     if (!on || P.padHold < .6 || S.coins <= 0 || P.payT > 0) continue;
     const info = pad.info, paid = S.paid[pad.id] || 0, left = info.cost - paid;
     const step = Math.min(S.coins, left, Math.max(1, Math.ceil(info.cost / 40)));
@@ -3748,10 +3819,15 @@ $('tractorBtn').addEventListener('click', () => {
   S.vehicle = next || 'none'; S.tractorOn = next === 'tractor';
   toast(next === 'tractor' ? `${who()} se sube al tractor` : next === 'mower' ? `${who()} se sube al cortacésped` : `${who()} va a pie`); refreshWorld(); save();
 });
+// Moving starts a new farm on the next map; the one left behind stays saved exactly as it was
 function moveFarm(headStart) {
+  const next = mapOf((S.farm || 0) + 1);
+  delete S.paid.move;
+  if (WORLD.farms[next.id]) { goToMap(next.id); return; }
   const gain = starGain();
   S.meta.starsTotal = (S.meta.starsTotal || 0) + gain;
   const keep = { farm: (S.farm || 0) + 1, life: S.life, sound: S.sound, boostUntil: S.boostUntil, ...prestigeKeep(), stars: S.stars + gain };
+  save(); WORLD.map = next.id;
   S = { ...fresh(), ...keep, tut: 3 };
   S.coins = Math.round((5000 * (S.perks.start || 0) + (headStart ? 50000 : 0)) * fscale());
   // Watching the ad starts the new map with a few skills already learnt
@@ -3866,7 +3942,7 @@ const ACHV = [
   { id: 'stars10', icon: '🌟', name: 'Estrella', text: 'Consigue 10 estrellas de prestigio', goal: 10, prog: () => S.meta.starsTotal || 0, reward: 200000 },
   { id: 'thief10', icon: '🚔', name: 'Sheriff', text: 'Atrapa a 10 ladrones', goal: 10, prog: () => S.meta.thieves || 0, reward: 120000 },
   { id: 'rides', icon: '🎢', name: 'Feriante', text: 'Construye las 8 atracciones', goal: 8, prog: () => ATTRS.filter(a => S.lv[a.id] > 0).length, reward: 2000000 },
-  { id: 'maps', icon: '🗺️', name: 'Viajera', text: 'Múdate a 3 mapas distintos', goal: 3, prog: () => S.farm || 0, reward: 500000 },
+  { id: 'maps', icon: '🗺️', name: 'Viajera', text: 'Múdate a 3 mapas distintos', goal: 3, prog: () => visitedMaps().length - 1, reward: 500000 },
   { id: 'weeds200', icon: '🌿', name: 'Mano verde', text: 'Arranca 200 malas hierbas', goal: 200, prog: () => S.meta.weeds || 0, reward: 50000 },
   { id: 'pets25', icon: '🐶', name: 'Mejor amiga', text: 'Acaricia al perro 25 veces', goal: 25, prog: () => S.meta.pets || 0, reward: 25000 },
   { id: 'days10', icon: '📅', name: 'Tienda abierta', text: 'Termina 10 jornadas', goal: 10, prog: () => S.meta.days || 0, reward: 60000 },
@@ -4007,6 +4083,13 @@ function openPanel(kind) {
       const l = S.perks[p.id] || 0, max = l >= p.max, c = perkCost(l);
       return `<div class="prow"><span class="pi">${p.icon}</span><span class="pt2"><b>${p.name.replace('Sonia', who())} · ${l}/${p.max}</b>${p.text.replace('Sonia', who())}</span><button data-perk="${p.id}" ${max || S.stars < c ? 'disabled' : ''}>${max ? 'Máx' : `⭐ ${c}`}</button></div>`;
     }).join('');
+  } else if (kind === 'farms') {
+    title = '🗺️ Mis granjas'; sub = 'Cada mapa guarda su propia granja tal como la dejaste. Puedes volver a cualquiera cuando quieras.';
+    rows = MAPS.map(m => {
+      const f = WORLD.farms[m.id], here = m.id === THEME.id;
+      const btn = here ? '<button disabled>Estás aquí</button>' : f ? `<button data-map="${m.id}">Viajar</button>` : '<button disabled>🔒</button>';
+      return `<div class="prow ${here ? 'done' : f ? '' : 'locked'}"><span class="pi">${f ? m.icon : '🔒'}</span><span class="pt2"><b>${m.name}</b>${f ? m.mechanic : 'Se abre mudándote desde la granja anterior'}${f && !here ? `<br><small>💰 ${fmt(f.coins || 0)} · misión ${(f.mission || 0) + 1}</small>` : ''}</span>${btn}</div>`;
+    }).join('');
   } else if (kind === 'achv') {
     title = '🏆 Logros'; sub = 'Cada logro da un premio en monedas en cuanto lo consigues.';
     rows = ACHV.map(a => {
@@ -4068,6 +4151,8 @@ $('panelList').addEventListener('click', e => {
     const o = OUTFITS.find(x => x.id === b.dataset.skinad);
     $('panelOverlay').hidden = true;
     showAd(() => { S.meta.skins = [...(S.meta.skins || []), o.id]; wearSkin(o); });
+  } else if (b.dataset.map) {
+    $('panelOverlay').hidden = true; toast(`🚚 Viajando a ${mapById(b.dataset.map).name}…`); setTimeout(() => goToMap(b.dataset.map), 400);
   } else if (b.dataset.chest) {
     $('panelOverlay').hidden = true;
     if (b.dataset.chest === '2') showAd(() => openChest(2)); else openChest(1);
@@ -4078,6 +4163,7 @@ $('starsBtn').addEventListener('click', () => openPanel('stars'));
 $('skinBtn').addEventListener('click', () => { S.meta.skinNew = false; openPanel('skins'); });
 $('vskinBtn').addEventListener('click', () => { S.meta.vskinNew = false; openPanel('vskins'); });
 $('achvBtn').addEventListener('click', () => openPanel('achv'));
+$('farmsBtn').addEventListener('click', () => openPanel('farms'));
 $('chestBtn').addEventListener('click', () => openPanel('chest'));
 $('adGrow').addEventListener('click', () => {
   if (Date.now() < growCdUntil) { toast(`🌱 Podrás volver a usarlo en ${fmtT((growCdUntil - Date.now()) / 1000)}`); return; }
@@ -4259,8 +4345,9 @@ const soundLabel = () => { $('soundBtn').textContent = S.sound ? '🔊 Sonido: s
 $('soundBtn').addEventListener('click', () => { S.sound = !S.sound; soundLabel(); save(); });
 $('resetBtn').addEventListener('click', () => { $('resetConfirm').hidden = false; });
 $('resetYes').addEventListener('click', () => {
-  S = fresh(); save();
-  try { localStorage.removeItem('huerto-tito-3d-v2'); } catch {}
+  // Starting from scratch wipes every farm and the player's progress, including the old saves it could come back from
+  leaving = true;
+  try { [SAVE_KEY, OLD_SAVE_KEY, 'huerto-tito-3d-v2'].forEach(k => localStorage.removeItem(k)); } catch {}
   location.reload();
 });
 // Feedback: the player writes what they think and sends it by WhatsApp (or copies it), with their progress attached
