@@ -830,7 +830,7 @@ const mapOf = n => MAPS[n % MAPS.length];
 const mapById = id => MAPS.find(m => m.id === id);
 // The version goes up with every release; the build (vite.config.js) stamps the date (while developing it says 'en pruebas')
 const GAME_VERSION = '35';
-const BUILD_DATE = '05/11/2026 10:22';
+const BUILD_DATE = '05/11/2026 10:26';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -953,8 +953,8 @@ MAPS.push({
   // Ids stay the same (missions and saves refer to them); names, products and models change.
   content: {
     sea: true,
-    // Still being made: only testers get the Costa's own plan and building on the grid
-    beta: {
+    // The Costa's own plan, building on the grid and its own first zones: out of testing for everyone since version 35
+    released: {
       freeBuild: true,
       // The first island lives off the sea from the start: seaweed, clams on the sand and salt pans
       // ...and the tropical island north of it has bananas, watermelons, lobsters and squid
@@ -1204,12 +1204,15 @@ const incMin = m => Math.round(incomeRef() * m);
 const mult = () => (boosted() ? 2 : 1) * 2 ** (S.farm || 0);
 const THEME = mapById(WORLD.map);
 // The current map's own zones replace the names, products and colours of the shared ones before the world is built
-// Whatever a map keeps under content.beta only exists for testers
-// It is merged one level deep, so beta can add fields, workshops or shops without repeating the others
+// content.released is a block that came out of testing and is now for everyone; content.beta only exists for testers.
+// Both are merged one level deep, so they can add fields, workshops or shops without repeating the others
 const MAPC = { ...(THEME.content || {}) };
-if (TESTER) Object.entries(THEME.content?.beta || {}).forEach(([k, v]) => {
+const mergeContent = over => Object.entries(over || {}).forEach(([k, v]) => {
   MAPC[k] = v && typeof v === 'object' && !Array.isArray(v) && MAPC[k] && typeof MAPC[k] === 'object' ? { ...MAPC[k], ...v } : v;
 });
+mergeContent(THEME.content?.released);
+if (TESTER) mergeContent(THEME.content?.beta);
+delete MAPC.released; delete MAPC.beta;
 {
   const put = (list, over) => Object.entries(over || {}).forEach(([id, o]) => Object.assign(list.find(x => x.id === id), o));
   put(PATCHES, MAPC.patches); put(PROCS, MAPC.procs); put(ANIMALS, MAPC.animals); put(SHOPS, MAPC.shops); put(GATES, MAPC.gates);
@@ -2150,7 +2153,9 @@ RUBBLE.forEach(Z => {
     Z.meshes = debris.types.map((t, i) => { const im = new T.InstancedMesh(t.geo, t.mat, Math.max(1, counts[i])); im.castShadow = true; scene.add(im); return im; });
     Z.cleared = new Uint8Array(Z.cells.length);
     const saved = (S.rubble || {})[Z.a];
-    Z.cells.forEach((c, i) => { if (saved === 'done' || (saved && saved[i] === '1')) Z.cleared[i] = 1; });
+    // A save from another plan (the list of cells changed): keep how much was clean, not which cells
+    const moved = saved && saved !== 'done' && saved.length !== Z.cells.length, keep = moved ? Math.round(saved.split('1').length - 1) / saved.length * Z.cells.length : 0;
+    Z.cells.forEach((c, i) => { if (saved === 'done' || (moved ? i < keep : saved && saved[i] === '1')) Z.cleared[i] = 1; });
     Z.left = Z.cells.length - Z.cleared.reduce((a, b) => a + b, 0);
     Z.cells.forEach((c, i) => { dummy.position.set(c.x, 0, c.z); dummy.rotation.set(0, c.rot, 0); dummy.scale.setScalar(Z.cleared[i] ? 0 : c.s); dummy.updateMatrix(); Z.meshes[c.type].setMatrixAt(c.idx, dummy.matrix); });
     Z.meshes.forEach(m => { m.instanceMatrix.needsUpdate = true; });
