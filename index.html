@@ -88,6 +88,23 @@ button:focus-visible { outline: 3px solid #3f7fd0; outline-offset: 2px; }
 .mission .mb { height: 7px; border-radius: 6px; background: #ead9bd; overflow: hidden; box-shadow: inset 0 1px 0 rgba(0,0,0,.12); }
 .mission .mb i { display: block; height: 100%; background: linear-gradient(#6fd07a, var(--leaf)); width: 0; transition: width .3s; border-radius: 6px; }
 .mission.done { animation: bump .4s; background: #e4f6d4; }
+.daily {
+  align-self: flex-start; max-width: min(320px, 100%); background: linear-gradient(#fffdf6, #fff3d9); border: 3px solid var(--ink); border-radius: 14px;
+  box-shadow: 0 3px 0 var(--ink); padding: 5px 10px 7px; display: flex; flex-direction: column; gap: 2px; pointer-events: auto; cursor: pointer;
+}
+.daily .mt { display: flex; gap: 8px; align-items: baseline; justify-content: space-between; }
+.daily .mk { font-size: .7rem; letter-spacing: .6px; text-transform: uppercase; color: var(--ink-soft); }
+.daily .dk { font-family: var(--font-display); font-size: .9rem; white-space: nowrap; }
+.daily .dl { font-weight: 800; font-size: .82rem; line-height: 1.25; }
+.daily .dl small { color: var(--ink-soft); font-weight: 700; }
+.daily .dl.ok { color: var(--ink-soft); text-decoration: line-through; }
+.daily.ready { background: #e4f6d4; }
+.daily .dchest { margin-top: 3px; font: inherit; font-weight: 900; font-size: .85rem; border: 2px solid var(--ink); border-radius: 10px; background: var(--gold, #f6c445); padding: 3px 8px; cursor: pointer; animation: bump 1.2s ease-in-out infinite; }
+.streak { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 8px; }
+.streak span { display: flex; flex-direction: column; align-items: center; font-size: .62rem; font-weight: 800; padding: 4px 0; border-radius: 8px; background: #ead9bd; opacity: .55; }
+.streak span b { font-size: 1rem; }
+.streak span.got { opacity: 1; background: #ffe2a8; }
+.streak span.now { opacity: 1; background: #ffd166; outline: 2px solid var(--ink); }
 
 .menu {
   position: fixed; z-index: 8; right: max(16px, env(safe-area-inset-right, 0px)); top: calc(62px + env(safe-area-inset-top, 0px));
@@ -307,7 +324,8 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
   .moodbar .ml, .moodbar .mp { font-size: .8rem; }
   .drawtab { height: 30px; font-size: .85rem; }
   .drawer { max-width: calc(100% - 50px); max-height: 38vh; max-height: 38dvh; overflow-y: auto; pointer-events: auto; gap: 6px; }
-  .mission, .order, .news { max-width: min(250px, calc(100% - 50px)); padding: 4px 9px 6px; border-width: 2px; box-shadow: 0 2px 0 var(--ink); }
+  .mission, .order, .news, .daily { max-width: min(250px, calc(100% - 50px)); padding: 4px 9px 6px; border-width: 2px; box-shadow: 0 2px 0 var(--ink); }
+  .daily .dl { font-size: .76rem; }
   .order { box-shadow: 0 2px 0 var(--gold-dark); }
   .mission .mx, .order .ox { font-size: .86rem; }
   .mission .mk, .order .mk, .news .nk { font-size: .64rem; }
@@ -353,6 +371,65 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
   .gridbar { bottom: calc(8px + env(safe-area-inset-bottom, 0px)); padding: 6px 10px; }
   .gridbar p { margin-bottom: 5px; font-size: .82rem; }
 }
+.prow button .coin { width: 15px; height: 15px; border-width: 1px; display: inline-block; vertical-align: -2px; margin-right: 3px; }
+.chip.zone { background: #3f7a3a; }
+.chip.dirty { background: #8a5a2b; }
+.chip.water { background: #3a7bd5; }
+
+/* Tycoon layer: morale and trust pill, decision cards */
+.townbar { pointer-events: auto; align-self: flex-start; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; background: var(--shade); color: var(--cream); border-radius: 999px; padding: 3px 10px; box-shadow: 0 3px 0 rgba(0,0,0,.25); font-family: var(--font-display); font-size: .9rem; max-width: 100%; }
+.townbar .low { color: #ff8a7a; animation: bump .8s infinite; }
+.townbar .tfx { font-family: inherit; font-size: .75rem; background: rgba(255,255,255,.15); border-radius: 999px; padding: 1px 8px; }
+.adbox.decision #decText { margin: 0; }
+.decopts { display: flex; flex-direction: column; gap: 8px; }
+.decopts button { display: flex; flex-direction: column; gap: 5px; align-items: stretch; }
+.decopts button:disabled { opacity: .5; cursor: default; }
+.decopts .fx { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
+.decopts .fx i { font-style: normal; font-family: system-ui, sans-serif; font-size: .75rem; border-radius: 999px; padding: 2px 8px; background: #fff3; border: 1.5px solid var(--ink); }
+.decopts .fx i.good { background: #c8ecb4; } .decopts .fx i.bad { background: #f6c4bb; }
+.dstats .ddec { grid-column: 1 / -1; font-size: .8rem; opacity: .8; }
+/* Story scenes */
+.adbox.scene .speech { display: flex; gap: 10px; align-items: flex-start; text-align: left; background: #fff; border: 2px solid var(--ink); border-radius: 14px; padding: 10px 12px; }
+.adbox.scene .sface { font-size: 2rem; line-height: 1; }
+.adbox.scene .speech b { font-family: var(--font-display); font-weight: 400; }
+.adbox.scene .speech p { margin: 2px 0 0; }
+/* Chapter path */
+.chapters { display: flex; flex-direction: column; gap: 14px; position: relative; }
+.chapters::before { content: ''; position: absolute; left: 24px; top: 20px; bottom: 20px; border-left: 4px dashed rgba(0,0,0,.18); }
+.prow.chap { position: relative; }
+.prow.chap small { display: block; opacity: .7; font-size: .72rem; text-transform: uppercase; letter-spacing: .4px; }
+.prow.chap.now { background: #fff3c4; outline: 3px solid var(--gold); }
+.prow.chap.done { background: #d9f0c8; }
+.prow.chap.soon { opacity: .55; }
+.prow.chap .soon { font-size: .75rem; font-family: var(--font-display); white-space: nowrap; }
+/* Mood and town on one line */
+.statrow { display: flex; align-items: center; gap: 6px; align-self: flex-start; max-width: 100%; }
+.statrow .moodbar { width: min(220px, 60vw); }
+.statrow .townbar { align-self: center; flex-wrap: nowrap; white-space: nowrap; }
+.chip.thief b { background: rgba(255,255,255,.3); border-radius: 999px; padding: 0 6px; margin-left: 4px; }
+@media (max-width: 430px) { .statrow .moodbar .ml { display: none; } .statrow .moodbar { width: 33vw; padding-right: 8px; } }
+/* Tidy side panel (49-hud.js): one status line, one alert, the mission */
+.hudhide { display: none !important; }
+.statrow { flex-wrap: wrap; row-gap: 4px; }
+.statrow .daychip { display: contents; }
+.statrow .daychip .chip { font-size: .78rem; padding: 3px 9px; }
+.chip.more { pointer-events: auto; border: 0; cursor: pointer; background: var(--ink); color: var(--cream); font: inherit; font-weight: 900; font-size: .8rem; padding: 3px 10px; box-shadow: 0 2px 0 rgba(0,0,0,.25); align-self: flex-start; }
+#news { display: none !important; }
+.drawtab { min-width: 34px; justify-content: center; }
+@media (max-width: 430px) {
+  .statrow .townbar { font-size: .8rem; padding: 2px 8px; }
+  .mission, .daily, .order { max-width: 62vw; }
+  .mission .mx { font-size: .85rem; }
+}
+.statrow { max-width: calc(100% - 52px); }
+/* Mission pill (49-hud.js) */
+.mpill { pointer-events: auto; position: relative; overflow: hidden; align-self: flex-start; display: flex; align-items: center; gap: 6px; max-width: min(260px, 64vw);
+  background: #fffdf6; color: var(--ink); border: 2px solid var(--ink); border-radius: 999px; padding: 4px 10px 6px; box-shadow: 0 2px 0 var(--ink); font: inherit; font-weight: 900; font-size: .82rem; cursor: pointer; }
+.mpill .mpt { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.mpill .mpa { opacity: .6; }
+.mpill b { animation: bump 1s infinite; }
+.mpill i { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--leaf); }
+.mission { cursor: pointer; }
 </style>
 
 <div id="game"></div>
@@ -368,11 +445,16 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
     <button class="iconbtn boost" id="boostBtn" aria-label="Ver anuncio para ganar el doble">📺 ×2</button>
     <button class="iconbtn" id="menuBtn" aria-label="Menú">☰</button>
   </div>
+  <div class="statrow">
   <div class="moodbar" id="moodBar" hidden title="Enfado de los clientes">
     <span class="mf" id="moodFace">🙂</span><span class="ml">Enfado</span>
     <span class="mtrack"><i id="moodFill"></i></span><span class="mp" id="moodPct">0%</span>
   </div>
+  <div class="townbar" id="townBar" hidden><span id="townMorale">😊 60</span><span id="townTrust">⭐ 60</span></div>
+  </div>
+  <div class="chips" id="zoneChip"></div>
   <div class="chips" id="urgent"></div>
+  <div class="chips" id="trouble"></div>
   <div class="order" id="order" hidden>
     <div class="mt"><span class="mk">📋 Pedido especial · <span id="orderTime">2:30</span></span><span class="mr"><span class="coin"></span><span id="orderReward">0</span></span></div>
     <div class="ox" id="orderTxt"></div>
@@ -381,6 +463,7 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
   <!-- Round buttons down the right edge, so the top row fits on narrow phones -->
   <div class="sidebtns">
     <button class="iconbtn" id="viewBtn" aria-label="Cambiar a vista desde arriba">🗺️</button>
+    <button class="iconbtn" id="turnBtn" aria-label="Girar la cámara">🔄</button>
     <button class="iconbtn" id="panBtn" hidden aria-label="Arrastrar el mapa sin mover al personaje">✋</button>
     <button class="iconbtn" id="tractorBtn" hidden aria-label="Subir o bajar del tractor">🚜</button>
     <button class="iconbtn" id="buildBtn" hidden aria-label="Mover edificios">🏗️</button>
@@ -394,6 +477,7 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
     <div class="mx" id="missionTxt"></div>
     <div class="mb"><i id="missionBar"></i></div>
   </div>
+  <div class="daily" id="daily" hidden></div>
   <div class="alerts" id="alerts" hidden></div>
   </div>
 </div>
@@ -403,7 +487,7 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
   <button id="avatarBtn">🧑‍🎨 Personaje</button>
   <button id="skinBtn">👗 Aspecto</button>
   <button id="vskinBtn">🚜 Pintura del tractor</button>
-  <button id="farmsBtn">🗺️ Mis granjas</button>
+  <button id="farmsBtn">🗺️ Capítulos</button>
   <button id="testBtn" hidden>🧪 Pruebas</button>
   <button id="starsBtn">⭐ Estrellas</button>
   <button id="achvBtn">🏆 Logros</button>
@@ -454,6 +538,24 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
     <button class="ghost" id="dayOk">Seguir</button>
   </div>
 </div>
+<div class="overlay" id="decOverlay" hidden>
+  <div class="adbox decision">
+    <p class="dsub" id="decSub">Decisión</p>
+    <div class="bigface" id="decIcon">❓</div>
+    <h3 id="decTitle"></h3>
+    <p id="decText"></p>
+    <div class="decopts" id="decOpts"></div>
+  </div>
+</div>
+<div class="overlay" id="sceneOverlay" hidden>
+  <div class="adbox scene">
+    <p class="dsub" id="sceneTag">Capítulo 1</p>
+    <div class="bigface" id="sceneIcon">🌱</div>
+    <h3 id="sceneTitle"></h3>
+    <div class="speech"><span class="sface" id="sceneFace">👩‍🌾</span><div><b id="sceneName">Sonia</b><p id="sceneText"></p></div></div>
+    <button id="sceneNext">Siguiente ▶</button>
+  </div>
+</div>
 <div class="overlay" id="levelOverlay" hidden>
   <div class="adbox levelup">
     <p class="dsub">¡Has subido de nivel!</p>
@@ -498,7 +600,7 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
 </div>
 <div class="overlay" id="moveOverlay" hidden>
   <div class="adbox">
-    <h3>¿Mudarse a un mapa nuevo?</h3>
+    <h3 id="moveTitle">¿Mudarse a un mapa nuevo?</h3>
     <div class="mapcard"><b id="moveMap"></b><span id="moveBonus"></span></div>
     <p id="moveTxt"></p>
     <button id="moveAd">📺 Mudarse con ventaja</button>
@@ -590,6 +692,24 @@ const ITEMS = {
   cocktail:   { name: 'Piñas coladas',  icon: '🍹', value: 320,  shape: 'jar',  wrap: 0xfff3c4, top: [0xf5c518] },
   pineapple:  { name: 'Piñas',          icon: '🍍', value: 210,  shape: 'box',  wrap: 0xa8703a, top: [0xf5c518] },
   smoothie:   { name: 'Batidos de mango', icon: '🥭', value: 620, shape: 'jar', wrap: 0xf5a524, top: [0x3fa34d] },
+  // The Costa's first island (testers only for now)
+  seaweed:    { name: 'Algas',              icon: '🌿', value: 2,   shape: 'box',  wrap: 0x9fd3e8, top: [0x3f8f5a] },
+  clam:       { name: 'Almejas',            icon: '🐚', value: 5,   shape: 'fish', wrap: 0x9fd3e8, top: [0xf0d8c0] },
+  salt:       { name: 'Sal',                icon: '🧂', value: 12,  shape: 'jar',  wrap: 0xfdfdfd, top: [0x3f7fd0] },
+  algaesalad: { name: 'Ensaladas de algas', icon: '🥗', value: 9,   shape: 'pie',  wrap: 0xfdf6ea, top: [0x3f8f5a] },
+  clamsoup:   { name: 'Sopas de almejas',   icon: '🍲', value: 22,  shape: 'pie',  wrap: 0xc98a4b, top: [0xfdf0d0] },
+  pretzel:    { name: 'Galletas saladas',   icon: '🥨', value: 55,  shape: 'loaf', wrap: 0xc98a4b, top: [0xfdfdfd] },
+  // The Costa's tropical island
+  banana:     { name: 'Plátanos',           icon: '🍌', value: 25,  shape: 'box',  wrap: 0x8fbf4a, top: [0xf5d020] },
+  watermelon: { name: 'Sandías',            icon: '🍉', value: 50,  shape: 'box',  wrap: 0xa8703a, top: [0x3f8f3a, 0xe8384a] },
+  lobster:    { name: 'Langostas',          icon: '🦞', value: 15,  shape: 'fish', wrap: 0x9fd3e8, top: [0xd8402f] },
+  squid:      { name: 'Calamares',          icon: '🦑', value: 45,  shape: 'fish', wrap: 0x9fd3e8, top: [0xf0b8c8] },
+  bananacake: { name: 'Bizcochos de plátano', icon: '🍰', value: 110, shape: 'pie', wrap: 0xe8c08a, top: [0xf5d020] },
+  granita:    { name: 'Granizados de sandía', icon: '🍧', value: 220, shape: 'jar', wrap: 0xfdf6ea, top: [0xe8384a] },
+  // The Costa's cliff (zone 3)
+  orange:     { name: 'Naranjas',           icon: '🍊', value: 90,  shape: 'box',  wrap: 0xa8703a, top: [0xf5891f, 0x8cc63f] },
+  orangejuice:{ name: 'Zumos de naranja',   icon: '🧃', value: 380, shape: 'jar',  wrap: 0xf5891f, top: [0x3fa34d] },
+  oyster:     { name: 'Ostras',             icon: '🦪', value: 160, shape: 'fish', wrap: 0x9fd3e8, top: [0xd8d0c0] },
 };
 // Areas: 1 farm · 2 forest (north gate) · 3 meadow to clean (east gate) · 4 lake (west gate) · 5 town (south, always open)
 //        6 animal farm (west of the lake) · 7 sawmill woods (east of the meadow) · 8 fair (south of the town) · 9 pools (south of the fair)
@@ -709,8 +829,8 @@ const MAPS = [];
 const mapOf = n => MAPS[n % MAPS.length];
 const mapById = id => MAPS.find(m => m.id === id);
 // The version goes up with every release; the build (vite.config.js) stamps the date (while developing it says 'en pruebas')
-const GAME_VERSION = '34';
-const BUILD_DATE = '03/11/2026 19:31';
+const GAME_VERSION = '35';
+const BUILD_DATE = '05/11/2026 10:22';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -836,6 +956,43 @@ MAPS.push({
     // Still being made: only testers get the Costa's own plan and building on the grid
     beta: {
       freeBuild: true,
+      // The first island lives off the sea from the start: seaweed, clams on the sand and salt pans
+      // ...and the tropical island north of it has bananas, watermelons, lobsters and squid
+      patches: { A: { crop: 'seaweed' }, B: { crop: 'clam' }, C: { crop: 'salt' }, D: { crop: 'banana' }, E: { crop: 'watermelon' }, F: { crop: 'orange' } },
+      procs: {
+        florist: { name: 'Puesto de ensaladas', input: 'seaweed', output: 'algaesalad', body: 0xe3f5e8, roof: 0x3f8f5a },
+        mill: { name: 'Marisquería', input: 'clam', output: 'clamsoup', body: 0xfdf0d0, roof: 0x2fb5a0 },
+        kitchen: { name: 'Horno de sal', input: 'salt', output: 'pretzel', body: 0xf3e9dc, roof: 0x3f7fd0 },
+        press: { name: 'Bananería', input: 'banana', output: 'bananacake', body: 0xfff3c4, roof: 0xf5a524 },
+        jam: { name: 'Granizadería', input: 'watermelon', output: 'granita', body: 0xfde3e3, roof: 0x3fa34d },
+        icecream: { name: 'Heladería', input: 'banana' },
+        // The cliff: orange groves up on the rocks and an oyster farm in the cove below
+        cider: { name: 'Zumería', input: 'orange', output: 'orangejuice', body: 0xfff1d6, roof: 0xf5891f },
+      },
+      animals: {
+        coop: { name: 'Vivero de langostas', output: 'lobster', look: 'lobster' },
+        dairy: { name: 'Vivero de calamares', output: 'squid', look: 'squid' },
+        hive: { name: 'Criadero de ostras', output: 'oyster', look: 'mussel' },
+      },
+      gates: { gate: { name: 'Abrir la isla tropical', icon: '🌴' }, gate3: { name: 'Abrir el acantilado', icon: '🍊' } },
+      gateToasts: { gate: '🌴 ¡Isla tropical! Plátanos, sandías, langostas y calamares', gate3: '🍊 ¡El acantilado! Hay que limpiar la basura que ha traído el mar' },
+      shops: {
+        farm: { name: 'Lonja de la cala', icon: '🐚', awning: 0x2fb5a0, goods: ['seaweed', 'clam', 'salt', 'algaesalad', 'clamsoup', 'pretzel'] },
+        forest: { name: 'Mercadillo tropical', icon: '🌴', awning: 0xf5a524, goods: ['banana', 'watermelon', 'bananacake', 'granita', 'lobster', 'squid'] },
+        meadow: { name: 'Mercado del acantilado', icon: '🍊', awning: 0xf5891f, goods: ['orange', 'orangejuice', 'oyster'] },
+      },
+      zones: { 2: 'la isla tropical', 3: 'el acantilado' },
+      missions: {
+        'Abre el campo de trigo': 'Abre la playa de almejas', 'Construye la floristería': 'Construye el puesto de ensaladas',
+        'Construye el molino': 'Construye la marisquería', 'Abre el campo de calabazas': 'Abre las salinas', 'Construye la cocina': 'Construye el horno de sal',
+        'Abre el bosque': 'Abre la isla tropical', 'Atiende a 10 clientes en la tienda del bosque': 'Atiende a 10 clientes en el mercadillo tropical',
+        'Abre el campo de girasoles': 'Planta los plataneros', 'Construye el gallinero': 'Pon el vivero de langostas', 'Construye la prensa de aceite': 'Construye la bananería',
+        'Contrata una cajera en la tienda del bosque': 'Contrata una cajera en el mercadillo tropical', 'Abre el campo de fresas': 'Planta las sandías',
+        'Construye la vaquería': 'Pon el vivero de calamares', 'Construye la fábrica de mermelada': 'Construye la granizadería', 'Abre la segunda caja del bosque': 'Abre la segunda caja del mercadillo',
+        'Abre el prado abandonado': 'Abre el acantilado', 'Limpia una parcela entera del prado': 'Limpia una parcela entera del acantilado', 'Planta los manzanos': 'Planta los naranjos',
+        'Construye el lagar': 'Construye la zumería', 'Atiende a 10 clientes en el mercado del prado': 'Atiende a 10 clientes en el mercado del acantilado',
+        'Contrata una cajera en el mercado del prado': 'Contrata una cajera en el mercado del acantilado', 'Construye el colmenar': 'Pon el criadero de ostras', 'Limpia todo el prado': 'Limpia todo el acantilado',
+      },
       // An archipelago: every zone is an island in the sea and the doors are wooden bridges between them
       layout: {
         islands: true,
@@ -952,6 +1109,22 @@ const SAVE_KEY = 'huerto-sonia-v4', OLD_SAVE_KEY = 'huerto-sonia-v3';
 // What belongs to the player and goes with them to every map; everything else belongs to one farm
 const PLAYER_KEYS = ['meta', 'stars', 'perks', 'achv', 'chestDay', 'life', 'sound', 'boostUntil'];
 
+// Every zone has its own squirrels (harvest its fields) and carriers (take its workshops' and animals' goods to the shop).
+// The first zone keeps the old 'helper' and 'carrier'; the others get 'helper_N' and 'carrier_N', bought in that zone's stall.
+// They must exist before the saved game is read, and their prices look at the map's content only when asked.
+// Each zone has its own little animal, so you can tell whose they are. Only a few walk about (one per field, at least two);
+// the levels after that make them quicker and let them carry more instead of crowding the zone.
+const CRITTERS = { 1: ['squirrel', 'Ardilla', '🐿️'], 2: ['fox', 'Zorro', '🦊'], 3: ['rabbit', 'Conejo', '🐰'], 4: ['beaver', 'Castor', '🦫'], 6: ['pig', 'Cerdito', '🐷'], 7: ['beaver', 'Castor', '🦫'], 8: ['rabbit', 'Conejo', '🐰'], 9: ['frog', 'Rana', '🐸'] };
+const critterOf = a => CRITTERS[a] || CRITTERS[1];
+const zoneCap = (kind, a) => kind === 'helper' ? Math.max(2, PATCHES.filter(p => (p.area || 1) === a).length) : Math.min(2, Math.max(1, Math.ceil([...PROCS, ...ANIMALS].filter(b => (b.area || 1) === a).length / 2)));
+[...new Set([...PATCHES, ...PROCS, ...ANIMALS].map(o => o.area || 1))].filter(a => a !== 1).forEach(a => {
+  const fields = () => PATCHES.filter(p => p.area === a), builds = () => [...PROCS, ...ANIMALS].filter(b => b.area === a);
+  const cheap = list => Math.min(...list.map(o => o.cost || 1e9)), [, name, icon] = critterOf(a);
+  if (fields().length) UPGRADES['helper_' + a] = { name, icon, x: 0, z: 0, max: zoneCap('helper', a) + 3, cost: l => Math.round(cheap(fields()) * .4 * 2.1 ** l), area: a, zoneWorker: 'helper' };
+  if (builds().length) UPGRADES['carrier_' + a] = { name: 'Repartidor', icon: '📦', x: 0, z: 0, max: zoneCap('carrier', a) + 3, cost: l => Math.round(cheap(builds()) * .5 * 2.4 ** l), area: a, zoneWorker: 'carrier' };
+});
+UPGRADES.helper.zoneWorker = 'helper'; UPGRADES.carrier.zoneWorker = 'carrier';
+
 const fresh = () => ({
   coins: 0, earned: 0, lv: Object.fromEntries(Object.keys(UPGRADES).map(k => [k, 0])),
   unlocked: ['A'], built: [], gate: false, gate3: false, gate4: false, gate5: false, gate6: false, gate7: false, gate8: false, tick: {}, paid: {}, procs: {}, sold: {}, shops: Object.fromEntries(SHOPS.map(sh => [sh.id, { stock: {}, cash: 0 }])), served: 0, servedBy: {}, angry: 0, mood: 0, over: false, chances: 0, dayT: 0, dayN: 1, today: { served: 0, angry: 0, sales: 0 }, dayPeak: 0, dayClosed: false, pendingSum: null, stars: 0, perks: { speed: 0, price: 0, patience: 0, calm: 0, start: 0 }, achv: {}, chestDay: '', meta: {},
@@ -974,7 +1147,7 @@ function sanitize(s) {
   o.unlocked = Array.isArray(s.unlocked) ? s.unlocked.filter(id => PATCHES.some(p => p.id === id)) : ['A'];
   if (!o.unlocked.includes('A')) o.unlocked.unshift('A');
   o.built = Array.isArray(s.built) ? s.built.filter(id => VALID_BUILT.has(id)) : [];
-  Object.keys(o.lv).forEach(k => { o.lv[k] = Math.min(UPGRADES[k].max, Math.max(0, o.lv[k] | 0)); });
+  Object.keys(o.lv).forEach(k => { if (!UPGRADES[k]) { delete o.lv[k]; return; } o.lv[k] = Math.min(UPGRADES[k].max, Math.max(0, o.lv[k] | 0)); }); // an upgrade that no longer exists is dropped instead of stopping the game
   if (typeof o.cleared !== 'string' || s.meadowV !== 2) { o.cleared = ''; o.meadowV = 2; }
   o.perks = { ...f.perks, ...(s.perks || {}) }; o.achv = { ...(s.achv || {}) }; o.meta = { ...(s.meta || {}) }; o.tick = { ...(s.tick || {}) };
   if (s.stars === undefined) o.stars = (s.farm || 0) * 4; // farms moved before stars existed still count
@@ -1023,11 +1196,20 @@ const isBuilt = id => S.built.includes(id);
 const unlocked = id => S.unlocked.includes(id);
 const boosted = () => Date.now() < S.boostUntil;
 const fscale = () => 1.6 ** (S.farm || 0);
+// Economy yardstick: what the farm earns per minute by selling (measured in 47-decisions.js while the shop is open).
+// Bonuses (levels, orders, chests, achievements, gifts, thieves, bank, decision cards) are counted in minutes of it,
+// so they keep the same weight all game long instead of growing with lifetime money and buying everything at once.
+const incomeRef = () => Math.max(60 * fscale(), S.salesPM || 0);
+const incMin = m => Math.round(incomeRef() * m);
 const mult = () => (boosted() ? 2 : 1) * 2 ** (S.farm || 0);
 const THEME = mapById(WORLD.map);
 // The current map's own zones replace the names, products and colours of the shared ones before the world is built
 // Whatever a map keeps under content.beta only exists for testers
-const MAPC = { ...(THEME.content || {}), ...(TESTER ? THEME.content?.beta : null) };
+// It is merged one level deep, so beta can add fields, workshops or shops without repeating the others
+const MAPC = { ...(THEME.content || {}) };
+if (TESTER) Object.entries(THEME.content?.beta || {}).forEach(([k, v]) => {
+  MAPC[k] = v && typeof v === 'object' && !Array.isArray(v) && MAPC[k] && typeof MAPC[k] === 'object' ? { ...MAPC[k], ...v } : v;
+});
 {
   const put = (list, over) => Object.entries(over || {}).forEach(([id, o]) => Object.assign(list.find(x => x.id === id), o));
   put(PATCHES, MAPC.patches); put(PROCS, MAPC.procs); put(ANIMALS, MAPC.animals); put(SHOPS, MAPC.shops); put(GATES, MAPC.gates);
@@ -1047,6 +1229,8 @@ const DOORS = {
   gate: { x0: -1.5, x1: 1.5, z0: -14.65, z1: -13.3 }, gate3: { x0: 11.6, x1: 12.9, z0: -.3, z1: 2.3 }, gate4: { x0: -12.9, x1: -11.6, z0: -9.8, z1: -7.2 },
   gate5: { x0: -35.7, x1: -34.3, z0: .6, z1: 3.4 }, gate6: { x0: 34.3, x1: 35.7, z0: .6, z1: 3.4 }, gate7: { x0: 1.5, x1: 3, z0: 21.5, z1: 23.2 }, gate8: { x0: -.9, x1: .9, z0: 44.3, z1: 45.6 },
 };
+// The zone workers stand by their zone's first field or building, once the map's own content is in place
+Object.values(UPGRADES).filter(u => u.zoneWorker && u.area).forEach(u => { const o = PATCHES.find(p => p.area === u.area) || [...PROCS, ...ANIMALS].find(b => b.area === u.area); if (o) { u.x = o.x; u.z = o.z; } });
 const LAYOUT = MAPC.layout || null;
 const areaShift = a => (LAYOUT && LAYOUT.shift && LAYOUT.shift[a]) || null;
 if (LAYOUT) {
@@ -1060,6 +1244,8 @@ if (LAYOUT) {
   Object.entries(LAYOUT.shift || {}).forEach(([a, [dx, dz]]) => {
     a = +a; const r = AREAS[a]; r.x0 += dx; r.x1 += dx; r.z0 += dz; r.z1 += dz;
     if (a === 4) { LAKE.x += dx; LAKE.z += dz; }
+    // The meadow's rubbish grid travels with its island, or part of it would end up in the sea and never get clean
+    if (a === 3) { MEADOW.x0 += dx; MEADOW.x1 += dx; MEADOW.midX += dx; MEADOW.z0 += dz; MEADOW.z1 += dz; MEADOW.midZ += dz; }
     if (a === 3) { [REC.hopper, REC.zone, REC.plant, REC.cash].forEach(o => move(o, dx, dz)); REC.beltX += dx; ['beltZ0', 'beltZ1', 'gapZ0', 'gapZ1'].forEach(k => { REC[k] += dz; }); }
     [...PATCHES, ...PROCS, ...ANIMALS, ...SPECIAL, ...TOWN, ...ATTRS, ...SELLS, ...Object.values(UPGRADES)].forEach(o => { if (o.area === a) move(o, dx, dz); });
     SHOPS.forEach(s => {
@@ -1099,7 +1285,17 @@ const houses = () => TOWN.filter(t => t.kind === 'house' && isBuilt(t.id)).lengt
 const fameOf = k => { const sh = shopFor(k); return 1 + .15 * ((sh && S.lv['fame_' + sh.id]) || 0); };
 // Easy start: once the first cashier is hired the market gets tougher and everything pays 40% less
 const earlyF = () => (S.lv.cashier > 0 ? .6 : 1);
-const priceF = () => earlyF() * priceOf(S.lv.sign) * (isBuilt('townhall') ? 1.25 : 1) * (1 + .1 * (S.perks.price || 0));
+// Tycoon layer (47-decisions.js): 😊 morale of the workers and ⭐ trust of the neighbours, 0–100, and short effects of the decision cards
+const DEC = { fx: {} };
+const decFx = k => (DEC.fx[k] || 0) > 0;
+const townOn = () => S.tut >= 3 && S.mission >= 4;
+const decPriceF = () => decFx('price') ? 1.25 : 1;
+const decClosed = () => decFx('closed');
+// Morale 50 is normal speed; 100 is 15 % quicker, 0 is 15 % slower. On strike, a day off or helping a neighbour they stop
+const workF = kind => !townOn() ? 1 : decFx('strike') || decFx(kind + 'Off') ? 0 : (1 + ((S.morale ?? 60) - 50) * .003) * (decFx('overtime') ? 1.5 : 1);
+// Trust 50 is the usual flow of customers; 100 brings them 20 % more often, 0 20 % less. A reporter brings a crowd
+const trustF = () => !townOn() ? 1 : (1 - ((S.trust ?? 60) - 50) * .004) * (decFx('crowd') ? .6 : 1);
+const priceF = () => earlyF() * priceOf(S.lv.sign) * (isBuilt('townhall') ? 1.25 : 1) * (1 + .1 * (S.perks.price || 0)) * decPriceF();
 const fishersOn = () => ANIMALS.filter(a => a.dock && isBuilt(a.id)).slice(0, S.lv.fisher);
 // The vehicle Sonia rides: the tractor harvests more at once, the mower cuts down weeds; S.vehicle 'none' means on foot
 const vehicleNow = () => (S.vehicle === 'mower' && S.lv.mower ? 'mower' : S.vehicle !== 'none' && S.vehicle !== 'mower' && S.lv.tractor && S.tractorOn ? 'tractor' : null);
@@ -1247,7 +1443,7 @@ const M = {
   zoneRing: new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .85 }),
 };
 M.belt = new LitMat({ map: beltTex });
-M.corn = mat(0xf5c518); M.lemon = mat(0xf5e01f); M.wool = mat(0xf7f3ea); M.pig = mat(0xf4a6b0); M.goat = mat(0xe8dcc8);
+M.corn = mat(0xf5c518); M.lemon = mat(0xf5e01f); M.orange = mat(0xf5891f); M.wool = mat(0xf7f3ea); M.pig = mat(0xf4a6b0); M.goat = mat(0xe8dcc8);
 document.body.style.background = '#' + THEME.sky.toString(16).padStart(6, '0');
 function mesh(geo, material, shadow = true) { const m = new T.Mesh(geo, material); m.castShadow = shadow; m.receiveShadow = true; return m; }
 function flat(geo, material, x, y, z) { const m = mesh(geo, material, false); m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); scene.add(m); return m; }
@@ -1677,12 +1873,45 @@ const CROP_PARTS = {
     { geo: pg(new T.ConeGeometry(.12, .3, 5), .63), mat: M.leaf },
     { geo: pg(new T.SphereGeometry(.2, 6, 4).scale(1.5, .12, .5).rotateY(1), .05), mat: M.leaf },
   ],
+  seaweed: [
+    { geo: pg(new T.SphereGeometry(.1, 6, 4).scale(.5, 3.2, .25).rotateZ(.25), .3), mat: mat(0x3f8f5a) },
+    { geo: pg(new T.SphereGeometry(.1, 6, 4).scale(.5, 2.6, .25).rotateZ(-.35).translate(.1, 0, .06), .25), mat: mat(0x6fbf4a) },
+    { geo: pg(new T.SphereGeometry(.1, 6, 4).scale(.5, 2.2, .25).rotateZ(.1).rotateY(1.4).translate(-.08, 0, -.08), .22), mat: mat(0x2f7a4a) },
+  ],
+  clam: [
+    { geo: pg(new T.SphereGeometry(.2, 8, 5).scale(1.2, .3, 1), .02), mat: M.sand },
+    { geo: pg(new T.SphereGeometry(.11, 8, 5, 0, Math.PI * 2, 0, Math.PI / 2).scale(1.1, .55, 1).translate(-.06, 0, .03), .05), mat: mat(0xf0d8c0) },
+    { geo: pg(new T.SphereGeometry(.1, 8, 5, 0, Math.PI * 2, 0, Math.PI / 2).scale(1.1, .55, 1).translate(.1, 0, -.06), .05), mat: mat(0xe8b8a0) },
+  ],
+  salt: [
+    { geo: pg(new T.ConeGeometry(.27, .38, 8), .19), mat: mat(0xfdfdfd) },
+    { geo: pg(new T.ConeGeometry(.14, .2, 7).translate(.2, 0, .12), .1), mat: mat(0xeef2f6) },
+  ],
+  banana: [
+    { geo: pg(new T.CylinderGeometry(.06, .09, 1, 6), .5), mat: M.trunk },
+    { geo: pg(new T.SphereGeometry(.22, 6, 4).scale(2, .2, .7).rotateZ(.35), 1.05), mat: M.leaf },
+    { geo: pg(new T.SphereGeometry(.22, 6, 4).scale(2, .2, .7).rotateZ(-.35).rotateY(1.9), 1.08), mat: M.crown },
+    { geo: pg(new T.SphereGeometry(.09, 6, 5).scale(1, 1.8, 1).translate(.1, 0, .08), .82), mat: mat(0xf5d020) },
+    { geo: pg(new T.SphereGeometry(.08, 6, 5).scale(1, 1.8, 1).translate(-.06, 0, .12), .8), mat: mat(0xf5d020) },
+  ],
+  watermelon: [
+    { geo: pg(new T.SphereGeometry(.25, 10, 8).scale(1.25, .8, 1), .19), mat: mat(0x3f8f3a) },
+    { geo: pg(new T.SphereGeometry(.252, 10, 8, 0, Math.PI * 2, .3, .25).scale(1.25, .8, 1), .19), mat: mat(0x2a6a2a) },
+    { geo: pg(new T.SphereGeometry(.16, 6, 4).scale(1.4, .15, 1), .04), mat: M.leaf },
+  ],
   lemon: [
     { geo: pg(new T.CylinderGeometry(.07, .1, .7, 6), .35), mat: M.trunk },
     { geo: pg(new T.IcosahedronGeometry(.45, 1).scale(1, .85, 1), 1.0), mat: M.crown },
     { geo: pg(new T.SphereGeometry(.08, 6, 5).scale(1, 1.25, 1).translate(.3, 0, .26), .9), mat: M.lemon },
     { geo: pg(new T.SphereGeometry(.08, 6, 5).scale(1, 1.25, 1).translate(-.28, 0, .24), 1.1), mat: M.lemon },
     { geo: pg(new T.SphereGeometry(.08, 6, 5).scale(1, 1.25, 1).translate(.04, 0, .42), 1.22), mat: M.lemon },
+  ],
+  orange: [
+    { geo: pg(new T.CylinderGeometry(.07, .1, .7, 6), .35), mat: M.trunk },
+    { geo: pg(new T.IcosahedronGeometry(.45, 1).scale(1, .85, 1), 1.0), mat: M.crown },
+    { geo: pg(new T.SphereGeometry(.08, 6, 5).scale(1, 1.25, 1).translate(.3, 0, .26), .9), mat: M.orange },
+    { geo: pg(new T.SphereGeometry(.08, 6, 5).scale(1, 1.25, 1).translate(-.28, 0, .24), 1.1), mat: M.orange },
+    { geo: pg(new T.SphereGeometry(.08, 6, 5).scale(1, 1.25, 1).translate(.04, 0, .42), 1.22), mat: M.orange },
   ],
 };
 PATCHES.forEach(p => {
@@ -1716,7 +1945,7 @@ function updatePlants(dt) {
   const touched = new Set(), gm = growOf(S.lv.water);
   for (const pl of plants) {
     if (!unlocked(pl.patch.id)) { if (pl.dirty) { writePlant(pl, 0); touched.add(pl.patch); pl.dirty = false; } continue; }
-    if (pl.grow < 1) { pl.grow = Math.min(1, pl.grow + dt * gm * Math.max(0, 1 - .2 * (pl.patch.weeds || 0)) / pl.patch.regrow); if (pl.grow >= 1) pl.pop = 1; pl.dirty = true; }
+    if (pl.grow < 1 && !troubleAt('patch:' + pl.patch.id)) { pl.grow = Math.min(1, pl.grow + dt * gm * waterF(pl.patch) * Math.max(0, 1 - .2 * (pl.patch.weeds || 0)) / pl.patch.regrow); if (pl.grow >= 1) pl.pop = 1; pl.dirty = true; }
     if (pl.pop > 0) { pl.pop = Math.max(0, pl.pop - dt * 3); pl.dirty = true; }
     if (pl.dirty) { writePlant(pl, pl.grow < 1 ? .12 + .55 * pl.grow : 1 + Math.sin(pl.pop * Math.PI) * .25); touched.add(pl.patch); pl.dirty = false; }
   }
@@ -1784,13 +2013,23 @@ const saveCleared = () => { let s = ''; for (let i = 0; i < debris.n; i++) s += 
 const sectorCenters = [0, 1, 2, 3].map(i => ({ x: i % 2 ? (MEADOW.midX + MEADOW.x1) / 2 : (MEADOW.x0 + MEADOW.midX) / 2, z: i < 2 ? (MEADOW.z0 + MEADOW.midZ) / 2 : (MEADOW.midZ + MEADOW.z1) / 2 }));
 const SECTOR_NAMES = ['Parcela de los manzanos', 'Parcela del lagar', 'Parcela de las abejas', 'Parcela del mercado'];
 const touchedDebris = new Set();
+// Once a plot counts as clean, whatever bits are left vanish too, so it really looks clean
+function finishSector(sec, fx) {
+  debris.cells.forEach((c, i) => {
+    if (c.sec !== sec || debris.cleared[i]) return;
+    debris.cleared[i] = 1; debris.sectorDone[sec]++;
+    dummy.position.set(c.x, 0, c.z); dummy.scale.setScalar(0); dummy.updateMatrix();
+    debris.meshes[c.type].setMatrixAt(c.idx, dummy.matrix); touchedDebris.add(c.type);
+    if (fx && Math.random() < .3) puff(c.x, .2, c.z, 0xf6e7a8, 2, .6, 1.6);
+  });
+}
 function clearCell(i) {
   const cell = debris.cells[i];
   if (debris.cleared[i]) return 0;
   debris.cleared[i] = 1; debris.sectorDone[cell.sec]++;
   dummy.position.set(cell.x, 0, cell.z); dummy.scale.setScalar(0); dummy.updateMatrix();
   debris.meshes[cell.type].setMatrixAt(cell.idx, dummy.matrix); touchedDebris.add(cell.type);
-  if (debris.sectorDone[cell.sec] === Math.ceil(debris.sector[cell.sec] * .97)) { toast(`¡${SECTOR_NAMES[cell.sec]} limpia! Ya puedes construir allí`); sfx.mission(); puff(sectorCenters[cell.sec].x, 1, sectorCenters[cell.sec].z, 0xf6c445, 18, 2, 4); }
+  if (debris.sectorDone[cell.sec] === Math.ceil(debris.sector[cell.sec] * .97)) { finishSector(cell.sec, true); toast(`¡${SECTOR_NAMES[cell.sec]} limpia! Ya puedes construir allí`); sfx.mission(); puff(sectorCenters[cell.sec].x, 1, sectorCenters[cell.sec].z, 0xf6c445, 18, 2, 4); }
   return debris.types[cell.type].units;
 }
 function sweepAround(x, z, r, room) {
@@ -1806,6 +2045,8 @@ function sweepAround(x, z, r, room) {
   return got;
 }
 function flushDebris() { touchedDebris.forEach(t => { debris.meshes[t].instanceMatrix.needsUpdate = true; }); touchedDebris.clear(); }
+// Saves from before this rule: plots already clean lose their leftover bits on load
+[0, 1, 2, 3].forEach(sec => { if (debris.sector[sec] && sectorPct(sec) >= .97 && debris.sectorDone[sec] < debris.sector[sec]) finishSector(sec, false); }); flushDebris();
 
 /* ---------- Recycling complex ---------- */
 const recycler = new T.Group();
@@ -1878,6 +2119,7 @@ const RUBBLE = [
   { a: 9, name: 'las piscinas',          x0: -24,   x1: 24,    z0: 46,    z1: 63.8, n: 260, bin: { x: 6.5, z: 46.6 } },
 ];
 const RUBBLE_CLEAN = .85;
+const START_BIN = { a: 1, name: 'la zona de inicio' };
 RUBBLE.forEach(Z => {
   if (MAPC.zones && MAPC.zones[Z.a]) Z.name = MAPC.zones[Z.a];
   const sh = areaShift(Z.a); if (sh) { Z.x0 += sh[0]; Z.x1 += sh[0]; Z.z0 += sh[1]; Z.z1 += sh[1]; Z.bin.x += sh[0]; Z.bin.z += sh[1]; }
@@ -1899,7 +2141,8 @@ RUBBLE.forEach(Z => {
     const all = [];
     for (let x = Z.x0 + .4; x < Z.x1; x += .75) for (let z = Z.z0 + .4; z < Z.z1; z += .75) {
       const cx = x + (rnd() - .5) * .3, cz = z + (rnd() - .5) * .3;
-      if (free(cx, cz, Z.bin)) all.push([cx, cz, rnd()]);
+      // On maps with their own plan, rubbish only lands on the zone's own ground (never in the sea around an island)
+      if (free(cx, cz, Z.bin) && (!LAYOUT || inRect(AREAS[Z.a], cx, cz))) all.push([cx, cz, rnd()]);
     }
     all.sort((p, q) => p[2] - q[2]);
     const counts = [0, 0, 0, 0];
@@ -1920,12 +2163,39 @@ RUBBLE.forEach(Z => {
     g.position.set(Z.bin.x, 0, Z.bin.z - 1.2); scene.add(g); Z.binMesh = g;
     Z.zone = { x: Z.bin.x, z: Z.bin.z, r: .9 }; Z.disc = zoneDisc(Z.zone, 0x3f8f4a);
   });
+  // A skip in the starting zone too, near the market, for the rubbish the customers drop (a map can place it with pos 'bin:start')
+  {
+    const want = LAYOUT?.pos?.['bin:start'], cands = [];
+    if (want) cands.push(want);
+    for (let dz = 3; dz <= 12; dz += 1) for (let dx = -2; dx <= 9; dx += 1) cands.push([FARM.x + dx, FARM.z + dz]);
+    const far = { x: 1e9, z: 1e9 };
+    const spot = want || cands.sort((p, q) => Math.hypot(p[0] - FARM.x - 3, p[1] - FARM.z - 4) - Math.hypot(q[0] - FARM.x - 3, q[1] - FARM.z - 4))
+      .find(([x, z]) => free(x, z, far) && free(x, z - 1.2, far) && inRect(AREAS[1], x, z - 1.8) && inRect(AREAS[1], x, z + .9) && !TOWN.some(t => Math.abs(x - t.x) < 2.4 && Math.abs(z - t.z) < 2.6));
+    if (spot) {
+      const Z = START_BIN; Z.bin = { x: spot[0], z: spot[1] };
+      const g = new T.Group();
+      const box = mesh(binGeo, mat(0x3f8f4a)); box.position.y = .45; g.add(box);
+      const lid = mesh(lidGeo, mat(0x2f6f3a)); lid.position.set(0, .9, -.1); lid.rotation.x = -.35; g.add(lid);
+      const sign = iconSprite('🗑️', .7, '#3f8f4a'); sign.position.y = 1.3; g.add(sign);
+      g.position.set(Z.bin.x, 0, Z.bin.z - 1.2); scene.add(g); Z.binMesh = g;
+      Z.zone = { x: Z.bin.x, z: Z.bin.z, r: .9 }; Z.disc = zoneDisc(Z.zone, 0x3f8f4a);
+    }
+  }
 }
 const rubbleZone = a => RUBBLE.find(Z => Z.a === a);
 const rubbleFrac = Z => 1 - Z.left / Z.cells.length;
 // A zone counts as clean once 85% of its rubbish is gone; zones without rubbish are always clean
 const zoneClean = a => { const Z = rubbleZone(a); return !Z || rubbleFrac(Z) >= RUBBLE_CLEAN; };
 const rubbleAt = (x, z) => RUBBLE.find(Z => Z.left > 0 && areaOpen(Z.a) && x > Z.x0 - .5 && x < Z.x1 + .5 && z > Z.z0 - .5 && z < Z.z1 + .5);
+function finishRubble(Z, fx) {
+  Z.cells.forEach((c, i) => {
+    if (Z.cleared[i]) return;
+    Z.cleared[i] = 1; dummy.position.set(c.x, 0, c.z); dummy.scale.setScalar(0); dummy.updateMatrix(); Z.meshes[c.type].setMatrixAt(c.idx, dummy.matrix);
+    if (fx && Math.random() < .3) puff(c.x, .2, c.z, 0xf6e7a8, 2, .6, 1.6);
+  });
+  Z.left = 0; Z.meshes.forEach(m => { m.instanceMatrix.needsUpdate = true; });
+}
+RUBBLE.forEach(Z => { if (Z.left > 0 && rubbleFrac(Z) >= RUBBLE_CLEAN) finishRubble(Z, false); });
 function sweepRubble(Z, x, z, r, room) {
   let got = 0;
   const wasClean = zoneClean(Z.a);
@@ -1936,7 +2206,7 @@ function sweepRubble(Z, x, z, r, room) {
     dummy.position.set(c.x, 0, c.z); dummy.scale.setScalar(0); dummy.updateMatrix(); Z.meshes[c.type].setMatrixAt(c.idx, dummy.matrix); Z.meshes[c.type].instanceMatrix.needsUpdate = true;
     if (Math.random() < .25) puff(c.x, .2, c.z, debris.types[c.type].mat.color.getHex(), 2, .6, 1.6);
   }
-  if (!wasClean && zoneClean(Z.a)) { addXP(80); sfx.mission(); toast(`✨ ¡Has limpiado ${Z.name}! Ya puedes construir allí`); puff(x, 1, z, 0xf6c445, 18, 2, 4); refreshWorld(); }
+  if (!wasClean && zoneClean(Z.a)) { finishRubble(Z, true); addXP(80); sfx.mission(); toast(`✨ ¡Has limpiado ${Z.name}! Ya puedes construir allí`); puff(x, 1, z, 0xf6c445, 18, 2, 4); refreshWorld(); }
   return got;
 }
 // The nearest rubbish of a zone, for the guide arrow
@@ -2173,16 +2443,34 @@ function makeCustomer() {
   p.g.scale.setScalar(.92);
   return p;
 }
-function makeSquirrel() {
+// The workers' animal changes with the zone: squirrel, fox, rabbit, beaver, piglet or frog. All share the same body and the stack on their back
+const CRITTER_LOOK = {
+  squirrel: { fur: 0xd2752c, light: 0xf3c08a }, fox: { fur: 0xe0632a, light: 0xfff3e6 }, rabbit: { fur: 0xe9e4dc, light: 0xf7c6d0 },
+  beaver: { fur: 0x7a4a2a, light: 0xc89a6a }, pig: { fur: 0xf2a7b5, light: 0xf9cdd5 }, frog: { fur: 0x5fb548, light: 0xd6ef9a },
+};
+const critterMats = {};
+function makeSquirrel(kind = 'squirrel') {
+  const look = CRITTER_LOOK[kind] || CRITTER_LOOK.squirrel;
+  const fm = critterMats[kind] = critterMats[kind] || [mat(look.fur), mat(look.light)], [fur, light] = fm;
   const g = new T.Group(), body = new T.Group(); g.add(body);
-  const torso = mesh(new T.SphereGeometry(.2, 10, 8).scale(1, 1.15, 1), M.squirrel); torso.position.y = .3; body.add(torso);
-  const belly = mesh(new T.SphereGeometry(.13, 8, 6), M.squirrelLight); belly.position.set(0, .27, .1); body.add(belly);
-  const head = mesh(new T.SphereGeometry(.16, 10, 8), M.squirrel); head.position.set(0, .58, .04); body.add(head);
+  const add = (geo, m, x, y, z) => { const o = mesh(geo, m); o.position.set(x, y, z); body.add(o); return o; };
+  add(new T.SphereGeometry(.2, 10, 8).scale(1, kind === 'frog' ? .85 : 1.15, 1), fur, 0, .3, 0);
+  add(new T.SphereGeometry(.13, 8, 6), light, 0, .27, .1);
+  const head = add(new T.SphereGeometry(.16, 10, 8).scale(kind === 'frog' ? 1.2 : 1, kind === 'frog' ? .8 : 1, 1), fur, 0, kind === 'frog' ? .52 : .58, .04);
   [-.08, .08].forEach(x => {
-    const ear = mesh(new T.ConeGeometry(.05, .12, 5), M.squirrel); ear.position.set(x, .74, 0); body.add(ear);
     const e = mesh(new T.SphereGeometry(.025, 5, 4), M.eye, false); e.position.set(x * .8, .62, .17); body.add(e);
+    if (kind === 'rabbit') { const ear = add(new T.CylinderGeometry(.035, .045, .3, 6), fur, x * .8, .86, -.02); ear.rotation.z = x * 1.2; }
+    else if (kind === 'frog') { add(new T.SphereGeometry(.06, 6, 5), fur, x * 1.1, .64, .08); e.position.set(x * 1.1, .67, .13); }
+    else if (kind === 'pig' || kind === 'beaver') { const ear = add(new T.SphereGeometry(.045, 6, 5), fur, x * 1.2, .72, 0); ear.scale.set(1, kind === 'pig' ? 1.4 : 1, .6); }
+    else add(new T.ConeGeometry(kind === 'fox' ? .065 : .05, kind === 'fox' ? .16 : .12, 5), fur, x * (kind === 'fox' ? 1.2 : 1), .76, 0);
   });
-  const tail = mesh(new T.SphereGeometry(.2, 8, 6).scale(.7, 1.5, .7), M.squirrel); tail.position.set(0, .5, -.24); tail.rotation.x = -.4; body.add(tail);
+  if (kind === 'fox' || kind === 'pig' || kind === 'beaver') { const sn = add(new T.SphereGeometry(kind === 'fox' ? .06 : .07, 6, 5), light, 0, .55, .19); sn.scale.z = kind === 'fox' ? 1.6 : .7; }
+  if (kind === 'squirrel') { const t = add(new T.SphereGeometry(.2, 8, 6).scale(.7, 1.5, .7), fur, 0, .5, -.24); t.rotation.x = -.4; }
+  if (kind === 'fox') { const t = add(new T.SphereGeometry(.14, 8, 6).scale(.8, .8, 2), fur, 0, .3, -.36); t.rotation.x = .5; add(new T.SphereGeometry(.08, 6, 5), light, 0, .17, -.56); }
+  if (kind === 'rabbit') add(new T.SphereGeometry(.08, 6, 5), M.white || light, 0, .25, -.2);
+  if (kind === 'beaver') { const t = add(new T.BoxGeometry(.2, .04, .32), light, 0, .1, -.3); t.material = mat(0x4a3020); }
+  if (kind === 'pig') add(new T.TorusGeometry(.04, .015, 4, 8), fur, 0, .32, -.2);
+  head.castShadow = true;
   const stack = new T.Group(); stack.position.set(0, .45, -.1); body.add(stack);
   g.scale.setScalar(1.1);
   return { g, body, stack };
@@ -2239,6 +2527,20 @@ function makeShrimp() {
   const b = mesh(new T.SphereGeometry(.12, 8, 6).scale(.7, .7, 1.5), m); b.position.y = .16; g.add(b);
   const t = mesh(new T.ConeGeometry(.09, .2, 5), m); t.rotation.x = -Math.PI / 2; t.position.set(0, .16, -.26); g.add(t);
   [-.04, .04].forEach(x => { const a = mesh(new T.CylinderGeometry(.006, .006, .3, 3), m, false); a.position.set(x, .25, .22); a.rotation.x = .9; g.add(a); });
+  return g;
+}
+function makeLobster() {
+  const g = new T.Group(), m = mat(0xd8402f);
+  const b = mesh(new T.SphereGeometry(.12, 8, 6).scale(.8, .6, 1.7), m); b.position.y = .12; g.add(b);
+  const t = mesh(new T.ConeGeometry(.1, .18, 5), m); t.rotation.x = -Math.PI / 2; t.position.set(0, .1, -.28); g.add(t);
+  [-1, 1].forEach(sd => { const c = mesh(new T.SphereGeometry(.06, 6, 5).scale(1, .6, 1.6), m); c.position.set(sd * .13, .14, .28); c.rotation.y = -sd * .4; g.add(c); });
+  return g;
+}
+function makeSquid() {
+  const g = new T.Group(), m = mat(0xf0b8c8);
+  const b = mesh(new T.ConeGeometry(.12, .45, 8), m); b.position.y = .45; g.add(b);
+  [-.06, .06].forEach(x => { const e = mesh(new T.SphereGeometry(.025, 5, 4), M.eye, false); e.position.set(x, .24, .1); g.add(e); });
+  for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2, l = mesh(new T.CylinderGeometry(.015, .025, .22, 4), m); l.position.set(Math.sin(a) * .06, .1, Math.cos(a) * .06); l.rotation.set(Math.cos(a) * .3, 0, -Math.sin(a) * .3); g.add(l); }
   return g;
 }
 function makeOctopus() {
@@ -2315,7 +2617,7 @@ function makePen(a) {
     const rod = mesh(new T.CylinderGeometry(.02, .03, 1.8, 5), M.woodDark); rod.rotation.x = Math.PI / 2 - .5; rod.position.set(0, .4, .75); fisher.arm.add(rod); fisher.arm.rotation.x = -1;
     pier.add(fisher.g); fisher.g.visible = false;
     pier.rotation.y = a.rot; g.add(pier); g.userData.fisher = fisher;
-  } else if (a.id === 'hive') {
+  } else if (a.id === 'hive' && !a.look) {
     for (let i = 0; i < 3; i++) {
       const h = new T.Group(); h.position.set(-1.4 + i * 1.4, 0, 0);
       const st = mesh(new T.BoxGeometry(.5, .3, .5), M.woodDark); st.position.y = .15; h.add(st);
@@ -2333,8 +2635,8 @@ function makePen(a) {
     const roof = mesh(new T.ConeGeometry(1.1, .6, 4), M.woodDark); roof.rotation.y = Math.PI / 4; roof.position.set(-1.4, 1.3, -1); g.add(roof);
     // Fish farms on the coast: a pool of sea water inside the fence
     if (a.look) { const pool = mesh(new T.PlaneGeometry(4.4, 3.2), M.water, false); pool.rotation.x = -Math.PI / 2; pool.position.y = .05; g.add(pool); }
-    const kind = a.look || a.id, count = { coop: 5, sheep: 4, mussel: 6, shrimp: 5 }[kind] || 3;
-    const maker = { coop: makeHen, sheep: makeSheep, pigs: makePig, goats: makeGoat, mussel: makeMussel, shrimp: makeShrimp, octopus: makeOctopus }[kind] || makeCow;
+    const kind = a.look || a.id, count = { coop: 5, sheep: 4, mussel: 6, shrimp: 5, lobster: 4, squid: 4 }[kind] || 3;
+    const maker = { coop: makeHen, sheep: makeSheep, pigs: makePig, goats: makeGoat, mussel: makeMussel, shrimp: makeShrimp, octopus: makeOctopus, lobster: makeLobster, squid: makeSquid }[kind] || makeCow;
     for (let i = 0; i < count; i++) {
       const m = maker();
       const st = { m, x: (Math.random() - .3) * 2.6, z: (Math.random() - .5) * 2, tx: 0, tz: 0, t: 0 };
@@ -2685,11 +2987,11 @@ function refreshWorld() {
     pad.g.visible = info.active; pad.info = info;
     if (!info.active) return;
     const paid = S.paid[pad.id] || 0, left = info.cost - paid;
-    const html = `<div class="nm">${info.name}${info.sub ? ' · ' + info.sub : ''}</div>${info.cost ? `<div class="pr"><span class="coin"></span>${fmt(left)}</div>` : '<div class="pr">Gratis</div>'}`;
+    const html = `<div class="nm">${info.name}${info.sub ? ' · ' + info.sub : ''}</div>${info.pr || (info.cost ? `<div class="pr"><span class="coin"></span>${fmt(left)}</div>` : '<div class="pr">Gratis</div>')}`;
     if (pad.iconKey !== info.icon) { pad.iconKey = info.icon; pad.icon.material.map = iconTex(info.icon, '#c98f12'); pad.icon.material.needsUpdate = true; }
     if (pad.label._html !== html) { pad.label.innerHTML = html; pad.label._html = html; }
     pad.label.classList.toggle('cant', S.coins <= 0);
-    const prog = info.cost ? paid / info.cost : 1;
+    const prog = info.prog ?? (info.cost ? paid / info.cost : 1);
     if (Math.abs(prog - pad.lastP) > .005) { pad.fill.geometry.dispose(); pad.fill.geometry = new T.RingGeometry(.6, .76, 40, 1, 0, Math.max(.001, prog * Math.PI * 2)); pad.lastP = prog; }
   });
   PATCHES.forEach(p => { const show = p.area !== 3 || sectorClean(p.sector); p.decor.forEach(d => { d.visible = show; }); p.soil.material = unlocked(p.id) ? M.dirt : M.dirtLocked; });
@@ -2726,7 +3028,7 @@ function completePad(pad) {
   const kind = pad.kind, r = pad.ref;
   if (kind === 'upg') {
     S.lv[pad.id]++;
-    if (pad.id === 'helper' || pad.id === 'carrier' || pad.id === 'robots') spawnWorkers();
+    if (r.zoneWorker || pad.id === 'robots') spawnWorkers();
     if (pad.id === 'dog') spawnDog();
     if (pad.id === 'tractor') { S.tractorOn = true; S.vehicle = 'tractor'; }
     if (pad.id === 'mower') S.vehicle = 'mower';
@@ -2734,7 +3036,7 @@ function completePad(pad) {
     if (r.attr) { if (S.lv[pad.id] === 1) popIn(r.attr.mesh.g); toast(S.lv[pad.id] === 1 ? `${r.icon} ${r.name}: vende entradas. Recoge el dinero en su círculo` : `${r.icon} ${r.name} nivel ${S.lv[pad.id]}: más entradas`); }
     toast({
       bag: `Cesta más grande: caben ${capOf(S.lv.bag)}`, boots: `¡${who()} corre más rápido!`, sign: `Precios +${Math.round((priceOf(S.lv.sign) - 1) * 100)}% y vienen más clientes`,
-      helper: `Ya tienes ${S.lv.helper} ${S.lv.helper > 1 ? 'ardillas' : 'ardilla'}, cada una en un campo`, water: 'Los cultivos crecen más rápido',
+      water: 'Los cultivos crecen más rápido',
       machine: 'Los edificios y animales trabajan más rápido', cashier: 'La cajera cobra en la caja 1', cashier2: 'La segunda cajera cobra en la caja 2',
       carrier: 'El repartidor lleva productos de los edificios al mostrador', workers: 'Ardillas, repartidores y robots van más rápido',
       tractor: `¡${who()} ya tiene tractor! Cosecha mucho más de golpe`, dog: 'El perro te traerá los billetes',
@@ -2743,7 +3045,7 @@ function completePad(pad) {
       rod: 'Pescas más rápido', fisher: 'Un pescador pesca solo en un muelle',
       mechanic: 'El mecánico arregla solo las atracciones averiadas', animator: `🤡 Más público en la feria: las atracciones venden al ${Math.round(animatorMult() * 100)}%`, mower: '🌿 ¡Cortacésped! Cambia de vehículo con el botón de arriba y pasa por encima de las malas hierbas',
       gardener: '🧑‍🌾 Un jardinero arranca las malas hierbas por ti', patrol: 'Otro policía patrulla las tiendas',
-    }[pad.id] || (r.fame ? `⭐ ${r.fame.name}: todo se vende un ${15 * S.lv[pad.id]}% más caro` : r.shop ? `La cajera ya cobra en ${r.shop.name}` : ''));
+    }[pad.id] || (r.zoneWorker ? (S.lv[pad.id] > zoneCap(r.zoneWorker, r.area || 1) ? `${r.icon} Tus ${r.zoneWorker === 'helper' ? 'animalitos' : 'repartidores'} de esta zona van más rápido` : `¡Otro ayudante en esta zona: ${r.icon} ${r.name}!`) : r.fame ? `⭐ ${r.fame.name}: todo se vende un ${15 * S.lv[pad.id]}% más caro` : r.shop ? `La cajera ya cobra en ${r.shop.name}` : ''));
   } else if (kind === 'patch') {
     S.unlocked.push(r.id);
     plants.forEach(pl => { if (pl.patch === r) { pl.grow = 0; pl.dirty = true; } });
@@ -2783,18 +3085,27 @@ SHOPS.forEach(s => s.tills.forEach((t, i) => {
   const p = makePerson({ shirt: mat(0xfdf6ea), pants: mat(0x2f3f5f), hair: mat(pick(HAIRS)), long: Math.random() < .7, apron: mat(s.awning) });
   p.g.position.set(t.x + .75, 0, t.z); p.g.rotation.y = -Math.PI / 2; scene.add(p.g); t.cashier = p;
 }));
+// Squirrels and carriers belong to one zone and never leave it, except to take goods to a shop that is elsewhere
+const zonesWith = kind => Object.entries(UPGRADES).filter(([, u]) => u.zoneWorker === kind).map(([id, u]) => ({ id, zone: u.area || 1 }));
+const zoneStart = a => { const sh = SHOPS.find(s => s.area === a); if (sh) return sh.counter; const o = [...PATCHES, ...PROCS, ...ANIMALS].find(b => b.area === a); return o ? { x: o.zx ?? o.x, z: o.zz ?? o.z } : COUNTER_ZONE; };
 function spawnWorkers() {
-  while (squirrels.length < S.lv.helper) {
-    const m = makeSquirrel();
-    const h = { m, x: COUNTER_ZONE.x + 1, z: COUNTER_ZONE.z + squirrels.length * .6, face: 0, carry: [], state: 'harvest', target: null, walk: 0, home: squirrels.length };
-    m.g.position.set(h.x, 0, h.z); scene.add(m.g); squirrels.push(h);
-  }
-  while (carriers.length < S.lv.carrier) {
-    const m = makePerson({ shirt: mat(0x3fa34d), pants: mat(0x4a3a2e), hair: mat(pick(HAIRS)), cap: mat(0xf5a524) });
-    m.g.scale.setScalar(.85);
-    const c = { m, x: COUNTER_ZONE.x + 1.5, z: COUNTER_ZONE.z - 1 - carriers.length * .6, face: 0, carry: [], state: 'pick', target: null, walk: 0 };
-    m.g.position.set(c.x, 0, c.z); scene.add(m.g); carriers.push(c);
-  }
+  zonesWith('helper').forEach(({ id, zone }) => {
+    const mine = squirrels.filter(h => h.zone === zone), st = zone === 1 ? COUNTER_ZONE : zoneStart(zone);
+    for (let n = mine.length; n < Math.min(S.lv[id], zoneCap('helper', zone)); n++) {
+      const m = makeSquirrel(critterOf(zone)[0]);
+      const h = { m, zone, x: st.x + 1, z: st.z + n * .6, face: 0, carry: [], state: 'harvest', target: null, walk: 0, home: n };
+      m.g.position.set(h.x, 0, h.z); scene.add(m.g); squirrels.push(h);
+    }
+  });
+  zonesWith('carrier').forEach(({ id, zone }) => {
+    const mine = carriers.filter(c => c.zone === zone), st = zone === 1 ? COUNTER_ZONE : zoneStart(zone);
+    for (let n = mine.length; n < Math.min(S.lv[id], zoneCap('carrier', zone)); n++) {
+      const m = makePerson({ shirt: mat(0x3fa34d), pants: mat(0x4a3a2e), hair: mat(pick(HAIRS)), cap: mat(0xf5a524) });
+      m.g.scale.setScalar(.85);
+      const c = { m, zone, x: st.x + 1.5, z: st.z - 1 - n * .6, face: 0, carry: [], state: 'pick', target: null, walk: 0 };
+      m.g.position.set(c.x, 0, c.z); scene.add(m.g); carriers.push(c);
+    }
+  });
   while (gardeners.length < S.lv.gardener) {
     const m = makePerson({ shirt: mat(0x6abf5a), pants: mat(0x6b4a2e), hair: mat(pick(HAIRS)), hat: 'straw', long: Math.random() < .5 });
     const hoe = mesh(new T.CylinderGeometry(.025, .025, .9, 5), M.woodDark); hoe.position.set(0, -.2, .15); hoe.rotation.x = .6; m.arm.add(hoe);
@@ -2814,6 +3125,14 @@ function stepToward(w, tx, tz, sp, dt) {
   return true;
 }
 const procFor = crop => PROCS.find(p => p.input === crop && isBuilt(p.id));
+// Levels past the zone's cap make that zone's workers quicker and stronger instead of adding more of them
+const zoneBonus = (kind, zone) => { const id = kind === 'helper' ? (zone === 1 ? 'helper' : 'helper_' + zone) : (zone === 1 ? 'carrier' : 'carrier_' + zone); return Math.max(0, (S.lv[id] || 0) - zoneCap(kind, zone)); };
+// A squirrel takes its crop to the shop while the shop is short of it, and to its zone's workshop the rest of the time
+function squirrelDest(kind, zone) {
+  const pr = procIn(kind, zone), sh = shopFor(kind) || FARM;
+  return pr && (S.shops[sh.id].stock[kind] || 0) >= 6 ? pr : null;
+}
+const procIn = (crop, zone) => PROCS.find(p => p.input === crop && p.area === zone && isBuilt(p.id)); // a squirrel only feeds the workshops of its own zone
 function deliverToCounter(items) { items.forEach(k => { const sh = shopFor(k), st = S.shops[sh.id].stock; if (orderTake(k, sh.x, sh.z)) return; st[k] = (st[k] || 0) + 1; sh.dirty = true; }); }
 function walkAnim(p, moving, walk) {
   p.body.position.y = moving ? Math.abs(Math.sin(walk * .7)) * .06 : 0;
@@ -2821,17 +3140,20 @@ function walkAnim(p, moving, walk) {
 }
 function updateWorkers(dt) {
   const open = PATCHES.filter(p => unlocked(p.id) && reachable(p));
-  const capH = 4 + Math.floor(S.lv.helper / 2) + S.lv.workers, wsp = 1 + .2 * S.lv.workers;
+  // Workers are slower than Sonia and carry little: training and extra levels help, but never make them race around
+  const capH = 3 + Math.floor(S.lv.workers / 3), wsp = 1 + .05 * S.lv.workers;
   for (const h of squirrels) {
     let tx, tz;
+    const hb = zoneBonus('helper', h.zone), hcap = capH + hb, hsp = 1 + .07 * hb;
+    const zoneOpen = open.filter(p => p.area === h.zone);
     if (h.state === 'harvest') {
-      const myPatch = open[h.home % Math.max(1, open.length)];
+      const myPatch = zoneOpen[h.home % Math.max(1, zoneOpen.length)];
       if (h.target && (h.target.grow < 1 || h.target.claimed !== h)) h.target = null;
       if (!h.target) {
         let best = null, bd = 1e9;
         for (const pass of [myPatch, null]) {
           for (const pl of plants) {
-            if ((pass && pl.patch !== pass) || !unlocked(pl.patch.id) || pl.grow < 1 || (pl.claimed && pl.claimed !== h)) continue;
+            if ((pass && pl.patch !== pass) || pl.patch.area !== h.zone || !zoneOpen.includes(pl.patch) || troubleAt('patch:' + pl.patch.id) || pl.grow < 1 || (pl.claimed && pl.claimed !== h)) continue;
             const d = (pl.x - h.x) ** 2 + (pl.z - h.z) ** 2; if (d < bd) { bd = d; best = pl; }
           }
           if (best) break;
@@ -2840,19 +3162,21 @@ function updateWorkers(dt) {
       }
       if (h.target) { tx = h.target.x; tz = h.target.z; }
     } else {
-      const kind = h.carry[0] && h.carry[0].userData.item, pr = procFor(kind);
+      const kind = h.carry[0] && h.carry[0].userData.item;
+      if (h.dest === undefined) h.dest = squirrelDest(kind, h.zone);
+      const pr = h.dest;
       if (pr) { tx = pr.zx; tz = pr.zz; } else { const sh = shopFor(kind) || FARM; tx = sh.counter.x + .3; tz = sh.counter.z; }
     }
-    if (tx !== undefined && stepToward(h, tx, tz, 2.7 * wsp, dt)) {
+    if (tx !== undefined && stepToward(h, tx, tz, 1.8 * wsp * hsp * workF('helper'), dt)) {
       if (h.state === 'harvest' && h.target) {
         const pl = h.target; pl.claimed = null; h.target = null;
         if (pl.grow >= 1) {
           cutPlant(pl);
           const b = makeItem(pl.crop); b.scale.setScalar(.6); b.position.y = h.carry.length * .13; h.m.stack.add(b); h.carry.push(b);
-          if (h.carry.length >= capH) h.state = 'deliver';
+          if (h.carry.length >= hcap) h.state = 'deliver';
         }
       } else if (h.state === 'deliver') {
-        const kind = h.carry[0] && h.carry[0].userData.item, pr = procFor(kind);
+        const pr = h.dest; h.dest = undefined;
         if (pr) pstate(pr.id).in += h.carry.length; else deliverToCounter(h.carry.map(b => b.userData.item));
         h.carry.forEach(b => h.m.stack.remove(b)); h.carry = []; sfx.drop();
         h.state = 'harvest';
@@ -2861,27 +3185,28 @@ function updateWorkers(dt) {
     h.m.g.position.set(h.x, Math.abs(Math.sin(h.walk || 0)) * .12, h.z);
     h.m.g.rotation.y = lerpAngle(h.m.g.rotation.y, h.face, Math.min(1, dt * 12));
   }
-  const capC = 8 + S.lv.carrier * 2 + S.lv.workers * 2;
+  const capC = 4 + Math.floor(S.lv.workers / 2);
   for (const c of carriers) {
     let tx, tz;
+    const cb = zoneBonus('carrier', c.zone), ccap = capC + cb * 2, csp = 1 + .07 * cb;
     if (c.state === 'pick') {
       const same = b => !c.carry.length || shopFor(b.output) === shopFor(c.carry[0].userData.item);
       if (!c.target || pstate(c.target.id).out === 0) {
         let best = null, bo = 0;
-        BUILDS.forEach(b => { if (!isBuilt(b.id) || !same(b)) return; const o = pstate(b.id).out; if (o > bo) { bo = o; best = b; } });
+        BUILDS.forEach(b => { if (b.area !== c.zone || !isBuilt(b.id) || !same(b)) return; const o = pstate(b.id).out; if (o > bo) { bo = o; best = b; } });
         c.target = best;
       }
       if (c.target) { tx = c.target.zx; tz = c.target.zz; }
       else if (c.carry.length) c.state = 'drop';
     }
     if (c.state === 'drop') { const sh = (c.carry[0] && shopFor(c.carry[0].userData.item)) || FARM; tx = sh.counter.x + .4; tz = sh.counter.z + .4; }
-    const arrived = tx === undefined || stepToward(c, tx, tz, 3 * wsp, dt);
+    const arrived = tx === undefined || stepToward(c, tx, tz, 2 * wsp * csp * workF('carrier'), dt);
     if (tx !== undefined && arrived) {
       if (c.state === 'pick' && c.target) {
-        const got = takeFromPile(c.target, capC - c.carry.length);
+        const got = takeFromPile(c.target, ccap - c.carry.length);
         got.forEach(m => { scene.remove(m); m.position.set(0, c.carry.length * .21, 0); m.rotation.set(0, 0, 0); c.m.stack.add(m); c.carry.push(m); });
         c.target = null;
-        if (c.carry.length >= capC || !BUILDS.some(b => isBuilt(b.id) && pstate(b.id).out > 0 && (!c.carry.length || shopFor(b.output) === shopFor(c.carry[0].userData.item)))) c.state = c.carry.length ? 'drop' : 'pick';
+        if (c.carry.length >= ccap || !BUILDS.some(b => b.area === c.zone && isBuilt(b.id) && pstate(b.id).out > 0 && (!c.carry.length || shopFor(b.output) === shopFor(c.carry[0].userData.item)))) c.state = c.carry.length ? 'drop' : 'pick';
       } else if (c.state === 'drop') {
         deliverToCounter(c.carry.map(b => b.userData.item));
         c.carry.forEach(b => c.m.stack.remove(b)); c.carry = []; sfx.drop();
@@ -2944,14 +3269,15 @@ function updateWorkers(dt) {
 const customers = [];
 let angryToastT = 0;
 const patienceMax = s => (s.id === 'farm' ? 35 : 32) * (1 + (isBuilt('park') ? .3 : 0) + (isBuilt('cafe') ? .4 : 0) + (isBuilt('music') ? .15 : 0)) * (1 + .1 * (S.perks.patience || 0));
+// The first field is always open, whatever it grows on this map
 function shopKinds(s) {
-  const k = new Set(['tulip']);
+  const k = new Set([PATCHES[0].crop]);
   PATCHES.forEach(p => { if (unlocked(p.id) && reachable(p)) k.add(p.crop); });
   BUILDS.forEach(b => { if (isBuilt(b.id)) k.add(b.output); });
   return s.goods.filter(g => k.has(g));
 }
 function availableKinds() {
-  const k = new Set(['tulip']);
+  const k = new Set([PATCHES[0].crop]);
   PATCHES.forEach(p => { if (unlocked(p.id)) k.add(p.crop); });
   BUILDS.forEach(b => { if (isBuilt(b.id)) k.add(b.output); });
   return [...k];
@@ -3010,10 +3336,10 @@ function updateCustomers(dt) {
     const mine = customers.filter(c => c.shop === s);
     s.spawnT -= dt;
     if (s.spawnT <= 0) {
-      s.spawnT = (s.id === 'farm' ? Math.max(1.1, (5 - S.lv.sign * .3) * .92 ** houses()) : Math.max(1.8, (6.5 - S.lv.sign * .3) * .95 ** houses())) * (rushing ? .3 : dayOn() && dayPhase().id === 'morning' ? 1.4 : 1);
+      s.spawnT = (s.id === 'farm' ? Math.max(1.1, (5 - S.lv.sign * .3) * .92 ** houses()) : Math.max(1.8, (6.5 - S.lv.sign * .3) * .95 ** houses())) * (rushing ? .3 : dayOn() && dayPhase().id === 'morning' ? 1.4 : 1) * trustF();
       // The other zones' shops only draw customers once Sonia has stocked them or hired their cashier
       const ready = s === FARM || S.lv[s.tills[0].staff] > 0 || Object.values(S.shops[s.id].stock).some(v => v > 0);
-      if (ready && shopOpen() && mine.filter(c => c.state !== 'leave').length < shopMax(s) + (rushing ? (s === FARM ? 5 : 2) : 0)) spawnCustomer(s);
+      if (ready && shopOpen() && !decClosed() && mine.filter(c => c.state !== 'leave').length < shopMax(s) + (rushing ? (s === FARM ? 5 : 2) : 0)) spawnCustomer(s);
     }
     const used = new Set(mine.filter(c => c.spot >= 0).map(c => c.spot));
     mine.forEach(c => { if (c.state !== 'queue') return; for (let k = 0; k < s.spots.length; k++) if (!used.has(k)) { c.spot = k; used.add(k); c.state = 'toCounter'; break; } });
@@ -3028,7 +3354,7 @@ function updateCustomers(dt) {
     else { tx = s.spawn.x; tz = s.spawn.z + (s.spawn.z > s.z ? .4 : -.4); }
     const arrived = stepToward(c, tx, tz, 2.2, dt);
     if (c.state !== 'leave') {
-      const waitingHere = c.state === 'queue' || (c.state === 'shop' && !(stock[c.want] > 0)) || c.state === 'toPay' || (c.state === 'pay' && !s.servedAt[c.till]);
+      const waitingHere = c.state === 'queue' || (c.state === 'shop' && !(stock[c.want] > 0)) || c.state === 'toPay' || (c.state === 'pay' && !servedFor(c));
       if (waitingHere && shopOpen()) c.pat -= dt * (dirty ? 1.5 : 1);
       if (c.pat <= 0) customerLeaves(c, true);
     }
@@ -3051,7 +3377,7 @@ function updateCustomers(dt) {
     else if (c.state === 'toPay' && arrived) {
       if (payLine(s, c.till).indexOf(c) === 0) { c.state = 'pay'; c.payT = .5; c.face = Math.PI / 2; }
     }
-    else if (c.state === 'pay' && s.servedAt[c.till]) {
+    else if (c.state === 'pay' && servedFor(c)) {
       c.payT -= dt;
       if (c.payT <= 0) {
         const tip = isBuilt('cafe') ? 1.1 : 1;
@@ -3200,7 +3526,7 @@ function dropThief(th) { const i = thieves.indexOf(th); if (i >= 0) thieves.spli
 function catchThief(th, bySonia) {
   addXP(25);
   dropThief(th);
-  const reward = Math.round(Math.max(400, Math.sqrt(S.earned + 100) * 12) * fscale());
+  const reward = Math.round(Math.max(100 * fscale(), incMin(1.2)));
   if (th.loot) { S.shops[th.shop.id].cash += th.loot; syncCash(th.shop); }
   addCoins(reward); addMood(-6); S.caughtThieves = (S.caughtThieves || 0) + 1; S.meta.thieves = (S.meta.thieves || 0) + 1;
   puff(th.x, 1, th.z, 0xf6c445, 12, 1.2, 3); burst(th.x, 2.2, th.z, '🚔 +' + fmt(reward)); sfx.mission();
@@ -3326,7 +3652,7 @@ function updateGift(dt) {
   if (!got && gift.life > 0) return;
   gift.on = false; gift.g.visible = false; gift.t = 70 + Math.random() * 60;
   if (got) {
-    const v = Math.round(Math.max(40, Math.sqrt(S.earned + 100) * 6) * fscale());
+    const v = Math.round(Math.max(40 * fscale(), incMin(.6)));
     addCoins(v); burst(gift.x, 1.2, gift.z, '🎁 +' + fmt(v)); flyCoins(gift.x, .5, gift.z, 8); sfx.mission(); puff(gift.x, .6, gift.z, 0xf06aa8, 14, 1.4, 3.5);
   }
 }
@@ -3572,7 +3898,7 @@ function renderMission() {
   box.hidden = false;
   const m = MISSIONS[S.mission];
   if (!m) { $('missionNum').textContent = 'Granja completa'; $('missionTxt').textContent = '¡Has terminado todas las misiones!'; $('missionReward').textContent = '—'; $('missionBar').style.width = '100%'; return; }
-  $('missionNum').textContent = `Misión ${S.mission + 1} de ${MISSIONS.length}`;
+  $('missionNum').textContent = `Capítulo ${(S.farm || 0) + 1} · Misión ${S.mission + 1} de ${MISSIONS.length}`;
   const p = Math.min(m.goal, m.prog());
   $('missionTxt').textContent = m.goal > 1 ? `${m.text} (${fmt(p)}/${fmt(m.goal)})` : m.text;
   $('missionReward').textContent = fmt(m.reward * fscale());
@@ -3624,10 +3950,15 @@ addEventListener('blur', () => input.keys.clear());
 // From above, the ✋ button lets the finger drag the map around while the character stays where it is
 let topView = false, panMode = false;
 const camPan = { x: 0, z: 0 };
+// The 🔄 button turns the camera a quarter turn around the character; the finger and the map drag turn with it
+let camYaw = 0, camYawNow = 0;
+const camRot = (x, z) => { const c = Math.cos(camYawNow), s = Math.sin(camYawNow); return { x: x * c + z * s, z: -x * s + z * c }; };
+function turnCam(dir) { camYaw += dir * Math.PI / 2; sfx.drop(); }
 const panning = () => topView && panMode;
 function dragMap(dx, dy) {
   const perPx = 2 * camera.position.y * Math.tan(camera.fov * Math.PI / 360) / innerHeight;
-  camPan.x = Math.max(-70, Math.min(70, camPan.x - dx * perPx)); camPan.z = Math.max(-70, Math.min(70, camPan.z - dy * perPx));
+  const w = camRot(dx * perPx, dy * perPx);
+  camPan.x = Math.max(-70, Math.min(70, camPan.x - w.x)); camPan.z = Math.max(-70, Math.min(70, camPan.z - w.z));
 }
 function setPan(on) {
   panMode = on; $('panBtn').classList.toggle('boost', on); $('panBtn').classList.toggle('on', on);
@@ -3638,6 +3969,8 @@ $('viewBtn').addEventListener('click', () => {
   topView = !topView; $('viewBtn').textContent = topView ? '🧑‍🌾' : '🗺️'; $('panBtn').hidden = !topView; if (!topView) setPan(false);
   $('viewBtn').setAttribute('aria-label', topView ? 'Volver a la vista normal' : 'Cambiar a vista desde arriba'); sfx.drop();
 });
+$('turnBtn').addEventListener('click', () => turnCam(1));
+addEventListener('keydown', e => { if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return; if (e.code === 'KeyQ') turnCam(-1); if (e.code === 'KeyE') turnCam(1); });
 
 /* ================= Game logic ================= */
 function lerpAngle(a, b, t) { let d = ((b - a + Math.PI) % (Math.PI * 2)) - Math.PI; if (d < -Math.PI) d += Math.PI * 2; return a + d * t; }
@@ -3726,6 +4059,7 @@ function update(dt) {
   let ix = input.jx, iz = input.jz;
   if (input.keys.has('l')) ix -= 1; if (input.keys.has('r')) ix += 1;
   if (input.keys.has('u')) iz -= 1; if (input.keys.has('d')) iz += 1;
+  ({ x: ix, z: iz } = camRot(ix, iz));
   const veh = vehicleNow(), riding = veh === 'tractor', mowing = veh === 'mower';
   const mag = Math.min(1, Math.hypot(ix, iz)), sp = speedOf(S.lv.boots) * mag * (riding ? 1.35 : mowing ? 1.2 : 1) * (1 + .08 * (S.perks.speed || 0));
   if (mag > .05) {
@@ -3767,7 +4101,7 @@ function update(dt) {
   }
   // Sweeping the meadow into the sack
   const sackCap = sackOf(S.lv.bin);
-  const meadow = S.gate3 && P.x > 16.2 && P.x < 34.3 && P.z < 7.8, r = broomOf(S.lv.broom), rz = !meadow && rubbleAt(P.x, P.z);
+  const meadow = S.gate3 && P.x > MEADOW.x0 - .6 && P.x < MEADOW.x1 + .5 && P.z > MEADOW.z0 - .6 && P.z < MEADOW.z1 + .6, r = broomOf(S.lv.broom), rz = !meadow && rubbleAt(P.x, P.z);
   broomRing.visible = meadow || !!rz;
   if (rz) {
     // A newly opened zone still full of rubbish: same broom and sack as in the meadow
@@ -3845,7 +4179,9 @@ function update(dt) {
   }
   // Zone skips: emptying the sack there pays half of what the recycling plant would
   P.binT = (P.binT || 0) - dt;
-  RUBBLE.forEach(Z => {
+  // The starting zone's skip only shows once the town starts making rubbish
+  if (START_BIN.binMesh) { const on = S.gate3 || isBuilt('recycler') || litter.length > 0; START_BIN.binMesh.visible = START_BIN.disc.ring.visible = START_BIN.disc.fill.visible = on; START_BIN.off = !on; }
+  [...RUBBLE, ...(START_BIN.zone && !START_BIN.off ? [START_BIN] : [])].forEach(Z => {
     if (!areaOpen(Z.a)) return;
     const at = near(Z.zone); Z.disc.fill.material.opacity = at ? .6 : .3;
     if (!at || S.sack <= 0 || P.binT > 0) return;
@@ -3870,17 +4206,17 @@ function update(dt) {
     if (!isBuilt(b.id)) return;
     const st = pstate(b.id);
     if (b.input) {
-      if (st.in > 0 && st.out < PROC_MAX) { st.t += dt * mm; if (st.t >= b.time) { st.t = 0; st.in--; st.out++; } }
+      if (st.in > 0 && st.out < PROC_MAX && !troubleAt(b.id)) { st.t += dt * mm; if (st.t >= b.time) { st.t = 0; st.in--; st.out++; } }
       if (builds[b.id].spin && st.in > 0) builds[b.id].spin.rotation.z += dt * 3;
       if (st.in > 0 && Math.random() < dt * 1.5 && !builds[b.id].spin) { const c = b.x < 0 ? -1 : 1; puff(b.x + .4 * c, 3.1, b.z + .7 * c, 0xd0d0d0, 1, .2, 1.2); }
     } else {
       const producing = !b.dock || fishers.includes(b);
       // Fish from the hired fishers count as caught too, so the fishing mission keeps going once one is hired
-      if (producing && st.out < ANIMAL_MAX) { st.t += dt * mm; if (st.t >= b.every) { st.t = 0; st.out++; if (b.dock) S.caught++; } }
+      if (producing && st.out < ANIMAL_MAX) { st.t += dt * mm * (troubleAt(b.id) ? .4 : 1) * (penDirty(b) ? .5 : 1); if (st.t >= b.every) { st.t = 0; st.out++; if (b.dock) S.caught++; } }
       if (b.dock && producing) { const f = builds[b.id].g.userData.fisher; f.arm.rotation.x = -1 + Math.sin(performance.now() / 500) * .1; }
       builds[b.id].animals.forEach(a => {
         if (a.bee) { a.a += dt * a.s; a.bee.position.set(Math.cos(a.a) * a.r, a.h + Math.sin(a.a * 3) * .15, Math.sin(a.a) * a.r * .6); a.bee.rotation.y = -a.a; return; }
-        if (b.look === 'mussel') return; // mussels stay put
+        if (b.look === 'mussel' || a.escaped) return; // mussels stay put, and a runaway moves on its own
         a.t -= dt;
         if (a.t <= 0) { a.t = 1.5 + Math.random() * 3; a.tx = (Math.random() - .3) * 2.8; a.tz = (Math.random() - .5) * 2.2; }
         const dx = a.tx - a.x, dz = a.tz - a.z, d = Math.hypot(dx, dz), v = b.id === 'coop' ? 1.2 : .5;
@@ -3933,7 +4269,7 @@ function update(dt) {
     if (S.paid[pad.id] >= info.cost) completePad(pad); else refreshWorld();
   }
   // Bank interest
-  if (isBuilt('bank')) { bankT -= dt; if (bankT <= 0) { bankT = 30; const v = Math.min(Math.round(S.coins * .02), Math.round(20000 * fscale())); if (v > 0) { addCoins(v); burst(4.5, 3, 19.6, '🏦 +' + fmt(v)); } } }
+  if (isBuilt('bank')) { bankT -= dt; if (bankT <= 0) { bankT = 30; const v = Math.min(Math.round(S.coins * .02), incMin(.5)); if (v > 0) { addCoins(v); burst(4.5, 3, 19.6, '🏦 +' + fmt(v)); } } }
 
   updateWorkers(dt);
   updateCustomers(dt);
@@ -3971,7 +4307,7 @@ function update(dt) {
   else if (S.shops.farm.cash > 0 && S.mission < 8) target = CASH;
   else if (S.tut === 0) target = { x: PATCHES[0].x, z: PATCHES[0].z };
   else if (S.tut === 1 && P.stack.length >= 4) target = COUNTER_ZONE;
-  else if (S.tut >= 2) { const m = MISSIONS[S.mission], t = m && m.target(); if (t && (!t.g || t.g.visible)) target = t; else if (t && t.ref && areaOpen(t.ref.area || 1) && !zoneClean(t.ref.area || 1)) target = rubbleTarget(t.ref.area); }
+  else if (S.tut >= 2) { const m = MISSIONS[S.mission], t0 = m && m.target(), t = t0 && t0.stall ? t0.stall : t0; if (t && (!t.g || t.g.visible)) target = t; else if (t && t.ref && areaOpen(t.ref.area || 1) && !zoneClean(t.ref.area || 1)) target = rubbleTarget(t.ref.area); }
   arrow.visible = !!target;
   if (target) { arrow.position.set(target.x, 1.6 + Math.sin(performance.now() / 220) * .2, target.z); arrow.rotation.y += dt * 2; }
 
@@ -3979,11 +4315,14 @@ function update(dt) {
   // The map button lifts the camera high above to see the whole farm at once
   const portrait = innerWidth / innerHeight < .8, off = topView ? (portrait ? { y: 46, z: 7 } : { y: 34, z: 5 }) : portrait ? { y: 14.5, z: 13.8 } : { y: 10, z: 9.5 };
   const k = Math.min(1, dt * 5);
-  camera.position.x += (P.x + camPan.x - camera.position.x) * k;
+  camYawNow += (camYaw - camYawNow) * k;
+  const back = camRot(0, off.z);
+  camera.position.x += (P.x + camPan.x + back.x - camera.position.x) * k;
   camera.position.y += (off.y - camera.position.y) * k;
-  camera.position.z += (P.z + camPan.z + off.z - camera.position.z) * k;
+  camera.position.z += (P.z + camPan.z + back.z - camera.position.z) * k;
   // Upright phones show Sonia a little below the middle, so the cards at the top cover the land ahead and not her
-  camera.lookAt(camera.position.x, 0, camera.position.z - off.z - (portrait && !topView ? 2.6 : .4));
+  const ahead = camRot(0, -off.z - (portrait && !topView ? 2.6 : .4));
+  camera.lookAt(camera.position.x + ahead.x, 0, camera.position.z + ahead.z);
   sun.position.set(P.x + 6, 14, P.z + 6); sun.target.position.set(P.x, 0, P.z);
 }
 
@@ -4173,7 +4512,7 @@ function newOrder() {
   const worth = items.reduce((a, it) => a + ITEMS[it.k].value * it.need, 0);
   const left = Math.min(150, DAY_OPEN_END - S.dayT - 5);
   if (left < 60) return;
-  ORDER = { items, left, total: left, reward: Math.round(worth * priceF() * mult() * 4 + (2000 + Math.sqrt(S.earned + 100) * 25) * fscale()) };
+  ORDER = { items, left, total: left, reward: Math.round(worth * priceF() * mult() * 3 + incMin(2)) };
   toast(`📋 ¡Pedido especial! Lleva al mostrador ${items.map(i => ITEMS[i.k].icon + ' ' + i.need).join(' y ')} antes de que acabe el tiempo`); sfx.bell();
 }
 // Goods for the order count the moment they reach their shop's counter (or a sales vehicle), and are set aside for it
@@ -4276,7 +4615,7 @@ function renderLevel() {
 function levelUp(l) {
   const star = l % 5 === 0, gifts = [...OUTFITS.filter(o => o.lvl === l), ...VEHICLE_SKINS.filter(v => v.lvl === l)];
   const next = [...OUTFITS, ...VEHICLE_SKINS].filter(o => o.lvl > l).sort((p, q) => p.lvl - q.lvl)[0];
-  lvlCoins = Math.round(Math.sqrt(S.earned + 100) * 15 * fscale() * (1 + l * .05));
+  lvlCoins = incMin(star ? 5 : 2.5);
   if (star) { S.stars++; S.meta.starsTotal = (S.meta.starsTotal || 0) + 1; }
   // Only every 5th level gets the big poster; the others pay quietly and leave a note in the side drawer
   if (!star) {
@@ -4302,14 +4641,14 @@ function confetti() {
 $('lvlOk').addEventListener('click', () => claimLevel(false));
 $('lvlAd').addEventListener('click', () => { $('levelOverlay').hidden = true; showAd(() => claimLevel(true), 'nivel'); });
 $('lvlPill').addEventListener('click', () => toast(`⭐ Nivel ${S.meta.level || 1}: te faltan ${xpNeed(S.meta.level || 1) - (S.meta.xp || 0)} puntos para el siguiente`));
-const chestValue = () => Math.round(Math.max(1000, Math.sqrt(S.earned + 100) * 80) * fscale());
+const chestValue = () => Math.round(Math.max(300 * fscale(), incMin(4)));
 const chestReady = () => S.tut >= 2 && S.chestDay !== todayKey();
 
 function renderExtras() {
   // Achievements pay out on their own the moment they are reached
   ACHV.forEach(a => {
     if (S.achv[a.id] || a.prog() < a.goal) return;
-    S.achv[a.id] = 1; const v = Math.round(a.reward * fscale()); addCoins(v); sfx.mission();
+    S.achv[a.id] = 1; const v = Math.round(Math.max(incMin(3), Math.min(a.reward * fscale(), incMin(10)))); addCoins(v); sfx.mission();
     toast(`🏆 Logro: ${a.name}. +${fmt(v)} monedas`);
   });
   // New outfits unlock on their own as the player progresses
@@ -4334,7 +4673,7 @@ function renderExtras() {
     const ph = dayPhase(), left = fmtT(ph.end - S.dayT);
     if (ph.id === 'night') chips.unshift(`<span class="chip night">🌙 Día ${S.dayN} · tienda cerrada · ${left}</span><button class="chip open" id="openNow">☀️ Abrir ya</button>`);
     else if (ph.id === 'rush') chips.unshift(`<span class="chip rush">⏰ Hora punta · ${left}</span>`);
-    else chips.unshift(`<span class="chip day">${ph.name} · Día ${S.dayN} · ${left}</span>`);
+    else chips.unshift(`<span class="chip day" title="${ph.name}">${ph.name.split(' ')[0]} Día ${S.dayN} · ${left}</span>`);
     if (ph.id === 'morning' && ph.end - S.dayT <= 12) chips.push(`<span class="chip rush">⏰ Hora punta en ${left}</span>`);
   }
   const ch = chips.join(''); if ($('chips')._h !== ch) { $('chips').innerHTML = ch; $('chips')._h = ch; }
@@ -4349,13 +4688,14 @@ function renderExtras() {
     $('orderBar').style.width = (got / need * 100) + '%';
     ob.classList.toggle('late', ORDER.left < 30);
   }
-  if (!$('panelOverlay').hidden && panelKind !== 'chest') openPanel(panelKind);
+  if (!$('panelOverlay').hidden && panelKind !== 'chest' && panelKind !== 'daily') openPanel(panelKind);
   renderDrawer();
 }
 
 /* Side drawer: everything that is not the farm itself folds into it */
 const NEWS = [];
-function addNews(txt) { NEWS.unshift(txt); NEWS.length = Math.min(NEWS.length, 4); S.meta.newsSeen = false; renderDrawer(); }
+// News go away on their own after a few seconds, so the side panel does not fill up
+function addNews(txt) { NEWS.unshift(txt); NEWS.length = Math.min(NEWS.length, 2); S.meta.newsSeen = false; renderDrawer(); setTimeout(() => { const i = NEWS.indexOf(txt); if (i >= 0) { NEWS.splice(i, 1); renderDrawer(); } }, 8000); }
 // On a phone lying sideways there is little height, so the drawer starts folded unless the player opened it
 const shortScreen = matchMedia('(orientation: landscape) and (max-height: 520px)');
 const drawerOpen = () => S.tut < 2 || (S.meta.hudOpen ?? !shortScreen.matches);
@@ -4366,9 +4706,9 @@ function renderDrawer() {
   const nw = $('news'); nw.hidden = !NEWS.length;
   const nh = `<span class="nk">✨ Novedades<button id="newsClear" aria-label="Borrar novedades">✕</button></span>${NEWS.slice(0, 2).map(n => `<span>${n}</span>`).join('')}`;
   if (nw._h !== nh) { nw.innerHTML = nh; nw._h = nh; }
-  const n = ['mission', 'alerts', 'news'].filter(id => !$(id).hidden).length + $('chips').children.length;
+  const n = ['mission', 'daily', 'alerts', 'news'].filter(id => !$(id).hidden).length + $('chips').children.length;
   const alert = !open && (!$('alerts').hidden || (NEWS.length && !S.meta.newsSeen));
-  $('drawIcon').textContent = open ? '◀ Ocultar' : alert && !$('alerts').hidden ? '⏳' : '📋';
+  $('drawIcon').textContent = open ? '◀' : alert && !$('alerts').hidden ? '⏳' : '📋';
   $('drawBadge').textContent = open || !n ? '' : n;
   $('drawTab').classList.toggle('alert', !!alert);
   if (open) S.meta.newsSeen = true;
@@ -4390,12 +4730,9 @@ function openPanel(kind) {
       return `<div class="prow"><span class="pi">${p.icon}</span><span class="pt2"><b>${p.name.replace('Sonia', who())} · ${l}/${p.max}</b>${p.text.replace('Sonia', who())}</span><button data-perk="${p.id}" ${max || S.stars < c ? 'disabled' : ''}>${max ? 'Máx' : `⭐ ${c}`}</button></div>`;
     }).join('');
   } else if (kind === 'farms') {
-    title = '🗺️ Mis granjas'; sub = 'Cada mapa guarda su propia granja tal como la dejaste. Puedes volver a cualquiera cuando quieras.';
-    rows = MAPS.filter(mapOpen).map(m => {
-      const f = WORLD.farms[m.id], here = m.id === THEME.id;
-      const btn = here ? '<button disabled>Estás aquí</button>' : f ? `<button data-map="${m.id}">Viajar</button>` : '<button disabled>🔒</button>';
-      return `<div class="prow ${here ? 'done' : f ? '' : 'locked'}"><span class="pi">${f ? m.icon : '🔒'}</span><span class="pt2"><b>${m.name}</b>${f ? m.mechanic : 'Se abre mudándote desde la granja anterior'}${f && !here ? `<br><small>💰 ${fmt(f.coins || 0)} · misión ${(f.mission || 0) + 1}</small>` : ''}</span>${btn}</div>`;
-    }).join('');
+    // The story path: one chapter per map (48-story.js)
+    title = '🗺️ Capítulos'; sub = 'La historia de Sonia, capítulo a capítulo. Cada granja se queda guardada tal como la dejaste y puedes volver cuando quieras.';
+    rows = chapterRows();
   } else if (kind === 'tests') {
     // Testers jump to any map at once, even the ones nobody else can see yet
     title = '🧪 Modo pruebas'; sub = 'Solo lo ves tú en este móvil. Puedes ir a cualquier mapa sin mudarte, y ver lo que aún está en pruebas.';
@@ -4424,10 +4761,23 @@ function openPanel(kind) {
       return `<div class="prow ${on ? 'done' : got || o.ad ? '' : 'locked'}"><span class="pi">${o.icon}</span><span class="pt2"><b>${o.name}</b>${got ? o.text : '🔒 ' + o.need}${!got && o.goal > 1 ? `<br><small>${fmt(p)}/${fmt(o.goal)}</small>` : ''}</span>${btn}</div>`;
     }).join('');
   } else if (kind === 'chest') {
-    const v = chestValue();
-    title = '🎁 Cofre diario'; sub = 'Un cofre gratis cada día. Vuelve mañana a por otro.';
-    rows = `<div class="prow"><span class="pi">🎁</span><span class="pt2"><b>Abrir</b>+${fmt(v)} monedas</span><button data-chest="1">Abrir</button></div>`
+    const v = Math.round(chestValue() * streakMult()), st = S.meta.dayStreak || 1, lost = S.meta.dayStreakLost && S.meta.dayStreakLostDay === todayKey();
+    title = '🎁 Cofre diario'; sub = `Un cofre gratis cada día. Cada día seguido que vuelves, el cofre vale más (hasta ×4 el día 7), y cada 7 días ganas ⭐ 2 estrellas.`;
+    rows = `<div class="streak">${[1, 2, 3, 4, 5, 6, 7].map(i => { const n = st > 7 ? st - 7 + i : i; return `<span class="${n < st ? 'got' : n === st ? 'now' : ''}"><b>${n % 7 ? '🔥' : '⭐'}</b>Día ${n}</span>`; }).join('')}</div>`
+      + (lost ? `<div class="prow"><span class="pi">💔</span><span class="pt2"><b>Salvar tu racha de ${S.meta.dayStreakLost} días</b>Ayer no viniste. Mira un anuncio y sigues por el día ${S.meta.dayStreakLost + 1}</span><button data-streak="1">📺 Salvar</button></div>` : '')
+      + `<div class="prow"><span class="pi">🎁</span><span class="pt2"><b>Abrir</b>+${fmt(v)} monedas</span><button data-chest="1">Abrir</button></div>`
       + `<div class="prow"><span class="pi">📺</span><span class="pt2"><b>Ver anuncio</b>+${fmt(v * 2)} monedas</span><button data-chest="2">×2</button></div>`;
+  } else if (kind === 'stall') {
+    title = '🛠️ Mejoras'; sub = 'Las mejoras de esta zona. Cada vez que compras una, aparece otra nueva.';
+    rows = stallRows();
+  } else if (kind === 'work') {
+    title = `🏗️ Obra: ${workPad ? workPad.info.name : ''}`; sub = 'Los edificios grandes tardan un rato en construirse.';
+    rows = workRows();
+  } else if (kind === 'daily') {
+    const v = dailyValue();
+    title = '📅 Cofre del día'; sub = '¡Has hecho las tres misiones de hoy! Mañana habrá tres nuevas.';
+    rows = `<div class="prow"><span class="pi">📅</span><span class="pt2"><b>Abrir</b>+${fmt(v)} monedas y ⭐ 1 estrella</span><button data-daily="1">Abrir</button></div>`
+      + `<div class="prow"><span class="pi">📺</span><span class="pt2"><b>Ver anuncio</b>+${fmt(v * 2)} monedas y ⭐ 1 estrella</span><button data-daily="2">×2</button></div>`;
   }
   $('panelTitle').textContent = title; $('panelSub').textContent = sub;
   if ($('panelList')._h !== rows) { $('panelList').innerHTML = rows; $('panelList')._h = rows; }
@@ -4435,8 +4785,9 @@ function openPanel(kind) {
 }
 function openChest(times) {
   if (!chestReady()) return;
-  const v = chestValue() * times;
-  S.chestDay = todayKey(); S.meta.chests = (S.meta.chests || 0) + 1;
+  const v = Math.round(chestValue() * streakMult()) * times, st = S.meta.dayStreak || 1;
+  S.chestDay = todayKey(); S.meta.chests = (S.meta.chests || 0) + 1; S.meta.dayStreakLost = 0;
+  if (st % 7 === 0) { S.stars += 2; S.meta.starsTotal = (S.meta.starsTotal || 0) + 2; setTimeout(() => toast(`⭐ ¡${st} días seguidos! +2 estrellas`), 1800); }
   addCoins(v); flyCoins(P.x, 1.5, P.z, 12); burst(P.x, 2.2, P.z, '🎁 +' + fmt(v)); sfx.mission(); puff(P.x, 1, P.z, 0xf6c445, 16, 1.5, 3.5);
   toast(`🎁 ¡Cofre abierto! +${fmt(v)} monedas`); save();
 }
@@ -4472,6 +4823,11 @@ $('panelList').addEventListener('click', e => {
   } else if (b.dataset.chest) {
     $('panelOverlay').hidden = true;
     if (b.dataset.chest === '2') showAd(() => openChest(2), 'cofre'); else openChest(1);
+  } else if (b.dataset.streak) {
+    showAd(() => { saveStreak(); $('panelList')._h = ''; openPanel('chest'); }, 'racha');
+  } else if (b.dataset.daily) {
+    $('panelOverlay').hidden = true;
+    if (b.dataset.daily === '2') showAd(() => openDaily(2), 'diarias'); else openDaily(1);
   }
 });
 $('panelClose').addEventListener('click', () => { $('panelOverlay').hidden = true; });
@@ -4641,14 +4997,16 @@ function resize() {
 addEventListener('resize', resize); resize();
 let last = performance.now(), saveT = 0, uiT = 0;
 function frame(now) {
+  // Ask for the next frame first: if anything below fails once (e.g. a script still loading), the game keeps going
+  requestAnimationFrame(frame);
+  if (!window.gameReady) { last = now; return; } // in development the scripts arrive one by one: wait for the last one
   const dt = Math.min(.1, (now - last) / 1000); last = now;
   if (creatorOn) creatorView(dt);
-  else if (!S.over && $('dayOverlay').hidden && $('tutOverlay').hidden) {
-    S.meta.playT = (S.meta.playT || 0) + dt; update(dt); updateDay(dt); updateMood(dt); updateExtras(dt); updateGrid(); }
+  else if (!S.over && $('dayOverlay').hidden && $('tutOverlay').hidden && $('decOverlay').hidden && $('sceneOverlay').hidden) {
+    S.meta.playT = (S.meta.playT || 0) + dt; update(dt); updateDay(dt); updateMood(dt); updateExtras(dt); updateTrouble(dt); updateChores(dt); updateIncome(dt); updateTown(dt); updateGrid(); }
   renderer.render(scene, camera); updateLabels(dt);
-  uiT += dt; if (uiT > .25) { uiT = 0; refreshWorld(); checkMission(); renderMood(); renderExtras(); }
+  uiT += dt; if (uiT > .25) { uiT = 0; refreshWorld(); checkMission(); renderMood(); renderDaily(); renderWorks(); renderStalls(); renderZone(); renderTrouble(); renderTown(); renderStory(); renderExtras(); tidyHud(); renderTips(); }
   saveT += dt; if (saveT > 4) { saveT = 0; saveCleared(); save(); }
-  requestAnimationFrame(frame);
 }
 
 /* ================= Menu ================= */
@@ -4761,16 +5119,17 @@ const TUTORIAL = [
   { icon: '👆', title: 'Muévete', text: 'Arrastra el dedo por la pantalla para caminar por la granja.' },
   { icon: '🌷', title: 'Cosecha', text: 'Pasa por encima de un campo con flores maduras para recogerlas.' },
   { icon: '🧺', title: 'Vende', text: 'Lleva la cosecha al mostrador. Los clientes pagan en la caja: ponte en ella para cobrar.' },
+  { icon: '🛠️', title: 'Crece', text: 'Pisa los círculos con precio para comprar campos, talleres y ayudantes. Las mejoras de cada zona están en su puesto 🛠️.' },
   { icon: '😠', title: 'Cuidado con el enfado', text: 'Si los clientes esperan demasiado se enfadan. Si llega al 100 % y cierras, pierdes el dinero del día.' },
-  { icon: '📋', title: 'Tus herramientas', text: 'Las misiones y avisos están en el panel de la izquierda (puedes ocultarlo). Con 🗺️ ves toda la granja desde arriba.' },
+  { icon: '📋', title: 'Tu pantalla', text: 'Arriba a la izquierda: el enfado y la hora del día, un aviso cada vez (toca +N para ver los demás) y tu misión. 🗺️ enseña la granja desde arriba y 🔄 gira la cámara.' },
 ];
-let tutI = 0;
-function openTutorial() { tutI = 0; showTutCard(); $('tutOverlay').hidden = false; }
+let tutI = 0, tutList = TUTORIAL;
+function openTutorial() { tutI = 0; tutList = TUTORIAL; showTutCard(); $('tutOverlay').hidden = false; }
 function showTutCard() {
-  const c = TUTORIAL[tutI], lastCard = tutI === TUTORIAL.length - 1;
-  $('tutStep').textContent = `${tutI + 1} de ${TUTORIAL.length}`; $('tutIcon').textContent = c.icon;
+  const c = tutList[tutI], lastCard = tutI === tutList.length - 1, tip = tutList !== TUTORIAL;
+  $('tutStep').textContent = tip ? (tutList.length > 1 ? `💡 Novedad · ${tutI + 1} de ${tutList.length}` : '💡 Novedad') : `${tutI + 1} de ${tutList.length}`; $('tutIcon').textContent = c.icon;
   $('tutTitle').textContent = c.title; $('tutText').textContent = c.text;
-  $('tutNext').textContent = lastCard ? '¡A jugar!' : 'Siguiente ▶'; $('tutSkip').hidden = lastCard;
+  $('tutNext').textContent = lastCard ? (tip ? '¡Entendido!' : '¡A jugar!') : 'Siguiente ▶'; $('tutSkip').hidden = lastCard || tip;
 }
 function closeTutorial(skip) {
   $('tutOverlay').hidden = true; S.meta.tutSeen = true; last = performance.now();
@@ -4778,7 +5137,7 @@ function closeTutorial(skip) {
   if (skip && S.tut < 2) { S.tut = 2; $('banner').classList.add('gone'); toast('Tutorial saltado. ¡Sigue las misiones del panel!'); }
   save();
 }
-$('tutNext').addEventListener('click', () => { sfx.drop(); if (tutI < TUTORIAL.length - 1) { tutI++; showTutCard(); } else closeTutorial(false); });
+$('tutNext').addEventListener('click', () => { sfx.drop(); if (tutI < tutList.length - 1) { tutI++; showTutCard(); } else if (tutList !== TUTORIAL) { $('tutOverlay').hidden = true; last = performance.now(); save(); } else closeTutorial(false); });
 $('tutSkip').addEventListener('click', () => closeTutorial(true));
 
 /* ================= Start ================= */
@@ -5078,7 +5437,8 @@ cvs.addEventListener('pointermove', e => {
     if (x !== placing.x || z !== placing.z) moveGhost(x, z, placing.r);
   } else {
     const perPx = 2 * camera.position.y * Math.tan(camera.fov * Math.PI / 360) / innerHeight;
-    camPan.x -= (e.clientX - d.lx) * perPx; camPan.z -= (e.clientY - d.ly) * perPx; d.lx = e.clientX; d.ly = e.clientY;
+    const w = camRot((e.clientX - d.lx) * perPx, (e.clientY - d.ly) * perPx);
+    camPan.x -= w.x; camPan.z -= w.z; d.lx = e.clientX; d.ly = e.clientY;
   }
 });
 const gridUp = e => {
@@ -5121,6 +5481,835 @@ $('stats').addEventListener('click', () => {
   const code = prompt('Código de probador:');
   if (code) enterTesting(code);
 });
+
+/* ================= Daily missions and streak ================= */
+// Everything lives in S.meta, so it travels with the player to every map. Progress counts what happens today in any farm.
+const dayNum = k => { const [y, m, d] = k.split('-').map(Number); return Math.round(new Date(y, m - 1, d).getTime() / 864e5); };
+const niceNum = n => { const p = 10 ** Math.max(0, Math.floor(Math.log10(n)) - 1); return Math.round(n / p) * p; };
+const DAILY_KINDS = {
+  serve:   { icon: '🧺', text: n => `Atiende a ${n} clientes`, goal: () => pick([10, 15, 20]) },
+  harvest: { icon: '🌾', text: n => `Cosecha ${n} plantas`, goal: () => pick([30, 45, 60]) },
+  earn:    { icon: '💰', text: n => `Gana ${fmt(n)} monedas`, goal: () => niceNum(chestValue() * 1.5) },
+  upgrade: { icon: '🔨', text: n => `Compra ${n} mejoras`, goal: () => pick([2, 3]), ok: () => S.mission < MOVE_AFTER },
+  fish:    { icon: '🐟', text: n => `Pesca ${n} peces`, goal: () => pick([10, 20]), ok: () => isBuilt('dock1') },
+};
+const streakMult = () => 1 + .5 * (Math.min(7, S.meta.dayStreak || 1) - 1); // day 7 and after: ×4
+const dailyDone = () => { const d = S.meta.daily; return !!d && d.list.every(m => m.got >= m.goal); };
+const dailyValue = () => niceNum(chestValue() * 2);
+
+function dailyNewDay() {
+  const t = todayKey(), m = S.meta;
+  // Streak: one more for each day in a row. Missing a single day can be saved with an ad until the day ends
+  if (m.dayStreakDay !== t) {
+    const gap = m.dayStreakDay ? dayNum(t) - dayNum(m.dayStreakDay) : 1;
+    m.dayStreakLost = 0;
+    if (gap === 1) m.dayStreak = (m.dayStreak || 0) + 1;
+    else { if (gap === 2 && (m.dayStreak || 0) >= 2) { m.dayStreakLost = m.dayStreak; m.dayStreakLostDay = t; } m.dayStreak = 1; }
+    m.dayStreakDay = t; m.dayStreakBest = Math.max(m.dayStreakBest || 0, m.dayStreak);
+    if (m.dayStreakLost) setTimeout(() => toast(`💔 Ayer no viniste y tu racha de ${m.dayStreakLost} días se ha roto. ¡Sálvala en el cofre 🎁!`), 2500);
+    else if (m.dayStreak > 1) setTimeout(() => toast(`🔥 ¡${m.dayStreak} días seguidos! El cofre diario es ×${streakMult()}`), 2500);
+  }
+  if (!m.daily || m.daily.day !== t) {
+    const kinds = Object.keys(DAILY_KINDS).filter(k => !DAILY_KINDS[k].ok || DAILY_KINDS[k].ok()).sort(() => Math.random() - .5).slice(0, 3);
+    m.daily = { day: t, list: kinds.map(k => ({ k, goal: DAILY_KINDS[k].goal(), got: 0 })), claimed: false };
+  }
+}
+function dailyAdd(k, n = 1) {
+  const d = S.meta.daily; if (!d || d.day !== todayKey() || S.tut < 2) return;
+  const m = d.list.find(x => x.k === k); if (!m || m.got >= m.goal) return;
+  m.got = Math.min(m.goal, m.got + n);
+  if (m.got >= m.goal) { sfx.mission(); toast(`✅ Misión del día: ${DAILY_KINDS[k].text(m.goal)}${dailyDone() ? ' · ¡Abre el cofre!' : ''}`); }
+}
+// Served, earned and fish are counted by watching the farm's totals go up (a new farm starts at 0, so drops are skipped)
+const dailySeen = { served: S.served, earned: S.earned, caught: S.caught };
+function watchDaily() {
+  [['served', 'serve'], ['earned', 'earn'], ['caught', 'fish']].forEach(([s, k]) => {
+    const d = S[s] - dailySeen[s]; if (d > 0) dailyAdd(k, d); dailySeen[s] = S[s];
+  });
+}
+function openDaily(times) {
+  const d = S.meta.daily; if (!dailyDone() || d.claimed) return;
+  const v = dailyValue() * times; d.claimed = true;
+  S.stars++; S.meta.starsTotal = (S.meta.starsTotal || 0) + 1; S.meta.dailyChests = (S.meta.dailyChests || 0) + 1;
+  dailySeen.earned += v; addCoins(v); flyCoins(P.x, 1.5, P.z, 12); burst(P.x, 2.2, P.z, '📅 +' + fmt(v)); sfx.mission(); puff(P.x, 1, P.z, 0xf6c445, 16, 1.5, 3.5);
+  toast(`📅 ¡Cofre del día! +${fmt(v)} monedas y ⭐ 1 estrella`); save(); renderDaily();
+}
+function saveStreak() {
+  const m = S.meta; if (!m.dayStreakLost || m.dayStreakLostDay !== todayKey()) return;
+  m.dayStreak = m.dayStreakLost + 1; m.dayStreakLost = 0; m.dayStreakBest = Math.max(m.dayStreakBest || 0, m.dayStreak);
+  sfx.mission(); toast(`🔥 ¡Racha salvada! ${m.dayStreak} días seguidos`); save();
+}
+function renderDaily() {
+  dailyNewDay(); watchDaily();
+  const box = $('daily'), d = S.meta.daily;
+  box.hidden = S.tut < 2 || d.claimed;
+  if (box.hidden) return;
+  const fold = S.meta.dailyFold ?? true, n = d.list.filter(m => m.got >= m.goal).length, ready = n === 3;
+  const h = `<div class="mt"><span class="mk">📅 Misiones del día · ${n}/3</span><span class="dk">🔥 ${S.meta.dayStreak || 1}${fold ? ' ▸' : ' ▾'}</span></div>`
+    + (fold ? '' : d.list.map(m => `<div class="dl ${m.got >= m.goal ? 'ok' : ''}">${m.got >= m.goal ? '✅' : DAILY_KINDS[m.k].icon} ${DAILY_KINDS[m.k].text(m.goal)}${m.got < m.goal ? ` <small>${fmt(m.got)}/${fmt(m.goal)}</small>` : ''}</div>`).join(''))
+    + (ready ? '<button class="dchest" data-dopen="1">🎁 ¡Abrir el cofre del día!</button>' : '');
+  if (box._h !== h) { box.innerHTML = h; box._h = h; }
+  box.classList.toggle('ready', ready);
+}
+$('daily').addEventListener('click', e => {
+  if (e.target.closest('[data-dopen]')) { openPanel('daily'); stat('anuncio_ofrecido', { sitio: 'diarias' }); return; }
+  S.meta.dailyFold = !(S.meta.dailyFold ?? true); sfx.drop(); renderDaily(); save();
+});
+// Harvests and upgrades are counted where they happen
+const cutPlantBase = cutPlant;
+cutPlant = pl => { cutPlantBase(pl); dailyAdd('harvest'); };
+const completePadBase = completePad;
+completePad = pad => { if (pad.kind !== 'move' && pad.info && pad.info.cost) dailyAdd('upgrade'); completePadBase(pad); };
+renderDaily();
+$('chestBtn').addEventListener('click', () => { if (S.meta.dayStreakLost && S.meta.dayStreakLostDay === todayKey()) stat('anuncio_ofrecido', { sitio: 'racha' }); });
+
+/* ================= Building works ================= */
+// Big buildings take a while to build once paid. The clock keeps running with the game closed.
+// Standing on the circle offers to finish at once with an ad or a star. Free-building maps (the Costa) still build at once for now.
+if (!S.works || typeof S.works !== 'object') S.works = {};
+const workSecs = pad => {
+  const c = (pad.ref && pad.ref.cost) || 0;
+  if (!(pad.kind === 'build' || pad.kind === 'special') || /^till2/.test(pad.id) || gridable(pad.ref) || c < 1000) return 0;
+  return Math.round(Math.min(480, 30 + (Math.log10(c) - 3) * 90)); // 1.000 → 30 s, 100.000 → 3:30, 10 millones → 6:30, 8 min at most
+};
+const workLeft = id => Math.max(0, (S.works[id].end - Date.now()) / 1000);
+const workObj = pad => pad.kind === 'build' ? builds[pad.id].g : townMeshes[pad.id] || (pad.id === 'recycler' ? recycler : null);
+const scaffolds = {};
+const scafPole = new T.BoxGeometry(.12, 2.6, .12), scafPlank = new T.BoxGeometry(1, .08, .3), scafWood = mat(0xc8924f), scafNet = mat(0x5aa0d8);
+function makeScaffold(pad) {
+  const o = workObj(pad); if (!o || scaffolds[pad.id]) return;
+  const w = (pad.ref.w || 3.2) + .4, d = (pad.ref.d || 3) + .4, g = new T.Group();
+  [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sz]) => { const p = mesh(scafPole, scafWood); p.position.set(sx * w / 2, 1.3, sz * d / 2); g.add(p); });
+  [.9, 1.9].forEach(y => [[0, -d / 2, w, 0], [0, d / 2, w, 0], [-w / 2, 0, d, 1], [w / 2, 0, d, 1]].forEach(([x, z, len, rot]) => {
+    const b = mesh(scafPlank, scafWood); b.scale.x = len; b.rotation.y = rot * Math.PI / 2; b.position.set(x, y, z); g.add(b);
+  }));
+  const net = mesh(new T.BoxGeometry(w - .2, 1.6, d - .2), scafNet); net.position.y = .8; net.material.transparent = true; net.material.opacity = .3; g.add(net);
+  g.position.set(o.position.x, 0, o.position.z); scene.add(g); scaffolds[pad.id] = g;
+}
+function dropScaffold(id) { if (scaffolds[id]) { scene.remove(scaffolds[id]); delete scaffolds[id]; } }
+// While a building is going up, its circle shows the countdown instead of a price
+const padInfoPlain = padInfo;
+padInfo = pad => {
+  const i = padInfoPlain(pad), w = S.works[pad.id];
+  if (!w) return i;
+  const left = workLeft(pad.id);
+  return { ...i, active: true, cost: 0, icon: '🏗️', sub: '', works: true, prog: 1 - left / w.secs, pr: `<div class="pr">🏗️ ${fmtT(left)}</div>` };
+};
+let workShown = null; // the offer opens once each time the player steps on the circle
+const completePadPlain = completePad;
+completePad = pad => {
+  if (S.works[pad.id]) { if (workLeft(pad.id) <= 0) finishWork(pad); else if (workShown !== pad.id) { workShown = pad.id; openWork(pad); } return; }
+  const secs = workSecs(pad);
+  if (!secs || !(pad.info && pad.info.cost)) { completePadPlain(pad); return; }
+  delete S.paid[pad.id]; S.works[pad.id] = { end: Date.now() + secs * 1000, secs }; workShown = pad.id;
+  makeScaffold(pad); sfx.buy(); puff(pad.x, .3, pad.z, 0xc8924f, 10, 1.4, 3);
+  toast(`🏗️ ¡Empieza la obra: ${pad.info.name}! Tardará ${fmtT(secs)}. Pisa el círculo para acabarla antes`);
+  stat('obra_empezada', { obra: pad.id, segundos: secs });
+  refreshWorld(); save();
+};
+function finishWork(pad) {
+  delete S.works[pad.id]; dropScaffold(pad.id);
+  if (!$('panelOverlay').hidden && panelKind === 'work' && workPad === pad) $('panelOverlay').hidden = true;
+  completePadPlain(pad);
+}
+let workPad = null;
+function openWork(pad) { workPad = pad; $('panelList')._h = ''; openPanel('work'); stat('anuncio_ofrecido', { sitio: 'obra' }); }
+function workRows() {
+  const pad = workPad; if (!pad || !S.works[pad.id]) return '';
+  const left = workLeft(pad.id);
+  return `<div class="prow"><span class="pi">📺</span><span class="pt2"><b>Ver anuncio</b>La obra se acaba ahora mismo</span><button data-workad="1">Acabar</button></div>`
+    + `<div class="prow ${S.stars < 1 ? 'locked' : ''}"><span class="pi">⭐</span><span class="pt2"><b>Usar 1 estrella</b>Tienes ${S.stars}. La obra se acaba ahora mismo</span><button data-workstar="1" ${S.stars < 1 ? 'disabled' : ''}>⭐ 1</button></div>`
+    + `<div class="prow"><span class="pi">⏳</span><span class="pt2"><b>Esperar</b>Quedan ${fmtT(left)}. Sigue jugando mientras tanto (también corre con el juego cerrado)</span></div>`;
+}
+function rushWork(how) {
+  const pad = workPad; if (!pad || !S.works[pad.id]) return;
+  if (how === 'star') { if (S.stars < 1) return; S.stars--; }
+  stat('obra_acelerada', { obra: pad.id, con: how });
+  $('panelOverlay').hidden = true; finishWork(pad);
+}
+$('panelList').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b || b.disabled) return;
+  if (b.dataset.workad) { $('panelOverlay').hidden = true; showAd(() => rushWork('ad'), 'obra'); }
+  else if (b.dataset.workstar) rushWork('star');
+});
+function renderWorks() {
+  if (workShown && (!P.padOn || P.padOn.id !== workShown)) workShown = null;
+  Object.keys(S.works).forEach(id => {
+    const pad = padById(id);
+    if (!pad) { delete S.works[id]; return; }
+    if (workLeft(id) <= 0) finishWork(pad); else makeScaffold(pad);
+  });
+}
+renderWorks();
+
+/* ================= Upgrade stalls ================= */
+// Each zone has one stall instead of a circle per upgrade. Stepping on it opens its list.
+// Upgrades show up one by one: the next one appears once the ones before have been bought once.
+// The first zone follows the missions (the cashier always first); the other zones go from cheapest to dearest.
+const UPG_ORDER = ['cashier', 'bag', 'boots', 'sign', 'helper', 'carrier', 'dog', 'cashier2', 'workers', 'patrol'];
+// The meadow's broom and sack come first: without them the meadow cannot be cleaned
+const upgRank = id => { if (id === 'broom' || id === 'bin') return -3 + (id === 'bin'); const i = UPG_ORDER.indexOf(id); return i >= 0 ? i : id.startsWith('fame') ? 50 : 40; };
+const upgDesc = p => {
+  const r = p.ref, sh = r.shop || r.fame;
+  if (r.fame) return `Todo lo de ${sh.name} se vende un 15% más caro por nivel`;
+  if (r.shop) return p.id.startsWith('cashier2') ? `Cobra sola en la segunda caja de ${sh.name}` : `Cobra sola en la caja de ${sh.name}, así no tienes que cobrar tú`;
+  if (r.attr) return 'Vende entradas';
+  if (r.zoneWorker) {
+    const zone = r.area || 1, more = S.lv[p.id] < zoneCap(r.zoneWorker, zone), who = r.zoneWorker === 'helper' ? critterOf(zone)[1].toLowerCase() : 'repartidor';
+    if (!more) return r.zoneWorker === 'helper' ? `Los animalitos de esta zona cosechan más rápido y llevan más` : 'Los repartidores de esta zona van más rápido y llevan más';
+    return r.zoneWorker === 'helper' ? `Un ${who} más cosecha los campos de esta zona y lo lleva a la tienda o al taller` : 'Un repartidor más lleva lo que hacen los talleres y animales de esta zona a la tienda';
+  }
+  return {
+    cashier: 'Cobra sola en la caja 1, así no tienes que cobrar tú', cashier2: 'Cobra sola en la segunda caja',
+    bag: 'Llevas más cosas a la vez', boots: `${who()} corre más rápido`, sign: 'Todo se vende más caro y vienen más clientes',
+    water: 'Los cultivos crecen más rápido y el agua de los campos dura más', machine: 'Los talleres y los animales trabajan más rápido', workers: 'Ardillas, repartidores y robots van más rápido',
+    helper: 'Una ardilla cosecha un campo por ti (una más por nivel)', carrier: 'Lleva los productos de los talleres al mostrador',
+    tractor: 'Cosecha mucho de golpe. Se cambia con el botón 🚜', dog: 'Te trae los billetes que dejan los clientes',
+    broom: 'Limpias más basura de una pasada', bin: 'El saco de basura aguanta más kilos', belt: 'La cinta de reciclaje va más rápida',
+    compactor: 'Cada kilo reciclado vale más', robots: 'Un robot barre la basura por ti', rod: 'Pescas más rápido', fisher: 'Pesca solo en un muelle',
+    patrol: 'Otro policía vigila las tiendas y atrapa ladrones', mower: 'Corta las malas hierbas pasando por encima', gardener: 'Arranca las malas hierbas por ti',
+    mechanic: 'Arregla solo las atracciones averiadas', animator: 'Viene más público a la feria',
+  }[p.id] || '';
+};
+const STALLS = [];
+// In the Valle the farm's stall stands on the right of the square, by the hedge, facing the square. Elsewhere it goes among its old circles
+const STALL_SPOTS = LAYOUT ? {} : { 1: { x: 8.3, z: 5, kx: 10.2, kz: 5, kr: -Math.PI / 2 } };
+const stallWood = mat(0xb07a45), stallTop = mat(0xfff3d9), stallRed = mat(0xd8483a), stallWhite = mat(0xfffdf6);
+function makeStallMesh(x, z, rot = 0) {
+  const g = new T.Group(), box = (w, h, d, m, px, py, pz) => { const b = mesh(new T.BoxGeometry(w, h, d), m); b.position.set(px, py, pz); g.add(b); return b; };
+  box(2.4, .95, .8, stallWood, 0, .48, 0); box(2.6, .1, 1, stallTop, 0, 1, 0);
+  [-1.15, 1.15].forEach(px => box(.12, 1.5, .12, stallWood, px, 1.75, -.3));
+  for (let i = 0; i < 6; i++) { const s = box(.44, .08, 1.3, i % 2 ? stallWhite : stallRed, -1.1 + i * .44, 2.5, .05); s.rotation.x = .25; }
+  g.position.set(x, 0, z); g.rotation.y = rot; scene.add(g); return g;
+}
+pads.filter(p => p.kind === 'upg' && !p.ref.attr).reduce((byArea, p) => { const a = p.ref.area || 1; (byArea[a] = byArea[a] || []).push(p); return byArea; }, []).forEach((list, area) => {
+  if (!list) return;
+  const base = list.filter(p => !p.ref.zoneWorker).length ? list.filter(p => !p.ref.zoneWorker) : list; // the new zone workers do not move the stall
+  const cx = base.reduce((s, p) => s + p.x, 0) / base.length, cz = base.reduce((s, p) => s + p.z, 0) / base.length;
+  const spot = STALL_SPOTS[area] || base.reduce((a, b) => (a.x - cx) ** 2 + (a.z - cz) ** 2 <= (b.x - cx) ** 2 + (b.z - cz) ** 2 ? a : b);
+  const pad = makePad('stall-' + area, spot.x, spot.z, 'stall', { area, name: 'Mejoras', icon: '🛠️' });
+  pad.list = list.sort((a, b) => upgRank(a.id) - upgRank(b.id) || a.ref.cost(0) - b.ref.cost(0));
+  pad.kiosk = spot.kx !== undefined ? makeStallMesh(spot.kx, spot.kz, spot.kr) : makeStallMesh(spot.x, spot.z - 1.5);
+  list.forEach(p => { p.stall = pad; p.g.visible = false; });
+  STALLS.push(pad);
+});
+// What each upgrade looks like in its stall: ready to buy, waiting for a building, not discovered yet, or maxed
+function upgState(p) {
+  const r = p.ref, l = S.lv[p.id];
+  if (l >= r.max) return 'max';
+  if (r.needs && !isBuilt(r.needs)) return 'needs';
+  const before = p.stall.list.slice(0, p.stall.list.indexOf(p)).filter(q => !q.ref.needs || isBuilt(q.ref.needs));
+  return before.every(q => S.lv[q.id] > 0) ? 'open' : 'hidden';
+}
+const upgCost = p => Math.max(1, Math.round(p.ref.cost(S.lv[p.id]) * fscale()) - (S.paid[p.id] || 0));
+const padInfoNoStall = padInfo;
+padInfo = pad => {
+  if (pad.kind === 'stall') {
+    const a = pad.ref.area, on = areaOpen(a) && zoneClean(a), n = pad.list.filter(p => upgState(p) === 'open' && S.coins >= upgCost(p)).length;
+    return { active: on, cost: 0, name: 'Mejoras', icon: '🛠️', sub: '', pr: `<div class="pr">${n ? `💰 ${n} para comprar` : 'Pisa para ver'}</div>` };
+  }
+  const i = padInfoNoStall(pad);
+  return pad.stall ? { ...i, active: false } : i; // upgrades are bought in the stall, never on their old circle
+};
+let stallShown = null, stallOpen = null;
+const completePadNoStall = completePad;
+completePad = pad => {
+  if (pad.kind !== 'stall') { completePadNoStall(pad); return; }
+  if (stallShown === pad.id) return;
+  stallShown = pad.id; stallOpen = pad; $('panelList')._h = ''; openPanel('stall');
+};
+function stallRows() {
+  const pad = stallOpen; if (!pad) return '';
+  let hidden = 0, teased = false;
+  const rows = pad.list.map(p => {
+    const st = upgState(p), r = p.ref, l = S.lv[p.id], info = padInfo(p);
+    const lvl = r.max > 1 ? ` · Nv ${l}/${r.max}` : '';
+    if (st === 'hidden') { if (teased) { hidden++; return ''; } teased = true; return `<div class="prow locked"><span class="pi">🔒</span><span class="pt2"><b>Mejora nueva</b>Aparece cuando compres las de arriba</span></div>`; }
+    if (st === 'needs') { const need = [...TOWN, ...SPECIAL, ...BUILDS].find(b => b.id === r.needs); return `<div class="prow locked"><span class="pi">${r.icon}</span><span class="pt2"><b>${info.name}</b>${upgDesc(p)}<br><small>🔒 Necesita: ${need ? need.name : 'otro edificio'}</small></span></div>`; }
+    if (st === 'max') return `<div class="prow done"><span class="pi">${r.icon}</span><span class="pt2"><b>${info.name}${lvl}</b>${upgDesc(p)}<br><small>¡Al máximo!</small></span><button disabled>Máx</button></div>`;
+    const c = upgCost(p);
+    return `<div class="prow"><span class="pi">${r.icon}</span><span class="pt2"><b>${info.name}${lvl}${l ? '' : ' · ✨ ¡Nueva!'}</b>${upgDesc(p)}</span><button data-upg="${p.id}" ${S.coins < c ? 'disabled' : ''}><span class="coin"></span>${fmt(c)}</button></div>`;
+  }).join('');
+  return rows + (hidden ? `<div class="prow locked"><span class="pi">❔</span><span class="pt2"><b>Y ${hidden} ${hidden > 1 ? 'mejoras más' : 'mejora más'} por descubrir</b></span></div>` : '');
+}
+$('panelList').addEventListener('click', e => {
+  const b = e.target.closest('button[data-upg]'); if (!b || b.disabled) return;
+  const p = padById(b.dataset.upg), c = upgCost(p);
+  if (upgState(p) !== 'open' || S.coins < c) return;
+  S.coins -= c; $('coinsTxt').textContent = fmt(S.coins); p.info = padInfo(p);
+  completePad(p); stat('mejora', { mejora: p.id, nivel: S.lv[p.id] });
+  $('panelList')._h = ''; openPanel('stall');
+});
+function renderStalls() {
+  if (stallShown && (!P.padOn || P.padOn.id !== stallShown)) stallShown = null;
+  STALLS.forEach(s => { s.kiosk.visible = s.g.visible; });
+}
+refreshWorld(); renderStalls();
+
+/* ================= Zone name and rubbish warning ================= */
+// A chip always says which zone Sonia is in. Walking into a zone that still has rubbish warns that it must be cleaned before building.
+const ZONE_BASE_NAMES = { 1: 'la granja', 3: 'el prado' };
+const zoneName = a => (MAPC.zones && MAPC.zones[a]) || (rubbleZone(a) || {}).name || ZONE_BASE_NAMES[a] || 'la granja';
+const areaAt = (x, z) => +(Object.keys(AREAS).find(a => inRect(AREAS[a], x, z)) || 0);
+const zoneWarned = {};
+let zoneNow = 0;
+let zoneShowT = 0;
+function renderZone() {
+  if (S.tut < 2) { $('zoneChip').innerHTML = ''; $('zoneChip')._h = ''; return; }
+  const a = areaAt(P.x, P.z) || zoneNow; if (!a) return;
+  const Z = rubbleZone(a), dirty = Z && areaOpen(a) && !zoneClean(a), name = zoneName(a);
+  if (a !== zoneNow) {
+    zoneNow = a; zoneShowT = Date.now() + 4000;
+    if (dirty && (!zoneWarned[a] || Date.now() - zoneWarned[a] > 60000)) {
+      zoneWarned[a] = Date.now(); sfx.drop();
+      toast(`🧹 ${name[0].toUpperCase() + name.slice(1)} está lleno de basura. Bárrela y vacía el saco en el contenedor 🗑️: hasta que esté limpio no se puede construir nada aquí`);
+    }
+  }
+  const pct = Z ? Math.min(100, Math.floor(rubbleFrac(Z) / RUBBLE_CLEAN * 100)) : 100;
+  // The zone's name only shows for a few seconds after walking in; the cleaning note stays while it is dirty
+  const h = (Date.now() < zoneShowT ? `<span class="chip zone">📍 ${name[0].toUpperCase() + name.slice(1)}</span>` : '') + (dirty ? `<span class="chip dirty">🧹 Limpieza ${pct}% · límpiala para construir</span>` : '');
+  if ($('zoneChip')._h !== h) { $('zoneChip').innerHTML = h; $('zoneChip')._h = h; }
+}
+
+/* ================= Mishaps and customers who want Sonia ================= */
+// Now and then something goes wrong that only Sonia can sort out: crows on a field (it stops growing and the animals skip it),
+// a broken workshop (it stops) or an animal out of its pen (the pen makes less). Fixing it gives nothing extra: the farm just works again.
+const TROUBLES = [];
+let troubleT = 60;
+const troubleAt = key => TROUBLES.some(t => t.key === key);
+const crowGeo = new T.SphereGeometry(.14, 8, 6), crowHead = new T.SphereGeometry(.09, 8, 6), crowBeak = new T.ConeGeometry(.035, .1, 4), crowMat = mat(0x22222a);
+function makeCrow() {
+  const g = new T.Group();
+  const b = mesh(crowGeo, crowMat); b.scale.set(1, .9, 1.3); b.position.y = .16; g.add(b);
+  const h = mesh(crowHead, crowMat); h.position.set(0, .3, .14); g.add(h);
+  const k = mesh(crowBeak, M.beak); k.rotation.x = Math.PI / 2; k.position.set(0, .29, .26); g.add(k);
+  scene.add(g); return g;
+}
+function troubleSign(t, x, z, icon) { t.sign = iconSprite(icon, 1.3, '#d8402f'); t.sign.position.set(x, 3.2, z); scene.add(t.sign); }
+// Fixing or cleaning a building happens on a ring of its own beside it, never on the ring where its goods are picked up
+function fixSpot(b) {
+  if (b._fix) return b._fix;
+  let dx = b.zx - b.x, dz = b.zz - b.z; const d = Math.hypot(dx, dz) || 1; dx /= d; dz /= d;
+  // Beside the building, a little towards its pickup ring; the side facing the camera first, so the roof does not hide it
+  const sides = [[-dz, dx], [dz, -dx]].sort((u, v) => v[1] - u[1]);
+  const tries = [3.4, 4.2].flatMap(k => sides.map(([px, pz]) => ({ x: b.x + px * k + dx * 1.4, z: b.z + pz * k + dz * 1.4 })));
+  tries.push({ x: b.zx + dx * 2.4, z: b.zz + dz * 2.4 });
+  b._fix = tries.find(q => inArea(q.x, q.z) && !blocked(q.x, q.z)) || tries[tries.length - 1];
+  return b._fix;
+}
+const fixRingMat = { red: new T.MeshBasicMaterial({ color: 0xd8402f, transparent: true, opacity: .85 }), blue: new T.MeshBasicMaterial({ color: 0x3a7bd5, transparent: true, opacity: .85 }) };
+const fixRingGeo = new T.RingGeometry(.72, .92, 32), fixFillGeo = new T.CircleGeometry(.72, 32);
+function fixRing(x, z, color) {
+  const g = new T.Group(); g.position.set(x, 0, z);
+  const r = flat(fixRingGeo, fixRingMat[color], 0, .03, 0), f = flat(fixFillGeo, new T.MeshBasicMaterial({ color: color === 'red' ? 0xd8402f : 0x3a7bd5, transparent: true, opacity: .25 }), 0, .025, 0);
+  g.add(r); g.add(f); scene.add(g); return g;
+}
+const onSpot = q => (P.x - q.x) ** 2 + (P.z - q.z) ** 2 < .8;
+const pulse = (sp, size) => { const k = size * (1 + .12 * Math.sin(performance.now() / 180)); sp.scale.set(k, k * 140 / 128, 1); };
+function startTrouble() {
+  const opts = [];
+  PATCHES.filter(p => unlocked(p.id) && reachable(p) && !troubleAt('patch:' + p.id)).forEach(p => opts.push(['crows', p]));
+  PROCS.filter(b => isBuilt(b.id) && reachable(b) && !troubleAt(b.id)).forEach(b => opts.push(['broken', b]));
+  ANIMALS.filter(b => isBuilt(b.id) && !b.dock && reachable(b) && !troubleAt(b.id) && builds[b.id].animals.some(a => a.m && !a.bee)).forEach(b => opts.push(['escaped', b]));
+  if (!opts.length) return;
+  const [kind, r] = pick(opts), t = { kind, r, area: r.area || 1 };
+  if (kind === 'crows') {
+    const mine = plants.filter(pl => pl.patch === r), xs = mine.map(pl => pl.x), zs = mine.map(pl => pl.z);
+    t.key = 'patch:' + r.id; t.box = { x0: Math.min(...xs) - .6, x1: Math.max(...xs) + .6, z0: Math.min(...zs) - .6, z1: Math.max(...zs) + .6 };
+    t.crows = [0, 1, 2, 3].map(() => { const pl = pick(mine), c = makeCrow(); c.position.set(pl.x, 0, pl.z); c.rotation.y = Math.random() * 6; return { g: c, hop: Math.random() * 6, up: 0 }; });
+    t.text = `🐦 Cuervos en el campo de ${ITEMS[r.crop].name.toLowerCase()}`; troubleSign(t, r.x, r.z, '🐦');
+  } else if (kind === 'broken') {
+    t.key = r.id; t.fix = 0; t.text = `🔧 Se ha averiado: ${r.name}`; troubleSign(t, r.x, r.z, '🔧');
+    const q = fixSpot(r); t.ring = fixRing(q.x, q.z, 'red');
+  } else {
+    const a = builds[r.id].animals.find(q => q.m && !q.bee), home = a.m.parent;
+    t.key = r.id; t.a = a; t.home = home; a.escaped = true; scene.attach(a.m);
+    t.x = r.zx + (Math.random() - .5) * 3; t.z = r.zz + 1.5 + Math.random() * 2; t.tx = t.x; t.tz = t.z; t.wt = 0;
+    t.text = `🐑 Un animal se ha escapado de: ${r.name}`; troubleSign(t, t.x, t.z, '❗');
+  }
+  TROUBLES.push(t); sfx.drop();
+  toast(`${t.text} (${zoneName(t.area)}). ${kind === 'broken' ? 'Quédate un momento en el círculo rojo de al lado para repararlo' : '¡Ve a arreglarlo!'}`);
+}
+function endTrouble(t) {
+  TROUBLES.splice(TROUBLES.indexOf(t), 1); scene.remove(t.sign); if (t.ring) scene.remove(t.ring);
+  if (t.kind === 'escaped') { t.home.attach(t.a.m); t.a.escaped = false; }
+  if (t.kind !== 'crows') { sfx.mission(); burst(P.x, 2, P.z, '¡Arreglado!', 'white'); }
+  stat('imprevisto_arreglado', { tipo: t.kind });
+}
+function updateTrouble(dt) {
+  const zones = Object.keys(AREAS).filter(a => areaOpen(+a)).length;
+  if (S.tut >= 3 && S.mission >= 6) {
+    troubleT -= dt;
+    if (troubleT <= 0) { troubleT = 80 + Math.random() * 50; if (TROUBLES.length < (zones >= 4 ? 2 : 1)) startTrouble(); }
+  }
+  for (const t of [...TROUBLES]) {
+    pulse(t.sign, 1.3); if (t.ring) t.ring.scale.setScalar(1 + .08 * Math.sin(performance.now() / 150));
+    if (t.kind === 'crows') {
+      const on = P.x > t.box.x0 && P.x < t.box.x1 && P.z > t.box.z0 && P.z < t.box.z1;
+      if (on && !t.scared) { t.scared = true; sfx.drop(); burst(P.x, 2, P.z, '¡Fuera, cuervos!', 'white'); }
+      t.crows.forEach(c => {
+        if (t.scared) { c.up += dt; c.g.position.y += dt * 4; c.g.position.x += dt * 2; c.g.scale.setScalar(Math.max(.01, 1 - c.up / 1.5)); return; }
+        c.hop += dt * 6; c.g.position.y = Math.max(0, Math.sin(c.hop)) * .15;
+        if (Math.random() < dt * .5) c.g.rotation.y = Math.random() * 6;
+      });
+      if (t.scared && t.crows[0].up > 1.5) { t.crows.forEach(c => scene.remove(c.g)); endTrouble(t); }
+    } else if (t.kind === 'broken') {
+      if (Math.random() < dt * 3) puff(t.r.x, 2.6, t.r.z, 0x444444, 1, .3, 1.5);
+      const on = onSpot(fixSpot(t.r));
+      t.fix = on ? t.fix + dt : 0;
+      if (on && Math.random() < dt * 6) beep(300 + Math.random() * 200, .03, 'square', .02);
+      if (t.fix >= 1.5) endTrouble(t);
+    } else {
+      // The runaway wanders near its pen until Sonia reaches it
+      t.wt -= dt; if (t.wt <= 0) { t.wt = 1.5 + Math.random() * 2; t.tx = t.r.zx + (Math.random() - .5) * 5; t.tz = t.r.zz + 1 + Math.random() * 3; }
+      const dx = t.tx - t.x, dz = t.tz - t.z, d = Math.hypot(dx, dz);
+      if (d > .05) { t.x += dx / d * Math.min(d, dt * .9); t.z += dz / d * Math.min(d, dt * .9); t.a.m.rotation.y = Math.atan2(dx, dz); }
+      t.a.m.position.set(t.x, Math.abs(Math.sin(performance.now() / 120)) * .06, t.z); t.sign.position.set(t.x, 2.2, t.z);
+      if ((P.x - t.x) ** 2 + (P.z - t.z) ** 2 < 1) endTrouble(t);
+    }
+  }
+}
+
+/* Customers who will only pay to Sonia: the cashier cannot serve them, and they hold up the line until she comes */
+let bossToastT = 0;
+const spawnCustomerPlain = spawnCustomer;
+spawnCustomer = s => {
+  const n = customers.length; spawnCustomerPlain(s);
+  const c = customers[n];
+  if (!c || c.vip || S.tut < 3 || !(S.lv[s.tills[0].staff] > 0) || customers.some(o => o.boss) || Math.random() > .07) return;
+  c.boss = true;
+  const hat = mesh(new T.CylinderGeometry(.15, .15, .24, 10), mat(0x6a2c91)); hat.position.y = .38; c.m.head.add(hat);
+  const band = mesh(new T.CylinderGeometry(.155, .155, .05, 10), M.gold); band.position.y = .3; c.m.head.add(band);
+};
+const servedFor = c => c.boss ? !!c.shop.tills[c.till].open && near(c.shop.tills[c.till].zone) : c.shop.servedAt[c.till];
+function renderTrouble() {
+  const boss = customers.find(c => c.boss && (c.state === 'toPay' || c.state === 'pay'));
+  if (boss && boss.state === 'pay' && performance.now() - bossToastT > 20000) { bossToastT = performance.now(); sfx.drop(); toast(`🎩 Un cliente de ${boss.shop.name} solo quiere que le cobre ${who()}. ¡Ve a la caja!`); }
+  // Only the first problem gets a line; the rest are counted, so the side panel stays short
+  const all = [...TROUBLES.map(t => `${t.text} · ${zoneName(t.area)}`), ...(boss ? [`🎩 Te esperan en la caja de ${boss.shop.name}`] : [])];
+  const h = (all.length ? `<span class="chip thief">${all[0]}${all.length > 1 ? ` <b>+${all.length - 1}</b>` : ''}</span>` : '') + (all.length ? '' : choreChip());
+  if ($('trouble')._h !== h) { $('trouble').innerHTML = h; $('trouble')._h = h; }
+}
+
+/* ================= Sonia's own chores ================= */
+// Fields dry out and pens get dirty little by little. The animals cannot help with this: Sonia waters a field by walking through it
+// and cleans a pen by standing a moment on its ring. A dry field grows at a third of the speed and a dirty pen makes half; nothing stops.
+if (!S.water || typeof S.water !== 'object') S.water = {};
+if (!S.dirt || typeof S.dirt !== 'object') S.dirt = {};
+const choresOn = () => S.tut >= 3 && S.mission >= 5;
+const waterSecs = () => 210 * (1 + .08 * S.lv.water);
+const waterF = p => choresOn() && (S.water[p.id] ?? 1) <= 0 ? .33 : 1;
+const penDirty = b => !b.dock && choresOn() && (S.dirt[b.id] || 0) >= 1;
+const choreSigns = {}, cleanRings = {};
+function choreSign(key, icon, x, z, on) {
+  let s = choreSigns[key];
+  if (on && !s) { s = choreSigns[key] = iconSprite(icon, 1.3, '#3a7bd5'); scene.add(s); }
+  if (s) { s.visible = on; if (on) { s.position.set(x, 2.8 + Math.sin(performance.now() / 300) * .15, z); pulse(s, 1.3); } }
+}
+let choreT = 0, cleanT = 0, choreHelp = { water: false, dirt: false };
+function updateChores(dt) {
+  if (!choresOn()) return;
+  const fields = PATCHES.filter(p => unlocked(p.id) && reachable(p));
+  fields.forEach(p => { S.water[p.id] = Math.max(0, (S.water[p.id] ?? 1) - dt / waterSecs()); });
+  const pens = ANIMALS.filter(b => isBuilt(b.id) && !b.dock && reachable(b));
+  pens.forEach(b => { S.dirt[b.id] = Math.min(1, (S.dirt[b.id] || 0) + dt / 240); });
+  // Watering: walking among a field's plants fills it up
+  choreT -= dt;
+  if (choreT <= 0) {
+    choreT = .2;
+    const pl = plants.find(q => (q.x - P.x) ** 2 + (q.z - P.z) ** 2 < .8 && fields.includes(q.patch));
+    if (pl && S.water[pl.patch.id] < .9) { S.water[pl.patch.id] = 1; sfx.drop(); puff(P.x, .4, P.z, 0x5aa0e8, 10, 1.2, 2.5); burst(P.x, 1.8, P.z, '💧 ¡Regado!', 'white'); }
+    fields.forEach(p => {
+      const dry = S.water[p.id] <= .15, mine = plants.filter(q => q.patch === p);
+      if (dry && !choreHelp.water && S.water[p.id] <= 0) { choreHelp.water = true; toast(`💧 El campo de ${ITEMS[p.crop].name.toLowerCase()} se ha quedado sin agua y crece muy despacio. Pasa por dentro para regarlo`); }
+      choreSign('w' + p.id, '💧', mine.reduce((a, q) => a + q.x, 0) / mine.length, mine.reduce((a, q) => a + q.z, 0) / mine.length, dry);
+    });
+  }
+  // Cleaning: a second on the pen's ring
+  const pen = pens.find(b => onSpot(fixSpot(b)) && S.dirt[b.id] > .3);
+  cleanT = pen ? cleanT + dt : 0;
+  if (pen && cleanT >= 1) { S.dirt[pen.id] = 0; cleanT = 0; sfx.mission(); puff(pen.x, .5, pen.z, 0xf6e7a8, 14, 1.5, 3); burst(P.x, 1.8, P.z, '🧹 ¡Limpio!', 'white'); }
+  pens.forEach(b => {
+    const dirty = S.dirt[b.id] >= 1;
+    if (dirty && !choreHelp.dirt) { choreHelp.dirt = true; toast(`🧹 ${b.name} está sucio y produce la mitad. Quédate un momento en el círculo azul de al lado para limpiarlo`); }
+    choreSign('d' + b.id, '🧹', b.x, b.z, dirty);
+    // The cleaning ring sits beside the pen, apart from the ring where its goods are picked up
+    let r = cleanRings[b.id];
+    if (dirty && !r) { const q = fixSpot(b); r = cleanRings[b.id] = fixRing(q.x, q.z, 'blue'); }
+    if (r) { r.visible = dirty; if (dirty) r.scale.setScalar(1 + .08 * Math.sin(performance.now() / 150)); }
+  });
+}
+// The chip at the top says how many chores are waiting, so they are not forgotten
+function choreChip() {
+  if (!choresOn()) return '';
+  const dry = PATCHES.filter(p => unlocked(p.id) && reachable(p) && (S.water[p.id] ?? 1) <= 0).length;
+  const dirty = ANIMALS.filter(b => isBuilt(b.id) && !b.dock && reachable(b) && (S.dirt[b.id] || 0) >= 1).length;
+  return (dry ? `<span class="chip water">💧 ${dry} ${dry > 1 ? 'campos' : 'campo'} sin agua</span>` : '') + (dirty ? `<span class="chip water">🧹 ${dirty} ${dirty > 1 ? 'corrales sucios' : 'corral sucio'}</span>` : '');
+}
+
+/* ================= Tycoon layer: 😊 morale, ⭐ trust and decision cards (Frostpunk style) ================= */
+// Once a day a card with two choices turns up; each choice has something good and something bad, and moves money,
+// the workers' morale or the neighbours' trust. Morale changes how fast the workers go (and, very low, a short strike);
+// trust changes how often customers come. Nothing ever blocks the game. The rules that read them live in 03-state.js.
+if (typeof S.morale !== 'number') S.morale = 60;
+if (typeof S.trust !== 'number') S.trust = 60;
+if (!Array.isArray(S.decSeen)) S.decSeen = [];
+const clamp100 = v => Math.max(0, Math.min(100, v));
+const hasStaff = k => (S.lv[k] || 0) > 0;
+// Money in the cards follows what the farm earns, so they matter in every map and at every stage
+// It follows both what the farm earns in a day and what Sonia has saved, so a choice always hurts a bit
+const decBase = () => { const v = Math.max(200 * fscale(), incMin(1.5), (S.coins || 0) * .08); const r = 10 ** Math.floor(Math.log10(v)) / 2; return Math.round(v / r) * r; };
+const FX_NAMES = { price: '💲 Precios +25 %', helperOff: '🐿️ Ardillas de descanso', carrierOff: '📦 Repartidor ayudando', overtime: '💪 Turno doble', crowd: '📰 Llegan más clientes', closed: '⛈️ No entran clientes', strike: '🪧 Huelga' };
+// coins are multiples of decBase(); fx are seconds of an effect
+const CARDS = [
+  { id: 'sequia', icon: '☀️', title: 'Sequía en el valle', text: 'Este verano llueve poco y a los vecinos les cuesta llenar la despensa.',
+    opts: [{ label: 'Subir los precios', fx: { price: 120 }, trust: -8 }, { label: 'Regalar verdura', coins: -.6, trust: 10 }] },
+  { id: 'diaLibre', icon: '🐿️', title: 'Las ardillas piden un descanso', text: 'Llevan muchos días sin parar y dicen que están agotadas.', ok: () => hasStaff('helper'),
+    opts: [{ label: 'Darles un rato libre', fx: { helperOff: 45 }, morale: 12 }, { label: 'Hoy no se puede', morale: -10 }] },
+  { id: 'sueldo', icon: '💼', title: 'La cajera pide un aumento', text: 'Dice que con lo que cobra no le llega para el alquiler.', ok: () => hasStaff('cashier'),
+    opts: [{ label: 'Subirle el sueldo', coins: -1, morale: 10 }, { label: 'No hay dinero', morale: -8 }] },
+  { id: 'ladronzuelo', icon: '🍎', title: 'Un chaval roba manzanas', text: 'Lo han pillado con los bolsillos llenos. Sus padres no tienen mucho.',
+    opts: [{ label: 'Llamar a la policía', coins: .5, trust: -6 }, { label: 'Perdonarle', trust: 8 }] },
+  { id: 'ricachon', icon: '🎩', title: 'Un señor quiere toda la tienda', text: 'Un señor muy elegante paga lo que sea por que le atiendan antes que a nadie.',
+    opts: [{ label: 'Aceptar su dinero', coins: 1.5, trust: -10 }, { label: 'Que haga cola', trust: 5 }] },
+  { id: 'fiesta', icon: '🎉', title: 'Fiesta del pueblo', text: 'Los vecinos preguntan si la granja pagará la fiesta de este año.',
+    opts: [{ label: 'Pagar la fiesta', coins: -1.2, trust: 8, morale: 8 }, { label: 'Este año no', trust: -5, morale: -4 }] },
+  { id: 'turnoDoble', icon: '💪', title: '¿Turno doble?', text: 'Hay mucho trabajo. Podrías pedir a todos que trabajen el doble un rato.', ok: () => hasStaff('helper') || hasStaff('carrier'),
+    opts: [{ label: 'Turno doble', fx: { overtime: 90 }, morale: -12 }, { label: 'Que descansen', morale: 5 }] },
+  { id: 'periodista', icon: '📰', title: 'Un periodista quiere un reportaje', text: 'Saldrías en el periódico, pero va a estar en medio todo el día.',
+    opts: [{ label: 'Que pase', fx: { crowd: 90 }, morale: -6 }, { label: 'Mejor no', trust: -4 }] },
+  { id: 'tormenta', icon: '⛈️', title: 'Se acerca una tormenta', text: 'El cielo se pone negro. Los trabajadores tienen miedo de los rayos.',
+    opts: [{ label: 'Cerrar un rato', fx: { closed: 40 }, morale: 6 }, { label: 'Seguir abiertos', morale: -8, trust: 4 }] },
+  { id: 'vecina', icon: '👵', title: 'La vecina necesita ayuda', text: 'A la señora Rosa se le ha roto la valla y no puede arreglarla sola.', ok: () => hasStaff('carrier'),
+    opts: [{ label: 'Mandar al repartidor', fx: { carrierOff: 45 }, trust: 10 }, { label: 'No hay tiempo', trust: -6 }] },
+];
+// Two cards a day: one in the morning (before the rush hour) and one in the afternoon
+const DEC_SLOTS = [[15, 50], [110, 215]];
+const newDecAt = n => { const sl = DEC_SLOTS[Math.min(n, DEC_SLOTS.length - 1)]; return sl[0] + Math.random() * (sl[1] - sl[0]); };
+let decAt = 0, decKey = '', decCard = null, townWarn = { m: 0, t: 0 }, lastServed = S.today?.served || 0, lastAngry = S.today?.angry || 0;
+function optFx(o) {
+  const out = [];
+  if (o.coins) { const v = Math.round(o.coins * decBase()); out.push([`💰 ${v > 0 ? '+' : '−'}${fmt(Math.abs(v))}`, v > 0]); }
+  if (o.morale) out.push([`😊 Ánimo ${o.morale > 0 ? '+' : '−'}${Math.abs(o.morale)}`, o.morale > 0]);
+  if (o.trust) out.push([`⭐ Confianza ${o.trust > 0 ? '+' : '−'}${Math.abs(o.trust)}`, o.trust > 0]);
+  Object.entries(o.fx || {}).forEach(([k, s]) => out.push([`${FX_NAMES[k]} (${s} s)`, k === 'price' || k === 'overtime' || k === 'crowd']));
+  return out;
+}
+function showCard(c) {
+  decCard = c;
+  if (S.decDay !== S.dayN) { S.decDay = S.dayN; S.decN = 0; }
+  S.decN = (S.decN || 0) + 1;
+  S.decSeen = [...S.decSeen.filter(i => i !== c.id), c.id].slice(-6);
+  $('decSub').textContent = `Día ${S.dayN} · Decisión`;
+  $('decIcon').textContent = c.icon; $('decTitle').textContent = c.title; $('decText').textContent = c.text;
+  $('decOpts').innerHTML = c.opts.map((o, i) => {
+    const cost = o.coins < 0 ? Math.round(-o.coins * decBase()) : 0, poor = cost > S.coins;
+    return `<button data-i="${i}" ${poor ? 'disabled' : ''}><b>${o.label}${poor ? ' (no te llega)' : ''}</b><span class="fx">${optFx(o).map(([t, good]) => `<i class="${good ? 'good' : 'bad'}">${t}</i>`).join('')}</span></button>`;
+  }).join('');
+  $('decOverlay').hidden = false; sfx.bell();
+  stat('decision_ofrecida', { carta: c.id });
+}
+$('decOpts').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b || b.disabled || !decCard) return;
+  const c = decCard, o = c.opts[+b.dataset.i];
+  if (o.coins) {
+    const v = Math.round(o.coins * decBase());
+    if (v > 0) { addCoins(v); flyCoins(P.x, 1.5, P.z, 6); } else { S.coins = Math.max(0, S.coins + v); $('coinsTxt').textContent = fmt(S.coins); }
+  }
+  if (o.morale) S.morale = clamp100(S.morale + o.morale);
+  if (o.trust) S.trust = clamp100(S.trust + o.trust);
+  Object.entries(o.fx || {}).forEach(([k, s]) => { DEC.fx[k] = s; });
+  S.decToday = [...(S.decToday || []).slice(-1), { icon: c.icon, title: c.title, choice: o.label }];
+  stat('decision', { carta: c.id, opcion: +b.dataset.i });
+  decCard = null; $('decOverlay').hidden = true; last = performance.now();
+  sfx.mission(); burst(P.x, 2.2, P.z, o.label, 'white'); save();
+});
+function updateTown(dt) {
+  if (!townOn()) return;
+  Object.keys(DEC.fx).forEach(k => { DEC.fx[k] -= dt; if (DEC.fx[k] <= 0) { delete DEC.fx[k]; if (k === 'strike') { S.morale = Math.max(S.morale, 30); toast('🪧 Se acabó la huelga. El ánimo sube un poco'); } } });
+  // Neighbours trust a shop that serves them well: each happy customer adds a little, each angry one takes more
+  const td = S.today || { served: 0, angry: 0 };
+  if (td.served < lastServed || td.angry < lastAngry) { lastServed = td.served; lastAngry = td.angry; }
+  S.trust = clamp100(S.trust + (td.served - lastServed) * .03 - (td.angry - lastAngry) * 1.5);
+  lastServed = td.served; lastAngry = td.angry;
+  // Morale slowly settles back towards normal
+  S.morale += (55 - S.morale) * Math.min(1, dt / 600);
+  S.trust += (55 - S.trust) * Math.min(1, dt / 900);
+  if (S.morale < 15 && !decFx('strike') && hasStaff('helper')) { DEC.fx.strike = 30; sfx.angry(); toast('🪧 ¡Huelga! El ánimo está muy bajo y los trabajadores paran 30 segundos'); }
+  else if (S.morale < 30 && performance.now() - townWarn.m > 60000) { townWarn.m = performance.now(); toast('😟 Los trabajadores están desanimados y van más despacio'); }
+  if (S.trust < 30 && performance.now() - townWarn.t > 60000) { townWarn.t = performance.now(); toast('😒 Los vecinos no se fían de la granja y vienen menos clientes'); }
+  // Two cards a day, while the shop is open and away from the rush hour
+  const done = S.decDay === S.dayN ? S.decN || 0 : 0;
+  // A fresh time for each card of each day; if that moment already went by (after a reload), it comes a little later
+  const key = S.dayN + ':' + done;
+  if (decKey !== key) { decKey = key; decAt = Math.max(newDecAt(done), S.dayT + 20 + Math.random() * 30); }
+  if (dayOn() && shopOpen() && done < DEC_SLOTS.length && S.dayT > decAt && dayPhase().id !== 'rush' && !S.over) {
+    const fresh = CARDS.filter(c => (!c.ok || c.ok()) && !S.decSeen.includes(c.id)), all = CARDS.filter(c => !c.ok || c.ok());
+    const c = pick(fresh.length ? fresh : all); if (c) showCard(c);
+  }
+}
+// Measures sales per minute in 30-second windows while the shop is open (not during a ×2 boost), smoothed
+let incT = 0, incSales = null;
+function updateIncome(dt) {
+  const s = S.today?.sales || 0;
+  if (incSales === null || s < incSales || !shopOpen() || boosted() || !dayOn()) { incSales = s; incT = 0; return; }
+  incT += dt;
+  if (incT >= 30) {
+    const pm = (s - incSales) * 60 / incT; incSales = s; incT = 0;
+    S.salesPM = S.salesPM ? S.salesPM * .8 + pm * .2 : pm;
+  }
+}
+let townShown = '';
+function renderTown() {
+  const b = $('townBar'); b.hidden = !townOn(); if (b.hidden) return;
+  const m = Math.round(S.morale), t = Math.round(S.trust);
+  const fx = Object.entries(DEC.fx).map(([k, s]) => `<span class="tfx" title="${FX_NAMES[k]}">${[...FX_NAMES[k]][0]} ${Math.ceil(s)}s</span>`).join('');
+  const h = `<span class="${m < 30 ? 'low' : ''}" title="Ánimo de los trabajadores">${m < 30 ? '😟' : m >= 70 ? '😄' : '😊'} ${m}</span><span class="${t < 30 ? 'low' : ''}" title="Confianza de los vecinos">⭐ ${t}</span>${fx}`;
+  if (h !== townShown) { b.innerHTML = h; townShown = h; }
+}
+// Day summary: the medal also moves trust and morale, and the summary shows how the town is doing
+const endDayTown = endDay;
+endDay = () => {
+  const sales = S.today?.sales || 0;
+  endDayTown();
+  S.lastSales = sales;
+  if (!townOn() || !S.pendingSum) return;
+  const md = S.pendingSum.medal, dm = md === 'gold' ? 3 : md === 'silver' ? 1 : -2, dt = md === 'gold' ? 4 : md === 'silver' ? 1 : -3;
+  S.morale = clamp100(S.morale + dm); S.trust = clamp100(S.trust + dt);
+  Object.assign(S.pendingSum, { morale: Math.round(S.morale), trust: Math.round(S.trust), dm, dt, dec: S.decToday || null });
+  S.decToday = null; save(); showSummary();
+};
+const showSummaryTown = showSummary;
+showSummary = () => {
+  showSummaryTown();
+  const d = S.pendingSum; if (!d || d.morale === undefined) return;
+  const sg = v => (v > 0 ? '+' : v < 0 ? '−' : '±') + Math.abs(v);
+  $('dayStats').innerHTML += `<span>😊 Ánimo del equipo</span><b>${d.morale} (${sg(d.dm)})</b><span>⭐ Confianza del pueblo</span><b>${d.trust} (${sg(d.dt)})</b>`
+    + [].concat(d.dec || []).map(x => `<span class="ddec">${x.icon} ${x.title}: «${x.choice}»</span>`).join('');
+  const tip = d.morale < 30 ? '😟 El equipo está desanimado: dales un descanso o paga la fiesta.' : d.trust < 30 ? '😒 El pueblo no se fía: atiende bien y piensa en los vecinos.' : '';
+  if (tip) $('dayHint').textContent += ' ' + tip;
+};
+
+/* ================= Story: chapters and short scenes ================= */
+// Each map is a chapter. A chapter opens and closes with a few lines from Sonia or a neighbour, and some big steps
+// (like the town hall) get their own little scene. Scenes are shown once per player (S.meta.scenes).
+if (!S.meta.scenes || typeof S.meta.scenes !== 'object') S.meta.scenes = {};
+const chapterN = () => (S.farm || 0) + 1;
+const SONIA = () => ['👩‍🌾', who()];
+const STORY = {
+  valle: {
+    title: 'El huerto del Valle',
+    intro: { icon: '🌱', lines: [
+      [SONIA, '¡Por fin tengo mi propio huerto! Es pequeñito, pero es mío.'],
+      [['👴', 'El abuelo Paco'], 'Este valle estaba lleno de vida. Si trabajas duro, aquí volverá a haber un pueblo entero.'],
+      [SONIA, '¡Pues manos a la obra! Primero, a recoger la cosecha.'],
+    ] },
+    steps: [
+      { id: 'townhall', when: () => isBuilt('townhall'), icon: '🏛️', title: '¡Ya sois un pueblo!', lines: [
+        [['👴', 'El abuelo Paco'], '¡Un ayuntamiento! Ya no somos cuatro casas: esto es un pueblo de verdad.'],
+        [SONIA, 'Y aún queda mucho por hacer: la granja de animales, el aserradero, la feria…'],
+      ] },
+    ],
+    outro: { icon: '🏆', lines: [
+      [SONIA, 'Mira todo lo que hemos construido… Empecé con un huerto y ahora hay un pueblo entero.'],
+      [['👴', 'El abuelo Paco'], 'Me han dicho que en la Costa el viejo puerto está abandonado. Necesitan a alguien como tú.'],
+      [SONIA, '¿Una granja junto al mar? ¡Me encanta! El Valle queda en buenas manos.'],
+    ] },
+  },
+  costa: {
+    title: 'El puerto de la Costa',
+    intro: { icon: '⚓', lines: [
+      [['🧔', 'Marino, el pescador'], '¿Tú eres la granjera del Valle? Bienvenida. Hace años este era el puerto más alegre del mar.'],
+      [SONIA, 'Pues lo volveremos a llenar de vida. Aquí cada cosa la colocaré yo donde quiera.'],
+      [['🧔', 'Marino, el pescador'], 'Las islas están separadas: habrá que tender puentes para llegar a todas.'],
+    ] },
+    steps: [],
+  },
+};
+const story = () => STORY[THEME.id];
+let sceneQueue = null;
+function showScene(sc, opts, done) {
+  sceneQueue = { sc, i: 0, done };
+  $('sceneTag').textContent = opts.tag || '';
+  $('sceneIcon').textContent = sc.icon; $('sceneTitle').textContent = opts.title || '';
+  $('sceneOverlay').hidden = false; sfx.bell(); sceneLine();
+}
+function sceneLine() {
+  const q = sceneQueue, [sp, text] = q.sc.lines[q.i], [face, name] = typeof sp === 'function' ? sp() : sp;
+  $('sceneFace').textContent = face; $('sceneName').textContent = name; $('sceneText').textContent = text;
+  $('sceneNext').textContent = q.i < q.sc.lines.length - 1 ? 'Siguiente ▶' : '¡Vamos!';
+}
+$('sceneOverlay').addEventListener('click', () => {
+  const q = sceneQueue; if (!q) return;
+  if (++q.i < q.sc.lines.length) { beep(880, .05, 'sine', .03); sceneLine(); return; }
+  sceneQueue = null; $('sceneOverlay').hidden = true; last = performance.now(); save();
+  if (q.done) q.done();
+});
+const sceneSeen = k => !!S.meta.scenes[k];
+const markSeen = k => { S.meta.scenes[k] = true; };
+// Players who were already far along when scenes arrived do not get the opening again
+{
+  const st = story();
+  if (st && S.mission >= 3) markSeen(THEME.id + ':intro');
+  if (st) st.steps.forEach(s => { if (s.when() && S.mission > 2) markSeen(THEME.id + ':' + s.id); });
+}
+function renderStory() {
+  const st = story();
+  if (!st || creatorOn || sceneQueue || document.querySelector('.overlay:not([hidden])') || !$('creator').hidden) return;
+  if (!sceneSeen(THEME.id + ':intro')) {
+    markSeen(THEME.id + ':intro'); stat('escena', { cual: THEME.id + ':intro' });
+    showScene(st.intro, { tag: `Capítulo ${chapterN()}`, title: st.title }); return;
+  }
+  const s = st.steps.find(x => !sceneSeen(THEME.id + ':' + x.id) && x.when());
+  if (s) { markSeen(THEME.id + ':' + s.id); stat('escena', { cual: THEME.id + ':' + s.id }); showScene(s, { tag: `Capítulo ${chapterN()} · ${st.title}`, title: s.title }); }
+}
+// The end of a chapter: paying the lorry first closes the chapter with its scene, then offers the next one
+const completePadStory = completePad;
+completePad = pad => {
+  const st = story(), next = mapOf(chapterN());
+  if (pad.kind === 'move' && st && st.outro && !WORLD.farms[next.id] && !sceneSeen(THEME.id + ':outro')) {
+    markSeen(THEME.id + ':outro'); S.meta.chapters = Math.max(S.meta.chapters || 0, chapterN());
+    stat('capitulo_completado', { capitulo: chapterN() }); addXP(200);
+    showScene(st.outro, { tag: `¡Capítulo ${chapterN()} completado!`, title: st.title }, () => openMove(pad));
+    return;
+  }
+  if (pad.kind === 'move') openMove(pad); else completePadStory(pad);
+};
+function openMove(pad) {
+  completePadStory(pad);
+  $('moveTitle').textContent = `¿Empezar el capítulo ${chapterN() + 1}?`;
+  const st = STORY[mapOf(chapterN()).id]; if (st) $('moveMap').textContent += ` · ${st.title}`;
+}
+// A brand-new player hears the chapter's opening first, and then the "how to play" cards
+const openTutorialStory = openTutorial;
+openTutorial = () => {
+  const st = story();
+  if (!st || sceneSeen(THEME.id + ':intro')) { openTutorialStory(); return; }
+  markSeen(THEME.id + ':intro'); stat('escena', { cual: THEME.id + ':intro' });
+  showScene(st.intro, { tag: `Capítulo ${chapterN()}`, title: st.title }, openTutorialStory);
+};
+
+/* The chapter path (menu ☰ → 🗺️ Capítulos) */
+// A map is a finished chapter only when it has its story; the others show as "coming soon" and the lorry will not go there yet
+const chapterMade = m => !!STORY[m.id] && mapOpen(m);
+function chapterRows() {
+  const hereN = chapterN();
+  return '<div class="chapters">' + MAPS.map((m, i) => {
+    const n = i + 1, f = WORLD.farms[m.id], here = m.id === THEME.id, made = chapterMade(m) || !!f;
+    const done = sceneSeen(m.id + ':outro') || (S.meta.chapters || 0) >= n || !!WORLD.farms[mapOf(n).id];
+    const st = STORY[m.id], name = st ? st.title : m.name;
+    let state, btn;
+    if (here) { state = 'now'; btn = '<button disabled>Estás aquí</button>'; }
+    else if (f) { state = done ? 'done' : 'open'; btn = `<button data-map="${m.id}">Viajar</button>`; }
+    else if (made) { state = 'locked'; btn = '<button disabled>🔒</button>'; }
+    else { state = 'soon'; btn = '<span class="soon">Próximamente</span>'; }
+    const what = here || f ? `${m.icon} ${m.name} · ${m.mechanic}` : made ? `Termina el capítulo ${n - 1} para abrirlo` : `${m.icon} ${m.mechanic}`;
+    const mark = done ? '✅' : here ? '📍' : f ? m.icon : '🔒';
+    return `<div class="prow chap ${state}"><span class="pi">${mark}</span><span class="pt2"><small>Capítulo ${n}${n < hereN && done ? ' · completado' : ''}</small><b>${name}</b>${what}</span>${btn}</div>`;
+  }).join('') + '</div>';
+}
+const padInfoStory = padInfoBase;
+padInfoBase = pad => {
+  const i = padInfoStory(pad);
+  if (pad.kind === 'move') {
+    const next = mapOf(chapterN());
+    if (!chapterMade(next) && !WORLD.farms[next.id]) { i.active = false; i.sub = `Capítulo ${chapterN() + 1}: próximamente`; }
+  }
+  return i;
+};
+
+/* ================= Tidy side panel: one status line, one alert, the mission ================= */
+// Many systems write their own chips (order, events, mishaps, rush hour, dirty zone, chores). Showing them all buried Sonia,
+// so every quarter second this keeps only the most important one on screen and counts the rest on a "+N" button;
+// tapping it shows the next one. The day's time moves into the status line and news only use the toast.
+const statRow = document.querySelector('.statrow');
+statRow.appendChild($('chips')); $('chips').classList.add('daychip');
+const moreBtn = document.createElement('button'); moreBtn.className = 'chip more'; moreBtn.id = 'moreAlerts'; moreBtn.hidden = true;
+$('trouble').after(moreBtn);
+let alertPick = 0;
+moreBtn.addEventListener('click', () => { alertPick++; sfx.drop(); tidyHud(); });
+// News (level rewards and such) are already told by a toast or a window: they no longer pile up on the side
+addNews = txt => { if (performance.now() - (addNews.t || 0) > 3000) { addNews.t = performance.now(); toast(txt); } };
+function tidyHud() {
+  // Candidates in order of importance: [element, how to show it alone]
+  const c = [];
+  if (!$('order').hidden) c.push($('order'));
+  [...$('urgent').children].forEach(e => c.push(e));
+  [...$('trouble').children].forEach(e => c.push(e));
+  // Only the day chip stays in the status line; "rush hour in 0:09" and the like become alerts
+  const dayKids = [...$('chips').children];
+  dayKids.slice(1).forEach(e => c.push(e));
+  [...$('zoneChip').children].filter(e => e.classList.contains('dirty')).forEach(e => c.push(e));
+  const all = [$('order'), ...$('urgent').children, ...$('trouble').children, ...dayKids.slice(1), ...$('zoneChip').children];
+  const pick = c.length ? c[alertPick % c.length] : null;
+  all.forEach(e => e.classList.toggle('hudhide', e !== pick && !(e === dayKids[0])));
+  if (!c.length) alertPick = 0;
+  moreBtn.hidden = c.length < 2; moreBtn.textContent = `+${c.length - 1}`;
+  moreBtn.title = 'Ver el siguiente aviso';
+}
+
+
+/* The mission folds into a one-line pill; tapping it opens the full card (with the daily missions), tapping the card closes it.
+   A new mission opens the card by itself for a few seconds so it can be read. */
+const mPill = document.createElement('button'); mPill.className = 'mpill'; mPill.id = 'missionPill'; mPill.hidden = true;
+$('mission').before(mPill);
+let mOpen = false, mAutoUntil = 0, mLast = -1, mPillH = '';
+mPill.addEventListener('click', () => { mOpen = true; sfx.drop(); tidyMission(); });
+$('mission').addEventListener('click', () => { if (S.tut < 2) return; mOpen = false; mAutoUntil = 0; sfx.drop(); tidyMission(); });
+$('mission').style.pointerEvents = 'auto';
+function tidyMission() {
+  if (S.mission !== mLast) { if (mLast >= 0) mAutoUntil = Date.now() + 5000; mLast = S.mission; }
+  const show = $('mission').hidden ? false : true, open = S.tut < 2 || mOpen || Date.now() < mAutoUntil;
+  $('mission').classList.toggle('hudhide', !open);
+  $('daily').classList.toggle('hudhide', !open);
+  mPill.hidden = !show || open;
+  if (mPill.hidden) return;
+  const pct = parseFloat($('missionBar').style.width) || 0, chest = !!$('daily').querySelector('.dchest');
+  const h = `<span class="mpt">🎯 ${$('missionTxt').textContent}</span>${chest ? '<b>🎁</b>' : ''}<span class="mpa">▸</span><i style="width:${pct}%"></i>`;
+  if (h !== mPillH) { mPill.innerHTML = h; mPillH = h; }
+}
+const tidyHudBase = tidyHud;
+tidyHud = () => { tidyHudBase(); tidyMission(); };
+
+/* ================= Tips: each new system explains itself the first time it shows up ================= */
+// The opening tutorial stays short. Daily missions, morale and decisions, chores, mishaps, timed works and dirty zones
+// each get one or two cards the first time they appear (once per player, S.meta.tips), in the tutorial's own window.
+if (!S.meta.tips || typeof S.meta.tips !== 'object') S.meta.tips = {};
+const TIPS = [
+  { id: 'daily', when: () => !$('daily').hidden, cards: [
+    { icon: '📅', title: 'Misiones del día', text: 'Cada día hay 3 misiones nuevas. Al completarlas abres un cofre con monedas y una estrella. Tócalas en el panel para verlas.' },
+    { icon: '🎁', title: 'Vuelve cada día', text: 'El cofre diario 🎁 de arriba vale más cada día seguido que juegas. ¡No pierdas la racha!' },
+  ] },
+  { id: 'town', when: () => townOn(), cards: [
+    { icon: '😊', title: 'Ánimo y Confianza', text: 'Arriba ves el 😊 ánimo de tus trabajadores (si está alto van más rápido) y la ⭐ confianza de los vecinos (si está alta vienen más clientes).' },
+    { icon: '❓', title: 'Tú decides', text: 'Dos veces al día tendrás que tomar una decisión. Cada opción tiene algo bueno y algo malo: piénsalo bien.' },
+  ] },
+  { id: 'chores', when: () => choresOn(), cards: [
+    { icon: '💧', title: 'Riega los campos', text: 'Cuando sale una gota 💧 encima de un campo, pasa por dentro para regarlo. Si no, crece muy despacio.' },
+    { icon: '🧹', title: 'Limpia los corrales', text: 'Un corral sucio 🧹 produce la mitad. Para limpiarlo, quédate un momento en el círculo azul que sale a su lado.' },
+  ] },
+  { id: 'trouble', when: () => TROUBLES.length > 0, cards: [
+    { icon: '🔧', title: 'Imprevistos', text: 'A veces algo falla: un taller se avería (repáralo en el círculo rojo de al lado), llegan cuervos a un campo (entra para espantarlos) o se escapa un animal (ve a cogerlo).' },
+  ] },
+  { id: 'works', when: () => Object.keys(S.works || {}).length > 0, cards: [
+    { icon: '🏗️', title: 'Obras', text: 'Los edificios grandes tardan un rato en construirse, también con el juego cerrado. Si tienes prisa, acábalos con un anuncio o una estrella pisando su círculo.' },
+  ] },
+  { id: 'rubble', when: () => [...$('zoneChip').children].some(e => e.classList.contains('dirty')), cards: [
+    { icon: '🧹', title: 'Zona sucia', text: 'Las zonas nuevas están llenas de basura. Camina por encima para barrerla y vacía el saco en el contenedor 🗑️. Cuando esté limpia podrás construir.' },
+  ] },
+];
+// At most one tip a minute, so a returning player is not met by a pile of windows
+let tipT = performance.now() - 45000;
+function renderTips() {
+  if (performance.now() - tipT < 60000 || S.tut < 2 || creatorOn || sceneQueue || !$('creator').hidden || document.querySelector('.overlay:not([hidden])')) return;
+  const t = TIPS.find(x => !S.meta.tips[x.id] && x.when());
+  if (!t) return;
+  S.meta.tips[t.id] = true; tipT = performance.now(); save(); stat('consejo', { cual: t.id });
+  tutI = 0; tutList = t.cards; showTutCard(); $('tutOverlay').hidden = false;
+}
+
+// Last script: from here on the main loop can run (34-loop.js waits for this)
+window.gameReady = true;
 })();
 </script>
 </body>
