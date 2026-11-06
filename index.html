@@ -262,7 +262,11 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
 .survey #surveyQs { display: flex; flex-direction: column; gap: 10px; text-align: left; }
 .survey .emoji { justify-content: space-between; }
 .survey .emoji .opt { font-size: 1.5rem; padding: 2px 10px; }
-.survey .opt { min-height: 32px; padding: 3px 9px; font-size: .8rem; }
+.survey .opt { min-height: 32px; padding: 3px 9px; font-size: .8rem; background: #fff; color: var(--ink); border-width: 2px; box-shadow: none; }
+.survey .opt.on { background: #2f8f4a; color: #fff; border-color: var(--ink); box-shadow: 0 0 0 2px #2f8f4a; }
+.survey .opt.on::before { content: '✓ '; }
+.survey .emoji .opt.on::before { content: none; }
+.survey .emoji .opt.on { transform: scale(1.15); }
 .survey #surveySend { position: sticky; bottom: -20px; flex-shrink: 0; z-index: 1; }
 .survey #surveySend:disabled { background: #e6d9bf; }
 .opt { min-height: 36px; border: 2px solid var(--ink); background: #f3e6cf; border-radius: 999px; padding: 4px 12px; font-weight: 900; font-size: .85rem; cursor: pointer; }
@@ -931,8 +935,8 @@ const MAPS = [];
 const mapOf = n => MAPS[n % MAPS.length];
 const mapById = id => MAPS.find(m => m.id === id);
 // The version goes up with every release; the build (vite.config.js) stamps the date (while developing it says 'en pruebas')
-const GAME_VERSION = '36';
-const BUILD_DATE = '06/11/2026 03:24';
+const GAME_VERSION = '37';
+const BUILD_DATE = '06/11/2026 03:27';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
