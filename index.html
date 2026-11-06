@@ -1074,8 +1074,8 @@ const MAPS = [];
 const mapOf = n => MAPS[n % MAPS.length];
 const mapById = id => MAPS.find(m => m.id === id);
 // The version goes up with every release; the build (vite.config.js) stamps the date (while developing it says 'en pruebas')
-const GAME_VERSION = '43';
-const BUILD_DATE = '06/11/2026 13:54';
+const GAME_VERSION = '45';
+const BUILD_DATE = '06/11/2026 15:00';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -1314,9 +1314,9 @@ MAPS.push({
 });
 
 /* ---------- Map 3: Estudios Luna (film studios) ---------- */
-// Each map is described here as data. Only testers see it until it is finished. Ids stay the same as in the Valley (missions and saves refer to them).
+// Each map is described here as data. Ids stay the same as in the Valley (missions and saves refer to them).
 MAPS.push({
-  id: 'cine', beta: true, mechanic: 'Dirigir películas: guion, plató, tomas en directo, montaje y estreno',
+  id: 'cine', mechanic: 'Dirigir películas: guion, plató, tomas en directo, montaje y estreno',
   name: 'Estudios Luna', icon: '🎬', sky: 0xffd9b0, grass: 0xa89f86, grassDark: 0x9c9379, pine: 0x4a7a4a, pine2: 0x7a9a4a, hedge: 0xe6dcc6, meadow: 0xb8a67a, leaves: 0x7a9a4a, path: 0x6b6870, water: 0x3f8fc8, trees: 'round', weather: 'none',
   bonus: { kind: 'tickets', text: 'Las atracciones dan el doble de entradas' },
   content: {
@@ -4560,6 +4560,25 @@ const MISSIONS = [
   { text: 'Gana 100 millones en total', reward: 20000000, goal: 1e8, prog: () => S.earned, target: () => null, v3: true },
   { text: 'Múdate a una granja nueva', reward: 0, goal: 1, prog: () => 0, target: padT('move') },
 ];
+// The film studios weave shooting films into the story: the arrow takes a new player through the first film and each new set
+if (THEME.id === 'cine') {
+  const stage = () => S.film.stage, made = () => S.film.made || 0, ring = id => () => setRing(genreOf(id));
+  const current = () => (S.film.g ? setRing(genreOf(S.film.g)) : setRing(genreOf('comedia')));
+  const set = (id, name, reward) => ({ text: `Construye ${name}`, reward, goal: 1, prog: () => +setBuilt(id), target: ring(id) });
+  [
+    ['Mejora la cesta', [
+      { text: 'Elige tu primer guion en el plató', reward: 40, goal: 1, prog: () => +(stage() !== 'idle' || made() > 0), target: ring('comedia') },
+      { text: 'Lleva el material al plató', reward: 50, goal: 1, prog: () => +(!['idle', 'prep'].includes(stage()) || made() > 0), target: current },
+      { text: 'Dirige las tomas de tu primera película', reward: 80, goal: 1, prog: () => +(!['idle', 'prep', 'shoot'].includes(stage()) || made() > 0), target: current },
+      { text: 'Estrena tu primera película en el Cine Luna', reward: 150, goal: 1, prog: () => +(made() > 0), target: () => (stage() === 'ready' ? CINE.ring : stage() === 'review' ? current() : null) },
+    ]],
+    ['Construye la fábrica de mermelada', [set('musical', 'el gran escenario', 3000), { text: 'Rueda 3 películas', reward: 4000, goal: 3, prog: made, target: () => null }]],
+    ['Limpia todo el prado', [set('western', 'la calle del oeste', 12000), { text: 'Consigue una película de 4 estrellas', reward: 15000, goal: 1, prog: () => +(S.film.hist || []).some(h => h.rating >= 4), target: () => null }]],
+    ['Compra los cerdos trufferos', [set('terror', 'el cementerio de cartón', 150000)]],
+    ['Construye la carpintería', [set('scifi', 'la nave espacial', 500000), { text: 'Rueda 10 películas', reward: 600000, goal: 10, prog: made, target: () => null }]],
+    ['Construye la noria', [set('accion', 'la calle en llamas', 1500000), { text: 'Consigue una película de 5 estrellas', reward: 2000000, goal: 1, prog: () => +(S.film.hist || []).some(h => h.rating === 5), target: () => null }]],
+  ].forEach(([after, list]) => { const i = MISSIONS.findIndex(m => m.text === after); if (i >= 0) MISSIONS.splice(i + 1, 0, ...list); });
+}
 MOVE_AFTER = MISSIONS.findIndex(m => m.text.startsWith('Abre las piscinas')) + 1;
 // Missions about the last zones take the current map's names
 MISSIONS.forEach(m => { if (MAPC.missions && MAPC.missions[m.text]) m.text = MAPC.missions[m.text]; });
@@ -7130,6 +7149,20 @@ function updateShip(dt) {
 }
 const updateTownShip = updateTown;
 updateTown = dt => { updateTownShip(dt); updateShip(dt); };
+// Decisions of the sea: they only turn up on the Coast
+const onCoast = () => THEME.id === 'costa';
+CARDS.push(
+  { id: 'redes', icon: '🎣', title: 'Los pescadores piden redes', text: 'La última tormenta les rompió las redes y sin ellas no pueden salir a faenar.', ok: onCoast,
+    opts: [{ label: 'Pagar redes nuevas', coins: -1, trust: 9, morale: 3 }, { label: 'Que se apañen', trust: -7 }] },
+  { id: 'crucero', icon: '🚢', title: 'Un crucero quiere atracar', text: 'Traería cientos de turistas con ganas de comprar… y mucho jaleo para tu equipo.', ok: onCoast,
+    opts: [{ label: 'Que atraque', fx: { crowd: 60 }, morale: -7, say: '🚢 ¡Llegan los turistas! Vendrá mucha gente durante 1 minuto' }, { label: 'Hoy no', morale: 4, trust: -2 }] },
+  { id: 'contrabando', icon: '🏴‍☠️', title: 'Un contrabandista en el muelle', text: 'Te ofrece un buen dinero por usar tu muelle de noche, sin preguntas.', ok: onCoast,
+    opts: [{ label: 'Aceptar el trato', coins: 1.5, trust: -11, note: '🤫 En el pueblo se acaba sabiendo' }, { label: 'Avisar a la policía', trust: 8 }] },
+  { id: 'tortugas', icon: '🐢', title: 'Tortugas en la playa', text: 'Han puesto sus huevos justo donde ibas a descargar. Protegerlas cuesta dinero.', ok: onCoast,
+    opts: [{ label: 'Protegerlas', coins: -.7, trust: 10, morale: 4 }, { label: 'Seguir trabajando', coins: .4, trust: -9 }] },
+  { id: 'regata', icon: '⛵', title: 'La regata del pueblo', text: 'Los vecinos buscan quién pague los premios de la regata de este año.', ok: onCoast,
+    opts: [{ label: 'Pagar los premios', coins: -1.2, trust: 7, morale: 5, fx: { crowd: 45 }, say: '⛵ ¡La regata llena el paseo de gente!' }, { label: 'Este año no', trust: -4 }] },
+);
 
 /* ================= The team: wages, food and houses ================= */
 // Keeping the workers happy costs something every day. Wages are charged at the end of the day, food is real goods Sonia carries to the
@@ -7463,11 +7496,6 @@ function renderFilm() {
     if (!f.scripts || !f.scripts.length) f.scripts = filmScripts();
     top = top || 'Elige un guion. Luego vistes el plató con lo que hacen los talleres y a rodar.';
     body += `<h4 class="sthead">Guiones</h4>` + (f.scripts.length ? f.scripts.map((s, i) => { const g = genreOf(s.g); return `<div class="dmrow"><span>${g.icon}</span><b>${s.title}<small>${g.name} · ${g.takes} tomas · ${g.note}</small><small>Para el plató: ${s.need.map(n => `${n.need} ${ITEMS[n.k].icon}`).join(' · ')}</small></b><button data-script="${i}">Elegir</button></div>`; }).join('') : '<p>Abre primero algún campo o taller.</p>');
-    const more = GENRES.filter(g => !setBuilt(g.id));
-    if (more.length) body += `<h4 class="sthead">Platós nuevos</h4>` + more.map(g => {
-      const open = areaOpen(g.area), zone = (MAPC.zones && MAPC.zones[g.area]) || 'otra zona';
-      return `<div class="dmrow"><span>${g.icon}</span><b>${g.set}<small>${g.name} · ${open ? fmt(g.cost) + ' monedas' : 'se abre con ' + zone}</small></b>${open ? `<button data-build="${g.id}" ${S.coins < g.cost ? 'disabled' : ''}>Construir</button>` : ''}</div>`;
-    }).join('');
   } else if (f.stage === 'prep') {
     top = top || `«${f.title}»: lleva todo esto al círculo rosa del ${genreOf(f.g).set.toLowerCase()}.`;
     body += `<div class="dmrow"><span>${genreOf(f.g).icon}</span><b>${f.need.map(n => `${ITEMS[n.k].icon} ${n.got}/${n.need}`).join(' · ')}</b></div><button class="ghost" id="filmDrop">Dejar este guion</button>`;
@@ -7485,6 +7513,11 @@ function renderFilm() {
   } else if (f.stage === 'ready') {
     top = top || `«${f.title}» está lista. Ve al círculo rosa del Cine Luna: ¡noche de estreno!`;
   }
+  const more = GENRES.filter(g => !setBuilt(g.id));
+  if (more.length) body += `<h4 class="sthead">Platós nuevos</h4>` + more.map(g => {
+    const open = areaOpen(g.area), zone = (MAPC.zones && MAPC.zones[g.area]) || 'otra zona';
+    return `<div class="dmrow"><span>${g.icon}</span><b>${g.set}<small>${g.name} · ${open ? fmt(g.cost) + ' monedas' : 'se abre con ' + zone}</small></b>${open ? `<button data-build="${g.id}" ${S.coins < g.cost ? 'disabled' : ''}>Construir</button>` : ''}</div>`;
+  }).join('');
   if (runs.length) body += `<h4 class="sthead">En cartelera</h4>` + runs.map(r => `<div class="dmrow done"><span>${r.icon}</span><b>${r.title}<small>${stars(r.rating)} · ${fmt(r.perDay)} al día · ${r.left} ${r.left === 1 ? 'día' : 'días'} más</small></b></div>`).join('');
   const old = (f.hist || []).filter(h => !runs.some(r => r.title === h.title));
   if (old.length) body += `<h4 class="sthead">Filmoteca</h4>` + old.map(r => `<div class="dmrow done"><span>${r.icon}</span><b>${r.title}<small>${stars(r.rating)}</small></b></div>`).join('');
@@ -7602,14 +7635,14 @@ function updateFilm(dt) {
   GENRES.forEach(h => {
     const o = filmSets[h.id], built = setBuilt(h.id), open = areaOpen(h.area);
     if (!built) { o.g.visible = o.sign.visible = open; if (open) pulse(o.sign, 1.2); }
-    const on = open && (st === 'idle' || (f.g === h.id && ['prep', 'shoot', 'review', 'edit'].includes(st) && !take));
+    const on = open && !take && (!built || st === 'idle' || (f.g === h.id && ['prep', 'shoot', 'review', 'edit'].includes(st)));
     o.ring.visible = on;
     if (on) { const q = setRing(h); o.ring.scale.setScalar(1 + .06 * Math.sin(performance.now() / 220)); if (nearRing(q)) onRing = h; }
   });
   if (!onRing) { filmOpened = false; ringHold = 0; }
-  else if (!filmOpened && filmFree() && (st === 'idle' || st === 'review' || st === 'edit')) { filmOpened = true; renderFilm(); $('filmOverlay').hidden = false; }
+  else if (!filmOpened && filmFree() && (!setBuilt(onRing.id) || st === 'idle' || st === 'review' || st === 'edit')) { filmOpened = true; renderFilm(); $('filmOverlay').hidden = false; }
   // Dressing the set
-  if (st === 'prep' && onRing && (filmGive -= dt) <= 0) {
+  if (st === 'prep' && onRing && onRing.id === f.g && (filmGive -= dt) <= 0) {
     const n = f.need.find(x => x.got < x.need && P.stack.some(b => b.parent === sonia.stack && b.userData.item === x.k));
     const b = n && takeFromStack(k => k === n.k);
     if (b) { n.got++; filmGive = .12; sfx.drop(); flyTo(b, new T.Vector3(g.at[0], 1, g.at[1] - 1), .35, () => scene.remove(b)); dressSets(); }
@@ -7618,7 +7651,7 @@ function updateFilm(dt) {
   // The takes
   if (f.stage === 'shoot') {
     ensureCast();
-    if (!take && onRing && filmFree() && (ringHold += dt) > .35) { ringHold = 0; startTake(); }
+    if (!take && onRing && onRing.id === f.g && filmFree() && (ringHold += dt) > .35) { ringHold = 0; startTake(); }
     if (take) updateTake(dt);
     updateCast(dt, !!take);
   } else if (f.stage === 'review' || f.stage === 'edit') updateCast(dt, false);
@@ -8305,6 +8338,11 @@ function updateLamps(glow) {
 // each get one or two cards the first time they appear (once per player, S.meta.tips), in the tutorial's own window.
 if (!S.meta.tips || typeof S.meta.tips !== 'object') S.meta.tips = {};
 const TIPS = [
+  { id: 'film', when: () => filmHere(), cards: [
+    { icon: '🎬', title: 'Vas a dirigir películas', text: 'Pisa el círculo rosa del plató y elige un guion. Después lleva allí lo que pide, y el decorado se irá montando.' },
+    { icon: '🎥', title: '¡Acción!', text: 'En las tomas, corre a los círculos rojos para arreglar lo que falle y toca a los curiosos antes de que entren en el plano. Cada fallo quita una estrella.' },
+    { icon: '🍿', title: 'Noche de estreno', text: 'Tras el montaje, ve a la alfombra roja del Cine Luna. Cuanto mejor sea la crítica, más gana la película cada día en cartelera y más gente viene al estudio.' },
+  ] },
   { id: 'daily', when: () => !$('daily').hidden, cards: [
     { icon: '📅', title: 'Misiones del día', text: 'Cada día hay 3 misiones nuevas. Al completarlas abres un cofre con monedas y una estrella. Tócalas en el panel para verlas.' },
     { icon: '🎁', title: 'Vuelve cada día', text: 'El cofre diario 🎁 de arriba vale más cada día seguido que juegas. ¡No pierdas la racha!' },
