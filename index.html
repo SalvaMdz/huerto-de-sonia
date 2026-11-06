@@ -29,8 +29,6 @@
   color-scheme: light;
   --safe-top: env(safe-area-inset-top, 0px);
 }
-/* iPhone browsers can draw their top bar over the first pixels of the page without saying so: keep the top row clear of it */
-@media (orientation: portrait) { html.iosweb { --safe-top: calc(env(safe-area-inset-top, 0px) + 36px); } }
 [hidden] { display: none !important; }
 html, body { height: 100%; overflow: hidden; }
 body {
@@ -258,6 +256,12 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
 .opts { display: flex; flex-wrap: wrap; gap: 6px; }
 .cbox .cbtns { position: sticky; bottom: -14px; z-index: 1; margin: 0 -14px -14px; padding: 8px 14px 12px; background: var(--cream); border-top: 2px solid rgba(59, 42, 30, .15); }
 .santabar { position: fixed; z-index: 4; left: 50%; transform: translateX(-50%); bottom: calc(14px + env(safe-area-inset-bottom, 0px)); max-width: 92vw; white-space: nowrap; pointer-events: none; background: rgba(59, 42, 30, .9); color: #fff8e7; border-radius: 999px; padding: 6px 14px; font-weight: 900; font-size: .85rem; }
+.dmrow { display: flex; align-items: center; gap: 8px; text-align: left; margin-bottom: 6px; padding: 6px 8px; background: #fff; border: 2px solid var(--ink); border-radius: 12px; }
+.dmrow.off { background: #e6d9bf; }
+.dmrow > span { font-size: 1.5rem; }
+.dmrow b { flex: 1; font-size: .92rem; min-width: 0; }
+.dmrow small { display: block; font-weight: 700; color: var(--ink-soft); }
+.survey .dmrow button { width: auto; flex: none; padding: 6px 10px; font-size: .85rem; }
 .album { text-align: left; margin-bottom: 10px; }
 .album h4 { margin: 0 0 4px; font-size: .95rem; }
 .album small { display: block; margin-bottom: 4px; color: var(--ink-soft); }
@@ -526,6 +530,7 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
   <button id="starsBtn">⭐ Estrellas</button>
   <button id="xmasBtn" hidden>🎄 Calendario</button>
   <button id="albumBtn">📖 Colección</button>
+  <button id="decorBtn" hidden>⛄ Decoraciones</button>
   <button id="achvBtn">🏆 Logros</button>
   <button id="feedbackBtn">💬 Opinión</button>
   <button id="soundBtn">🔊 Sonido: sí</button>
@@ -651,6 +656,15 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
     <div id="surveyQs"></div>
     <textarea id="surveyText" rows="2" maxlength="800" placeholder="Si quieres: ¿qué cambiarías o añadirías?"></textarea>
     <button id="surveySend" disabled>Faltan 5 respuestas</button>
+  </div>
+</div>
+<div class="overlay" id="decorOverlay" hidden>
+  <div class="adbox panel survey">
+    <h3>⛄ Decoraciones</h3>
+    <p id="decorTop"></p>
+    <div id="decorList"></div>
+    <button class="ghost" id="decorRemove" hidden>Quitar la que tengo cerca</button>
+    <button class="ghost" id="decorClose">Cerrar</button>
   </div>
 </div>
 <div class="overlay" id="albumOverlay" hidden>
@@ -977,8 +991,8 @@ const MAPS = [];
 const mapOf = n => MAPS[n % MAPS.length];
 const mapById = id => MAPS.find(m => m.id === id);
 // The version goes up with every release; the build (vite.config.js) stamps the date (while developing it says 'en pruebas')
-const GAME_VERSION = '40';
-const BUILD_DATE = '06/11/2026 03:56';
+const GAME_VERSION = '41';
+const BUILD_DATE = '06/11/2026 04:07';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -1451,10 +1465,12 @@ const decFx = k => (DEC.fx[k] || 0) > 0;
 const townOn = () => S.tut >= 3 && S.mission >= 4;
 const decPriceF = () => decFx('price') ? 1.25 : 1;
 const decClosed = () => decFx('closed');
-// Morale 50 is normal speed; 100 is 15 % quicker, 0 is 15 % slower. On strike, a day off or helping a neighbour they stop
-const workF = kind => !townOn() ? 1 : decFx('strike') || decFx(kind + 'Off') ? 0 : (1 + ((S.morale ?? 60) - 50) * .003) * (decFx('overtime') ? 1.5 : 1);
-// Trust 50 is the usual flow of customers; 100 brings them 20 % more often, 0 20 % less. A reporter brings a crowd
-const trustF = () => !townOn() ? 1 : (1 - ((S.trust ?? 60) - 50) * .004) * (decFx('crowd') ? .6 : 1);
+// Morale 50 is normal speed; 100 is 40 % quicker, 0 is 40 % slower. On strike, a day off or helping a neighbour they stop
+const workF = kind => !townOn() ? 1 : decFx('strike') || decFx(kind + 'Off') ? 0 : (1 + ((S.morale ?? 60) - 50) * .008) * (decFx('overtime') ? 2 : 1) * (decFx('fear') ? .6 : 1) * (decFx(kind + 'Slow') ? .6 : 1);
+// Trust 50 is the usual flow of customers; 100 brings them 60 % more often, 0 60 % less. A reporter brings a crowd
+const trustF = () => !townOn() ? 1 : (1 - ((S.trust ?? 60) - 50) * .012) * (decFx('crowd') ? .6 : 1);
+// The reporter gets in Sonia's way while he is next to her
+const decSoniaF = () => DEC.inWay ? .75 : 1;
 const priceF = () => earlyF() * priceOf(S.lv.sign) * (isBuilt('townhall') ? 1.25 : 1) * (1 + .1 * (S.perks.price || 0)) * decPriceF();
 const fishersOn = () => ANIMALS.filter(a => a.dock && isBuilt(a.id)).slice(0, S.lv.fisher);
 // The vehicle Sonia rides: the tractor harvests more at once, the mower cuts down weeds; S.vehicle 'none' means on foot
@@ -3434,6 +3450,7 @@ function completePad(pad) {
 
 /* ---------- Workers: squirrels, carriers, cashiers, robots ---------- */
 const squirrels = [], carriers = [], robots = [], gardeners = [];
+const CARRY_SHOWN = 5; // they can carry more than this, but a taller pile looks like a pole planted in the field
 SHOPS.forEach(s => s.tills.forEach((t, i) => {
   const p = makePerson({ shirt: mat(0xfdf6ea), pants: mat(0x2f3f5f), hair: mat(pick(HAIRS)), long: Math.random() < .7, apron: mat(s.awning) });
   p.g.position.set(t.x + .75, 0, t.z); p.g.rotation.y = -Math.PI / 2; scene.add(p.g); t.cashier = p;
@@ -3491,11 +3508,23 @@ function walkAnim(p, moving, walk) {
   p.body.position.y = moving ? Math.abs(Math.sin(walk * .7)) * .06 : 0;
   p.legs[0].rotation.x = moving ? Math.sin(walk * .7) * .6 : 0; p.legs[1].rotation.x = -p.legs[0].rotation.x;
 }
+// On strike or on a break a worker really stops: it lets go of what it was after and goes to stand with the others
+function pausedWork(w, kind, list, dt) {
+  if (workF(kind) > 0) return false;
+  if (w.target) { if (w.target.claimed === w) w.target.claimed = null; w.target = null; }
+  const st = w.zone === 1 ? COUNTER_ZONE : zoneStart(w.zone), a = list.indexOf(w) * 1.1 + (kind === 'carrier' ? 3 : 0);
+  const arrived = stepToward(w, st.x + 2.4 + Math.cos(a) * 1.3, st.z + 2.4 + Math.sin(a) * 1.3, 1.6, dt);
+  w.m.g.position.set(w.x, kind === 'helper' && !arrived ? Math.abs(Math.sin(w.walk)) * .12 : 0, w.z);
+  if (kind === 'carrier') walkAnim(w.m, !arrived, w.walk || 0);
+  w.m.g.rotation.y = lerpAngle(w.m.g.rotation.y, w.face, Math.min(1, dt * 12));
+  return true;
+}
 function updateWorkers(dt) {
   const open = PATCHES.filter(p => unlocked(p.id) && reachable(p));
   // Workers are slower than Sonia and carry little: training and extra levels help, but never make them race around
   const capH = 3 + Math.floor(S.lv.workers / 3), wsp = 1 + .05 * S.lv.workers;
   for (const h of squirrels) {
+    if (pausedWork(h, 'helper', squirrels, dt)) continue;
     let tx, tz;
     const hb = zoneBonus('helper', h.zone), hcap = capH + hb, hsp = 1 + .07 * hb;
     const zoneOpen = open.filter(p => p.area === h.zone);
@@ -3525,7 +3554,7 @@ function updateWorkers(dt) {
         const pl = h.target; pl.claimed = null; h.target = null;
         if (pl.grow >= 1) {
           cutPlant(pl);
-          const b = makeItem(pl.crop); b.scale.setScalar(.6); b.position.y = h.carry.length * .13; h.m.stack.add(b); h.carry.push(b);
+          const b = makeItem(pl.crop); b.scale.setScalar(.6); b.position.y = h.carry.length * .13; b.visible = h.carry.length < CARRY_SHOWN; h.m.stack.add(b); h.carry.push(b);
           if (h.carry.length >= hcap) h.state = 'deliver';
         }
       } else if (h.state === 'deliver') {
@@ -3540,6 +3569,7 @@ function updateWorkers(dt) {
   }
   const capC = 4 + Math.floor(S.lv.workers / 2);
   for (const c of carriers) {
+    if (pausedWork(c, 'carrier', carriers, dt)) continue;
     let tx, tz;
     const cb = zoneBonus('carrier', c.zone), ccap = capC + cb * 2, csp = 1 + .07 * cb;
     if (c.state === 'pick') {
@@ -3557,7 +3587,7 @@ function updateWorkers(dt) {
     if (tx !== undefined && arrived) {
       if (c.state === 'pick' && c.target) {
         const got = takeFromPile(c.target, ccap - c.carry.length);
-        got.forEach(m => { scene.remove(m); m.position.set(0, c.carry.length * .21, 0); m.rotation.set(0, 0, 0); c.m.stack.add(m); c.carry.push(m); });
+        got.forEach(m => { scene.remove(m); m.position.set(0, c.carry.length * .21, 0); m.rotation.set(0, 0, 0); m.visible = c.carry.length < CARRY_SHOWN; c.m.stack.add(m); c.carry.push(m); });
         c.target = null;
         if (c.carry.length >= ccap || !BUILDS.some(b => b.area === c.zone && isBuilt(b.id) && pstate(b.id).out > 0 && (!c.carry.length || shopFor(b.output) === shopFor(c.carry[0].userData.item)))) c.state = c.carry.length ? 'drop' : 'pick';
       } else if (c.state === 'drop') {
@@ -3571,6 +3601,10 @@ function updateWorkers(dt) {
   }
   // Gardeners pull out the weeds, the nearest first; with none left they stroll around the farm
   for (const gd of gardeners) {
+    if (workF('gardener') === 0) {
+      if (gd.target) { gd.target.claimed = null; gd.target = null; gd.pull = 0; }
+      walkAnim(gd.m, false, 0); continue;
+    }
     if (gd.target && !weeds.includes(gd.target)) gd.target = null;
     if (!gd.target) {
       let best = null, bd = 1e9;
@@ -3684,7 +3718,7 @@ const payLine = (s, ti) => customers.filter(o => o.shop === s && o.till === ti &
 function updateCustomers(dt) {
   const dirty = litter.length > 8, rushing = rushOn();
   SHOPS.forEach(s => {
-    s.servedAt = s.tills.map(t => !!t.open && (S.lv[t.staff] > 0 || near(t.zone)));
+    s.servedAt = s.tills.map(t => !!t.open && ((S.lv[t.staff] > 0 && workF('cashier') > 0) || near(t.zone)));
     if (!s.open) { s.queue = []; return; }
     const mine = customers.filter(c => c.shop === s);
     s.spawnT -= dt;
@@ -4451,7 +4485,7 @@ function update(dt) {
   if (input.keys.has('u')) iz -= 1; if (input.keys.has('d')) iz += 1;
   ({ x: ix, z: iz } = camRot(ix, iz));
   const veh = vehicleNow(), riding = veh === 'tractor', mowing = veh === 'mower';
-  const mag = Math.min(1, Math.hypot(ix, iz)), sp = speedOf(S.lv.boots) * mag * (riding ? 1.35 : mowing ? 1.2 : 1) * (1 + .08 * (S.perks.speed || 0));
+  const mag = Math.min(1, Math.hypot(ix, iz)), sp = speedOf(S.lv.boots) * mag * (riding ? 1.35 : mowing ? 1.2 : 1) * (1 + .08 * (S.perks.speed || 0)) * decSoniaF();
   if (mag > .05) {
     const a = Math.atan2(ix, iz);
     // Move one axis at a time so Sonia slides along walls instead of sticking to them
@@ -5392,7 +5426,7 @@ function frame(now) {
   if (!window.gameReady) { last = now; return; } // in development the scripts arrive one by one: wait for the last one
   const dt = Math.min(.1, (now - last) / 1000); last = now;
   if (creatorOn) creatorView(dt);
-  else if (!S.over && $('dayOverlay').hidden && $('tutOverlay').hidden && $('decOverlay').hidden && $('sceneOverlay').hidden && $('surveyOverlay').hidden && $('albumOverlay').hidden && $('xmasOverlay').hidden) {
+  else if (!S.over && $('dayOverlay').hidden && $('tutOverlay').hidden && $('decOverlay').hidden && $('sceneOverlay').hidden && $('surveyOverlay').hidden && $('albumOverlay').hidden && $('decorOverlay').hidden && $('xmasOverlay').hidden) {
     S.meta.playT = (S.meta.playT || 0) + dt; update(dt); updateDay(dt); updateMood(dt); updateExtras(dt); updateTrouble(dt); updateChores(dt); updateIncome(dt); updateTown(dt); updateGrid(); updateStorm(dt); xmasPlay(dt); }
   gfxTick(now, dt); updateXmas(dt); renderer.render(scene, camera); updateLabels(dt);
   uiT += dt; if (uiT > .25) { uiT = 0; refreshWorld(); checkMission(); renderMood(); renderDaily(); renderWorks(); renderStalls(); renderZone(); renderTrouble(); renderTown(); renderStory(); renderExtras(); tidyHud(); renderTips(); checkSurvey(); checkXmas(); }
@@ -6356,29 +6390,31 @@ const hasStaff = k => (S.lv[k] || 0) > 0;
 // Money in the cards follows what the farm earns, so they matter in every map and at every stage
 // It follows both what the farm earns in a day and what Sonia has saved, so a choice always hurts a bit
 const decBase = () => { const v = Math.max(200 * fscale(), incMin(1.5), (S.coins || 0) * .08); const r = 10 ** Math.floor(Math.log10(v)) / 2; return Math.round(v / r) * r; };
-const FX_NAMES = { price: '💲 Precios +25 %', helperOff: '🐿️ Ardillas de descanso', carrierOff: '📦 Repartidor ayudando', overtime: '💪 Turno doble', crowd: '📰 Llegan más clientes', closed: '⛈️ No entran clientes', strike: '🪧 Huelga' };
+const FX_NAMES = { price: '💲 Precios +25 %', helperOff: '🐿️ Ardillas de descanso', carrierOff: '📦 Repartidor fuera', cashierOff: '😠 Cajeras sin atender', helperSlow: '🥱 Ardillas agotadas', carrierSlow: '🥱 Repartidores agotados', fear: '😨 Equipo asustado', overtime: '💪 Turno doble', crowd: '📣 Llegan más clientes', closed: '⛈️ Tienda cerrada', reporter: '📸 Periodista detrás de ti', strike: '🪧 Huelga' };
+const FX_GOOD = ['price', 'overtime', 'crowd'];
+const STAFF_ICON = { strike: '🪧', helperOff: '💤', carrierOff: '🔨', cashierOff: '😠', fear: '😨', overtime: '💦', helperSlow: '🥱', carrierSlow: '🥱' };
 // coins are multiples of decBase(); fx are seconds of an effect
 const CARDS = [
   { id: 'sequia', icon: '☀️', title: 'Sequía en el valle', text: 'Este verano llueve poco y a los vecinos les cuesta llenar la despensa.',
-    opts: [{ label: 'Subir los precios', fx: { price: 120 }, trust: -8 }, { label: 'Regalar verdura', coins: -.6, trust: 10 }] },
+    opts: [{ label: 'Subir los precios', fx: { price: 120 }, trust: -8, say: '💲 Todo un 25 % más caro durante 2 minutos' }, { label: 'Regalar verdura', trust: 10, note: '🥕 Se llevan el 40 % de la tienda', act: giveAway }] },
   { id: 'diaLibre', icon: '🐿️', title: 'Las ardillas piden un descanso', text: 'Llevan muchos días sin parar y dicen que están agotadas.', ok: () => hasStaff('helper'),
-    opts: [{ label: 'Darles un rato libre', fx: { helperOff: 45 }, morale: 12 }, { label: 'Hoy no se puede', morale: -10 }] },
+    opts: [{ label: 'Darles un rato libre', fx: { helperOff: 45 }, morale: 12, say: '💤 Las ardillas dejan el trabajo y se van a descansar' }, { label: 'Hoy no se puede', fx: { helperSlow: 60 }, morale: -10 }] },
   { id: 'sueldo', icon: '💼', title: 'La cajera pide un aumento', text: 'Dice que con lo que cobra no le llega para el alquiler.', ok: () => hasStaff('cashier'),
-    opts: [{ label: 'Subirle el sueldo', coins: -1, morale: 10 }, { label: 'No hay dinero', morale: -8 }] },
+    opts: [{ label: 'Subirle el sueldo', coins: -1, morale: 10 }, { label: 'No hay dinero', fx: { cashierOff: 25 }, morale: -8, say: '😠 Las cajeras se cruzan de brazos: te toca cobrar a ti' }] },
   { id: 'ladronzuelo', icon: '🍎', title: 'Un chaval roba manzanas', text: 'Lo han pillado con los bolsillos llenos. Sus padres no tienen mucho.',
-    opts: [{ label: 'Llamar a la policía', coins: .5, trust: -6 }, { label: 'Perdonarle', trust: 8 }] },
+    opts: [{ label: 'Llamar a la policía', coins: .5, trust: -6, act: () => kidScene(true) }, { label: 'Perdonarle', trust: 8, act: () => kidScene(false) }] },
   { id: 'ricachon', icon: '🎩', title: 'Un señor quiere toda la tienda', text: 'Un señor muy elegante paga lo que sea por que le atiendan antes que a nadie.',
-    opts: [{ label: 'Aceptar su dinero', coins: 1.5, trust: -10 }, { label: 'Que haga cola', trust: 5 }] },
+    opts: [{ label: 'Aceptar su dinero', coins: 1.5, trust: -10, note: '😡 Los clientes de la cola se impacientan', act: () => richScene(true) }, { label: 'Que haga cola', trust: 5, act: () => richScene(false) }] },
   { id: 'fiesta', icon: '🎉', title: 'Fiesta del pueblo', text: 'Los vecinos preguntan si la granja pagará la fiesta de este año.',
-    opts: [{ label: 'Pagar la fiesta', coins: -1.2, trust: 8, morale: 8 }, { label: 'Este año no', trust: -5, morale: -4 }] },
+    opts: [{ label: 'Pagar la fiesta', coins: -1.2, trust: 8, morale: 8, fx: { crowd: 45 }, say: '🎉 ¡Los vecinos vienen a celebrarlo!', act: partyScene }, { label: 'Este año no', trust: -5, morale: -4 }] },
   { id: 'turnoDoble', icon: '💪', title: '¿Turno doble?', text: 'Hay mucho trabajo. Podrías pedir a todos que trabajen el doble un rato.', ok: () => hasStaff('helper') || hasStaff('carrier'),
-    opts: [{ label: 'Turno doble', fx: { overtime: 90 }, morale: -12 }, { label: 'Que descansen', morale: 5 }] },
-  { id: 'periodista', icon: '📰', title: 'Un periodista quiere un reportaje', text: 'Saldrías en el periódico, pero va a estar en medio todo el día.',
-    opts: [{ label: 'Que pase', fx: { crowd: 90 }, morale: -6 }, { label: 'Mejor no', trust: -4 }] },
+    opts: [{ label: 'Turno doble', fx: { overtime: 60 }, morale: -12, note: '🥱 Luego acaban agotados', say: '💪 ¡El doble de rápido durante 1 minuto!' }, { label: 'Que descansen', morale: 5 }] },
+  { id: 'periodista', icon: '📰', title: 'Un periodista quiere un reportaje', text: 'Saldrías en el periódico, pero te va a seguir a todas partes y a molestar.',
+    opts: [{ label: 'Que pase', fx: { crowd: 90, reporter: 90 }, morale: -6, note: '🐌 Andas más lento si lo tienes cerca', say: '📰 El periodista ya viene: no se te despega en 90 segundos', act: reporterScene }, { label: 'Mejor no', trust: -4 }] },
   { id: 'tormenta', icon: '⛈️', title: 'Se acerca una tormenta', text: 'El cielo se pone negro. Los trabajadores tienen miedo de los rayos.',
-    opts: [{ label: 'Cerrar un rato', fx: { closed: 40 }, morale: 6 }, { label: 'Seguir abiertos', morale: -8, trust: 4 }] },
+    opts: [{ label: 'Cerrar un rato', fx: { closed: 40 }, morale: 6, note: '🚪 Los clientes se van a casa', act: closeShops }, { label: 'Seguir abiertos', fx: { fear: 45 }, morale: -8, trust: 4 }] },
   { id: 'vecina', icon: '👵', title: 'La vecina necesita ayuda', text: 'A la señora Rosa se le ha roto la valla y no puede arreglarla sola.', ok: () => hasStaff('carrier'),
-    opts: [{ label: 'Mandar al repartidor', fx: { carrierOff: 45 }, trust: 10 }, { label: 'No hay tiempo', trust: -6 }] },
+    opts: [{ label: 'Mandar al repartidor', fx: { carrierOff: 45 }, trust: 10, say: '🔨 El repartidor deja el reparto y se va a arreglar la valla' }, { label: 'No hay tiempo', trust: -6 }] },
 ];
 // Two cards a day: one in the morning (before the rush hour) and one in the afternoon
 const DEC_SLOTS = [[15, 50], [110, 215]];
@@ -6389,7 +6425,8 @@ function optFx(o) {
   if (o.coins) { const v = Math.round(o.coins * decBase()); out.push([`💰 ${v > 0 ? '+' : '−'}${fmt(Math.abs(v))}`, v > 0]); }
   if (o.morale) out.push([`😊 Ánimo ${o.morale > 0 ? '+' : '−'}${Math.abs(o.morale)}`, o.morale > 0]);
   if (o.trust) out.push([`⭐ Confianza ${o.trust > 0 ? '+' : '−'}${Math.abs(o.trust)}`, o.trust > 0]);
-  Object.entries(o.fx || {}).forEach(([k, s]) => out.push([`${FX_NAMES[k]} (${s} s)`, k === 'price' || k === 'overtime' || k === 'crowd']));
+  Object.entries(o.fx || {}).forEach(([k, s]) => out.push([`${FX_NAMES[k]} (${s} s)`, FX_GOOD.includes(k)]));
+  if (o.note) out.push([o.note, false]);
   return out;
 }
 function showCard(c) {
@@ -6417,14 +6454,112 @@ $('decOpts').addEventListener('click', e => {
   if (o.trust) S.trust = clamp100(S.trust + o.trust);
   Object.entries(o.fx || {}).forEach(([k, s]) => { DEC.fx[k] = s; });
   if (c.id === 'tormenta') startStorm(); // whatever is decided, the storm does come
+  if (o.act) o.act();
+  if (o.say) toast(o.say);
   S.decToday = [...(S.decToday || []).slice(-1), { icon: c.icon, title: c.title, choice: o.label }];
   stat('decision', { carta: c.id, opcion: +b.dataset.i });
   decCard = null; $('decOverlay').hidden = true; last = performance.now();
   sfx.mission(); burst(P.x, 2.2, P.z, o.label, 'white'); save();
 });
+/* ---------- What the decisions look like in the world ---------- */
+// People who come in for one decision: they walk through their steps and go. Not saved: a reload ends the scene
+const actors = [];
+const closestShop = () => { const on = SHOPS.filter(s => s.open); return on.sort((a, b) => Math.hypot(a.x - P.x, a.z - P.z) - Math.hypot(b.x - P.x, b.z - P.z))[0] || FARM; };
+function addActor(m, s, steps, o = {}) {
+  const a = { m, x: s.spawn.x, z: s.spawn.z, face: 0, walk: 0, wait: 0, t: 0, steps, home: { x: s.spawn.x, z: s.spawn.z }, ...o };
+  m.g.position.set(a.x, 0, a.z); scene.add(m.g); actors.push(a); return a;
+}
+function updateActors(dt) {
+  DEC.inWay = false;
+  for (let i = actors.length - 1; i >= 0; i--) {
+    const a = actors[i]; let moving = false, hop = 0;
+    if (a.follow) {
+      if (!decFx(a.follow)) { a.follow = null; a.steps = [{ x: a.home.x, z: a.home.z }]; toast('📰 El periodista ya tiene su reportaje y se va'); continue; }
+      const d = Math.hypot(P.x - a.x, P.z - a.z); if (d < 2.6) DEC.inWay = true;
+      if (d > 1.5) { const k = (d - 1.2) / d; stepToward(a, a.x + (P.x - a.x) * k, a.z + (P.z - a.z) * k, Math.max(3.2, d), dt); moving = true; }
+      if ((a.t -= dt) <= 0) { a.t = 5; burst(a.x, 2.3, a.z, '📸'); puff(a.x, 1.5, a.z, 0xffffff, 5, .5, 1); }
+    } else if (a.wait > 0) {
+      a.wait -= dt; if (a.dance) { a.t += dt; hop = Math.abs(Math.sin(a.t * 6)) * .3; a.face += dt * 3; }
+    } else if (!a.steps.length) { scene.remove(a.m.g); actors.splice(i, 1); continue; }
+    else {
+      const st = a.steps[0]; moving = !stepToward(a, st.x, st.z, a.speed || 2.4, dt);
+      if (!moving) { a.steps.shift(); a.wait = st.wait || 0; if (st.say) burst(a.x, 2.3, a.z, st.say); if (st.then) st.then(); }
+    }
+    a.m.g.position.set(a.x, hop, a.z); walkAnim(a.m, moving, a.walk);
+    a.m.g.rotation.y = lerpAngle(a.m.g.rotation.y, a.face, Math.min(1, dt * 10));
+  }
+}
+const backHome = s => ({ x: s.spawn.x, z: s.spawn.z });
+function reporterScene() {
+  const m = makePerson({ shirt: mat(0x2f3f5f), pants: mat(0x3a3a40), hair: mat(pick(HAIRS)), cap: mat(0xd8402f) });
+  const cam = mesh(new T.BoxGeometry(.26, .18, .14), M.dark); cam.position.set(0, .82, .28); m.body.add(cam);
+  addActor(m, closestShop(), [], { follow: 'reporter' });
+}
+function kidScene(police) {
+  const s = closestShop(), pay = s.tills[0].pay, kid = makeCustomer(); kid.g.scale.setScalar(.72);
+  addActor(kid, s, [{ x: pay.x + 1, z: pay.z + 1, wait: 3, say: police ? '😢' : '🍎' }, backHome(s)], { speed: 2 });
+  if (!police) return;
+  const o = makePerson({ shirt: mat(0x2f4f8f), pants: mat(0x1f2f4f), hair: mat(pick(HAIRS)), cap: mat(0x1f2f4f) });
+  addActor(o, s, [{ x: pay.x + 1.8, z: pay.z + 1, wait: 3, say: '🚓' }, backHome(s)], { speed: 2 });
+}
+function richScene(accepted) {
+  const s = closestShop(), pay = s.tills[0].pay, m = makePerson({ shirt: mat(0x2a2a30), pants: mat(0x1f1f24), hair: mat(0x8a8a8a) });
+  const hat = mesh(new T.CylinderGeometry(.16, .16, .24, 10), M.dark); hat.position.y = .36; m.head.add(hat);
+  addActor(m, s, [{ x: pay.x + .6, z: pay.z + .6, wait: accepted ? 4 : 2, say: accepted ? '💰' : '😤' }, backHome(s)], { speed: 2.6 });
+  if (!accepted) return;
+  customers.filter(c => c.shop === s && c.state !== 'leave').forEach((c, i) => { c.pat *= .6; if (i < 5) burst(c.x, 2.2, c.z, '😡', 'red'); });
+}
+function partyScene() {
+  const s = closestShop();
+  for (let i = 0; i < 6; i++) {
+    const a = i / 6 * Math.PI * 2, x = s.counter.x + Math.cos(a) * 2.6, z = s.counter.z + 3 + Math.sin(a) * 2;
+    addActor(makeCustomer(), s, [{ x, z, wait: 22, say: '🎉' }, backHome(s)], { dance: true, speed: 2.8 });
+  }
+}
+function giveAway() {
+  const s = closestShop(), st = S.shops[s.id].stock, pay = s.tills[0].pay;
+  let given = 0; Object.keys(st).forEach(k => { const n = Math.ceil((st[k] || 0) * .4); st[k] -= n; given += n; }); s.dirty = true;
+  toast(given ? `🥕 Los vecinos se llevan ${given} productos de ${s.name}` : '🥕 La tienda está vacía: los vecinos lo agradecen igual');
+  for (let i = 0; i < 3; i++) addActor(makeCustomer(), s, [{ x: pay.x + i * .8, z: pay.z + 1.2, wait: 1.5 + i, say: '❤️' }, backHome(s)], { speed: 2 + i * .3 });
+}
+function closeShops() {
+  customers.filter(c => c.state !== 'leave').forEach(c => {
+    if (c.got) { const st = S.shops[c.shop.id].stock; st[c.want] = (st[c.want] || 0) + c.got; c.shop.dirty = true; c.got = 0; }
+    c.m.stack.clear(); customerLeaves(c, false);
+  });
+  toast('⛈️ Has cerrado: los clientes se van a casa');
+}
+// Everyone's state shows on them: placards on strike, and a small icon every few seconds for the rest
+function placard(p) {
+  if (p.placard) return p.placard;
+  const g = new T.Group(), stick = mesh(new T.CylinderGeometry(.025, .025, 1.1, 5), M.woodDark, false), board = mesh(new T.BoxGeometry(.62, .38, .04), mat(0xfff8e7));
+  const band = mesh(new T.BoxGeometry(.5, .08, .05), mat(0xd8402f), false); stick.position.y = .55; board.position.y = 1.15; band.position.y = 1.15;
+  g.add(stick, board, band); g.position.set(.34, 0, .05); p.g.add(g); return (p.placard = g);
+}
+let staffT = 0;
+function updateStaffLook(dt) {
+  const strike = decFx('strike'), wave = Math.sin(performance.now() / 160) * .16;
+  const people = [...squirrels.map(w => [w.m, 'helper', w]), ...carriers.map(w => [w.m, 'carrier', w]), ...gardeners.map(w => [w.m, 'gardener', w])];
+  SHOPS.forEach(s => s.tills.forEach(t => { if (t.cashier && S.lv[t.staff] > 0) people.push([t.cashier, 'cashier', { x: t.x + .75, z: t.z }]); }));
+  people.forEach(([m]) => { if (strike) { const b = placard(m); b.visible = true; b.rotation.z = wave; } else if (m.placard) m.placard.visible = false; });
+  if ((staffT -= dt) > 0) return;
+  staffT = 3.5;
+  people.forEach(([, kind, w]) => {
+    const fx = strike ? 'strike' : [kind + 'Off', 'fear', 'overtime', kind + 'Slow'].find(decFx);
+    if (fx && Math.hypot(w.x - P.x, w.z - P.z) < 26) burst(w.x, kind === 'helper' ? 1.4 : 2.3, w.z, STAFF_ICON[fx]);
+  });
+}
 function updateTown(dt) {
+  updateActors(dt);
   if (!townOn()) return;
-  Object.keys(DEC.fx).forEach(k => { DEC.fx[k] -= dt; if (DEC.fx[k] <= 0) { delete DEC.fx[k]; if (k === 'strike') { S.morale = Math.max(S.morale, 30); toast('🪧 Se acabó la huelga. El ánimo sube un poco'); } } });
+  updateStaffLook(dt);
+  Object.keys(DEC.fx).forEach(k => {
+    DEC.fx[k] -= dt; if (DEC.fx[k] > 0) return;
+    delete DEC.fx[k];
+    if (k === 'strike') { S.morale = Math.max(S.morale, 30); toast('🪧 Se acabó la huelga. El ánimo sube un poco'); }
+    if (k === 'overtime') { DEC.fx.helperSlow = DEC.fx.carrierSlow = 30; toast('🥱 El turno doble ha terminado y el equipo está agotado'); }
+    if (k === 'closed') toast('☀️ Vuelves a abrir: ya entran clientes');
+  });
   // Neighbours trust a shop that serves them well: each happy customer adds a little, each angry one takes more
   const td = S.today || { served: 0, angry: 0 };
   if (td.served < lastServed || td.angry < lastAngry) { lastServed = td.served; lastAngry = td.angry; }
@@ -6433,7 +6568,7 @@ function updateTown(dt) {
   // Morale slowly settles back towards normal
   S.morale += (55 - S.morale) * Math.min(1, dt / 600);
   S.trust += (55 - S.trust) * Math.min(1, dt / 900);
-  if (S.morale < 15 && !decFx('strike') && hasStaff('helper')) { DEC.fx.strike = 30; sfx.angry(); toast('🪧 ¡Huelga! El ánimo está muy bajo y los trabajadores paran 30 segundos'); }
+  if (S.morale < 15 && !decFx('strike') && hasStaff('helper')) { DEC.fx.strike = 30; sfx.angry(); toast('🪧 ¡Huelga! Ardillas, repartidores, jardineros y cajeras paran 30 segundos'); }
   else if (S.morale < 30 && performance.now() - townWarn.m > 60000) { townWarn.m = performance.now(); toast('😟 Los trabajadores están desanimados y van más despacio'); }
   if (S.trust < 30 && performance.now() - townWarn.t > 60000) { townWarn.t = performance.now(); toast('😒 Los vecinos no se fían de la granja y vienen menos clientes'); }
   // Two cards a day, while the shop is open and away from the rush hour
@@ -6699,7 +6834,6 @@ function progressText() {
 flushMail();
 addEventListener('online', flushMail);
 // iPhones can leave the page shifted up after the keyboard closes, hiding the top row behind the browser bar: put it back
-if (/iPhone|iPod/.test(navigator.userAgent) && !navigator.standalone) document.documentElement.classList.add('iosweb');
 function fixViewport() {
   if (scrollX || scrollY) scrollTo(0, 0);
   if (document.body.scrollTop) document.body.scrollTop = 0;
@@ -6718,7 +6852,7 @@ if (new URLSearchParams(location.search).has('vista')) {
   document.body.append(probe);
   setInterval(() => {
     const v = window.visualViewport, hud = document.querySelector('.hud');
-    box.textContent = `pantalla ${screen.width}x${screen.height}\nventana ${innerWidth}x${innerHeight}\nvisible ${v ? `${Math.round(v.width)}x${Math.round(v.height)} desde ${v.offsetTop.toFixed(1)}` : 'no'}\nscroll ${scrollY}\nmargen ${probe.offsetHeight}\nhud y ${hud.getBoundingClientRect().top.toFixed(1)}\nclase ${document.documentElement.className || '-'}\nmodo ${matchMedia('(display-mode: standalone)').matches ? 'app' : 'web'}`;
+    box.textContent = `pantalla ${screen.width}x${screen.height}\nventana ${innerWidth}x${innerHeight}\nvisible ${v ? `${Math.round(v.width)}x${Math.round(v.height)} desde ${v.offsetTop.toFixed(1)}` : 'no'}\nscroll ${scrollY}\nmargen ${probe.offsetHeight}\nhud y ${hud.getBoundingClientRect().top.toFixed(1)}\nmodo ${matchMedia('(display-mode: standalone)').matches ? 'app' : 'web'}`;
   }, 500);
 }
 addEventListener('scroll', fixViewport, { passive: true });
@@ -6817,6 +6951,7 @@ function adventGift(k) {
   if (k === XMAS_DAYS) return { icon: '🎅', big: true };
   if (k % 6 === 0) return { icon: '⭐', stars: 2 };
   if (k % 6 === 3) return { icon: '🎄', find: true };
+  if (k % 4 === 2) return { icon: '⛄', decor: true };
   return { icon: '🪙', mins: 2 + k * .15 };
 }
 let adventLast = 0, xmasAsked = false;
@@ -6835,6 +6970,7 @@ function openAdvent() {
   if (g.big) { S.meta.santa = 1; giveStars(5); adventLast = Math.max(1, Math.round(incMin(15))); addCoins(adventLast); toast(`🎅 ¡Último regalo! Traje de Papá Noel en 👗 Aspecto, ⭐ 5 y +${fmt(adventLast)} monedas`); }
   else if (g.stars) { giveStars(g.stars); toast(`🎁 Día ${k}: ⭐ ${g.stars} estrellas`); }
   else if (g.find) { toast(`🎁 Día ${k}: ¡una pieza de la colección!`); setTimeout(() => collectFind('navidad'), 1400); }
+  else if (g.decor) giveDecor();
   else { adventLast = Math.max(1, Math.round(incMin(g.mins))); addCoins(adventLast); toast(`🎁 Día ${k}: +${fmt(adventLast)} monedas`); }
   sfx.mission(); flyCoins(P.x, 1.5, P.z, 10); puff(P.x, 1, P.z, 0xe8384a, 14, 1.5, 3.5); stat('adviento', { dia: k }); save(); renderAdvent();
 }
@@ -6930,7 +7066,7 @@ function santaLeave(done) {
   const p = xmasP.santa; p.g.visible = false; puff(p.g.position.x, 1, p.g.position.z, 0xffffff, 16, 1.5, 3); xmasP.order = null; xmasP.wait = 170 + Math.random() * 80;
   if (!done) { toast('🎅 Papá Noel se ha ido. ¡Volverá con otro pedido!'); stat('papa_noel', { accion: 'se_va' }); return; }
   const v = Math.max(1, incMin(2 + xmasP.worth * .5)); addCoins(v); giveStars(1); flyCoins(P.x, 1.5, P.z, 14); sfx.mission(); burst(P.x, 2.3, P.z, '🎅 +' + fmt(v));
-  toast(`🎅 ¡Jo, jo, jo! +${fmt(v)} monedas y ⭐ 1`); if (Math.random() < .4) setTimeout(() => collectFind('navidad'), 2400);
+  toast(`🎅 ¡Jo, jo, jo! +${fmt(v)} monedas y ⭐ 1`); const prize = Math.random(); if (prize < .35) setTimeout(() => collectFind('navidad'), 2400); else if (prize < .6) setTimeout(giveDecor, 2400);
   stat('papa_noel', { accion: 'cumplido' }); save();
 }
 function xmasPlay(dt) {
@@ -6963,6 +7099,70 @@ function xmasPlay(dt) {
   const txt = want ? `🎅 Pide ${want} · ${Math.ceil(xmasP.t)} s${have ? ' | Tienes ' + have : ''}` : have;
   const bar = $('santaBar'); bar.hidden = !txt; if (bar.textContent !== txt) bar.textContent = txt;
 }
+
+/* ================= Decorations ================= */
+// Won at Christmas and kept for good. How many you own goes with the player (S.meta.decor); where they stand belongs to each farm (S.decorPut).
+if (!Array.isArray(S.decorPut)) S.decorPut = [];
+const pSph = (r, x, y, z, color, sy = 1) => ({ geo: new T.SphereGeometry(r, 9, 7).scale(1, sy, 1).translate(x, y, z), color });
+const pCone = (r, h, y, color) => ({ geo: new T.ConeGeometry(r, h, 8).translate(0, y, 0), color });
+const RED = 0xd8263a, GOLD = 0xf6c445, SNOW = 0xf7fbff, PINE = 0x2f7d46;
+const DECORS = {
+  snowman: { icon: '⛄', name: 'Muñeco de nieve', parts: () => [pSph(.42, 0, .38, 0, SNOW), pSph(.3, 0, .95, 0, SNOW), pSph(.21, 0, 1.38, 0, SNOW), { geo: new T.ConeGeometry(.05, .24, 6).rotateX(Math.PI / 2).translate(0, 1.38, .28), color: 0xf08a24 }, pSph(.03, -.08, 1.45, .18, 0x222222), pSph(.03, .08, 1.45, .18, 0x222222), pBox(.5, .08, .36, 0, 1.15, 0, RED), pCyl(.24, .05, 0, 1.56, 0, 0x2a2a30, 10), pCyl(.15, .26, 0, 1.7, 0, 0x2a2a30, 10)] },
+  tree: { icon: '🎄', name: 'Abeto con luces', parts: () => [pCyl(.1, .4, 0, .2, 0, 0x6b4426), pCone(.72, .85, .75, PINE), pCone(.56, .75, 1.2, 0x37904f), pCone(.38, .65, 1.65, 0x43a35b), pGem(.13, 0, 2.03, 0, GOLD), ...[[.45, .7, .32, RED], [-.42, .78, .3, GOLD], [.28, 1.2, -.32, 0x3f7fd0], [-.3, 1.25, .28, RED], [.16, 1.62, .24, GOLD], [-.5, .7, -.25, 0x3f7fd0]].map(([x, y, z, c]) => pSph(.07, x, y, z, c))] },
+  gifts: { icon: '🎁', name: 'Montón de regalos', parts: () => [pBox(.6, .46, .6, 0, .23, 0, RED), pBox(.64, .48, .1, 0, .23, 0, GOLD), pBox(.1, .48, .64, 0, .23, 0, GOLD), pBox(.4, .34, .4, .46, .17, .34, 0x3f7fd0), pBox(.08, .36, .43, .46, .17, .34, SNOW), pBox(.36, .3, .36, -.1, .61, .05, 0x4caf50), pBox(.39, .32, .08, -.1, .61, .05, RED)] },
+  cane: { icon: '🍭', name: 'Bastón de caramelo', parts: () => { const p = []; for (let i = 0; i < 7; i++) p.push(pCyl(.09, .2, 0, .1 + i * .2, 0, i % 2 ? SNOW : RED)); [[.1, 1.5, RED], [.24, 1.55, SNOW], [.36, 1.47, RED]].forEach(([x, y, c]) => p.push(pSph(.1, x, y, 0, c))); return p; } },
+  lantern: { icon: '🏮', name: 'Farol de Navidad', lit: true, parts: () => [pCyl(.05, 1.3, 0, .65, 0, 0x2a2a30), pBox(.34, .05, .34, 0, 1.32, 0, 0x2a2a30), pBox(.34, .05, .34, 0, 1.72, 0, 0x2a2a30), { geo: new T.ConeGeometry(.27, .2, 4).rotateY(Math.PI / 4).translate(0, 1.84, 0), color: RED }, pBox(.04, .38, .04, -.14, 1.52, -.14, 0x2a2a30), pBox(.04, .38, .04, .14, 1.52, .14, 0x2a2a30), pBox(.04, .38, .04, -.14, 1.52, .14, 0x2a2a30), pBox(.04, .38, .04, .14, 1.52, -.14, 0x2a2a30)] },
+  reindeer: { icon: '🦌', name: 'Reno de madera', parts: () => { const w = 0xa8743c, d = 0x6b4426; return [pBox(.72, .32, .3, 0, .62, 0, w), pBox(.2, .42, .2, .34, .9, 0, w), pBox(.32, .2, .2, .48, 1.14, 0, w), pSph(.05, .67, 1.16, 0, RED), ...[[-.28, -.1], [-.28, .1], [.28, -.1], [.28, .1]].map(([x, z]) => pBox(.08, .46, .08, x, .23, z, d)), pBox(.04, .3, .04, .4, 1.36, .08, d, .3), pBox(.04, .3, .04, .4, 1.36, -.08, d, .3), pBox(.16, .04, .04, .32, 1.42, .08, d), pBox(.16, .04, .04, .32, 1.42, -.08, d)]; } },
+};
+const decorOwned = () => (S.meta.decor = S.meta.decor || {});
+const decorUsed = k => (S.meta.decorUsed = S.meta.decorUsed || {})[k] || 0;
+const decorFree = k => (decorOwned()[k] || 0) - decorUsed(k);
+const decorAny = () => Object.values(decorOwned()).some(n => n > 0);
+const decorMeshes = [];
+function drawDecor(d) {
+  const def = DECORS[d.k]; if (!def) return;
+  const g = new T.Group(); addDetails(g, def.parts());
+  if (def.lit) { const l = mesh(new T.OctahedronGeometry(.13), M.lamp, false); l.position.y = 1.52; g.add(l); }
+  g.position.set(d.x, 0, d.z); g.rotation.y = d.r || 0; scene.add(g); decorMeshes.push({ d, g });
+}
+S.decorPut.forEach(drawDecor);
+// Gives one decoration, preferring one the player does not have yet
+function giveDecor() {
+  const keys = Object.keys(DECORS), missing = keys.filter(k => !decorOwned()[k]), k = pick(missing.length ? missing : keys);
+  decorOwned()[k] = (decorOwned()[k] || 0) + 1;
+  toast(`${DECORS[k].icon} ¡Decoración nueva: ${DECORS[k].name}! Colócala desde el menú ☰`);
+  sfx.mission(); stat('decoracion', { pieza: k }); $('decorBtn').hidden = false; save();
+}
+function decorBlocked(x, z) {
+  return PATCHES.some(p => { const sp = p.spacing || SPACING; return Math.abs(x - p.x) < p.cols * sp / 2 + .6 && Math.abs(z - p.z) < p.rows * sp / 2 + .6; })
+    || [...BUILDS.filter(b => isBuilt(b.id)), ...SHOPS.filter(s => s.open)].some(b => Math.hypot(x - b.x, z - b.z) < 2.6);
+}
+const decorNear = () => decorMeshes.filter(o => Math.hypot(o.d.x - P.x, o.d.z - P.z) < 3.5).sort((a, b) => Math.hypot(a.d.x - P.x, a.d.z - P.z) - Math.hypot(b.d.x - P.x, b.d.z - P.z))[0];
+function renderDecor() {
+  const bad = decorBlocked(P.x, P.z);
+  $('decorTop').textContent = bad ? 'Aquí no cabe: ponte lejos de campos y edificios.' : 'Se colocan donde está Sonia y se quedan para siempre, también al acabar la Navidad.';
+  $('decorList').innerHTML = Object.entries(DECORS).map(([k, d]) => {
+    const n = decorOwned()[k] || 0, free = decorFree(k);
+    return `<div class="dmrow${n ? '' : ' off'}"><span>${n ? d.icon : '❔'}</span><b>${n ? d.name : 'Sin conseguir'}<small>${n ? `Te quedan ${free} de ${n}` : 'Sale en el calendario y con Papá Noel'}</small></b><button data-k="${k}" ${!free || bad ? 'disabled' : ''}>Colocar</button></div>`;
+  }).join('');
+  $('decorRemove').hidden = !decorNear();
+}
+function closeDecor() { $('decorOverlay').hidden = true; last = performance.now(); }
+$('decorBtn').hidden = !decorAny() && !xmasOn();
+$('decorBtn').addEventListener('click', () => { $('menu').hidden = true; renderDecor(); $('decorOverlay').hidden = false; });
+$('decorClose').addEventListener('click', closeDecor);
+$('decorList').addEventListener('click', e => {
+  const b = e.target.closest('[data-k]'); if (!b || b.disabled) return;
+  const k = b.dataset.k; if (decorFree(k) <= 0 || decorBlocked(P.x, P.z)) return;
+  const d = { k, x: +P.x.toFixed(2), z: +(P.z + 1).toFixed(2), r: 0 };
+  S.decorPut.push(d); S.meta.decorUsed[k] = decorUsed(k) + 1; drawDecor(d);
+  puff(d.x, 1, d.z, 0xffffff, 12, 1, 2.5); sfx.drop(); stat('decoracion_puesta', { pieza: k }); save(); closeDecor();
+});
+$('decorRemove').addEventListener('click', () => {
+  const o = decorNear(); if (!o) return;
+  scene.remove(o.g); decorMeshes.splice(decorMeshes.indexOf(o), 1); S.decorPut.splice(S.decorPut.indexOf(o.d), 1);
+  S.meta.decorUsed[o.d.k] = Math.max(0, decorUsed(o.d.k) - 1); sfx.drop(); save(); renderDecor();
+});
 
 /* ================= Tips: each new system explains itself the first time it shows up ================= */
 // The opening tutorial stays short. Daily missions, morale and decisions, chores, mishaps, timed works and dirty zones
