@@ -37,6 +37,7 @@ body {
   -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; overscroll-behavior: none;
 }
 #game { position: fixed; inset: 0; touch-action: none; }
+#turnBtn { touch-action: none; }
 #game canvas { display: block; width: 100%; height: 100%; }
 #game::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(40, 25, 15, .26) 100%); }
 .vignette { position: fixed; inset: 0; pointer-events: none; z-index: 2; background: radial-gradient(ellipse at center, transparent 65%, rgba(30, 20, 10, .18) 100%); }
@@ -1074,8 +1075,8 @@ const MAPS = [];
 const mapOf = n => MAPS[n % MAPS.length];
 const mapById = id => MAPS.find(m => m.id === id);
 // The version goes up with every release; the build (vite.config.js) stamps the date (while developing it says 'en pruebas')
-const GAME_VERSION = '45';
-const BUILD_DATE = '06/11/2026 15:00';
+const GAME_VERSION = '46';
+const BUILD_DATE = '06/11/2026 15:10';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -1421,7 +1422,8 @@ MAPS.push({
 // A map with beta: true, or whatever a map keeps under content.beta, only exists on testers' devices.
 // The code arrives as a link (?pruebas=CODE) or typed after tapping the menu card 5 times; only its fingerprint is kept here.
 const TESTER_KEY = 'huerto-sonia-probador', TESTER_HASH = '802f8d5977e82989df047982bdd24158dd48bd53d850023c81e96e40e91681bf';
-const TESTER = (() => { try { return localStorage.getItem(TESTER_KEY) === TESTER_HASH; } catch { return false; } })();
+// The dev server opened from a phone at home (192.168.x.x) is always a tester: the code can't be checked there, browsers only allow it on secure sites
+const TESTER = /^192\.168\./.test(location.hostname) || (() => { try { return localStorage.getItem(TESTER_KEY) === TESTER_HASH; } catch { return false; } })();
 const mapOpen = m => !m.beta || TESTER;
 async function tryTesterCode(code) {
   const norm = String(code || '').trim().toUpperCase();
@@ -4613,7 +4615,9 @@ function checkMission() {
 const input = { jx: 0, jz: 0, keys: new Set(), pid: null, ox: 0, oy: 0 };
 const joy = $('joy'), knob = $('knob');
 renderer.domElement.addEventListener('pointerdown', e => {
-  if (input.pid !== null || placing.mode) return;
+  // Free camera: the mouse's right button, or a second finger while the first one walks
+  if (!placing.mode && camDrag.pid === null && (e.button === 2 || (input.pid !== null && e.pointerType === 'touch'))) { startCamDrag(e, renderer.domElement); return; }
+  if (e.button === 2 || input.pid !== null || placing.mode) return;
   input.pid = e.pointerId; input.ox = e.clientX; input.oy = e.clientY;
   if (panning()) { try { renderer.domElement.setPointerCapture(e.pointerId); } catch {} return; }
   joy.style.left = e.clientX + 'px'; joy.style.top = e.clientY + 'px'; joy.hidden = false; knob.style.transform = '';
@@ -4622,16 +4626,17 @@ renderer.domElement.addEventListener('pointerdown', e => {
   if (actx && actx.state === 'suspended') actx.resume();
 });
 renderer.domElement.addEventListener('pointermove', e => {
-  if (e.pointerId !== input.pid) return;
+  if (moveCamDrag(e) || e.pointerId !== input.pid) return;
   if (panning()) { dragMap(e.clientX - input.ox, e.clientY - input.oy); input.ox = e.clientX; input.oy = e.clientY; return; }
   let dx = e.clientX - input.ox, dy = e.clientY - input.oy; const d = Math.hypot(dx, dy), max = 50;
   if (d > max) { dx = dx / d * max; dy = dy / d * max; }
   knob.style.transform = `translate(${dx}px, ${dy}px)`;
   input.jx = d > 6 ? dx / max : 0; input.jz = d > 6 ? dy / max : 0;
 });
-const endPointer = e => { if (e.pointerId !== input.pid) return; input.pid = null; input.jx = input.jz = 0; joy.hidden = true; };
+const endPointer = e => { if (e.pointerId === camDrag.pid) { camDrag.pid = null; return; } if (e.pointerId !== input.pid) return; input.pid = null; input.jx = input.jz = 0; joy.hidden = true; };
 renderer.domElement.addEventListener('pointerup', endPointer);
 renderer.domElement.addEventListener('pointercancel', endPointer);
+renderer.domElement.addEventListener('contextmenu', e => e.preventDefault());
 const KEYMAP = { ArrowUp: 'u', KeyW: 'u', ArrowDown: 'd', KeyS: 'd', ArrowLeft: 'l', KeyA: 'l', ArrowRight: 'r', KeyD: 'r' };
 addEventListener('keydown', e => { if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return; if (KEYMAP[e.code]) { input.keys.add(KEYMAP[e.code]); e.preventDefault(); } });
 addEventListener('keyup', e => input.keys.delete(KEYMAP[e.code]));
@@ -4641,9 +4646,25 @@ addEventListener('blur', () => input.keys.clear());
 let topView = false, panMode = false;
 const camPan = { x: 0, z: 0 };
 // The 🔄 button turns the camera a quarter turn around the character; the finger and the map drag turn with it
-let camYaw = 0, camYawNow = 0;
+// Dragging moves it freely, as in an MMO: sideways it turns around the character, up and down it changes the height (camTilt, 0 = normal)
+let camYaw = 0, camYawNow = 0, camTilt = 0, camTiltNow = 0;
+const CAM_TILT_LOW = -.5, CAM_TILT_HIGH = .55;
+const camDrag = { pid: null, x: 0, y: 0, moved: 0, btn: false, skipClick: false };
+function startCamDrag(e, el) {
+  camDrag.pid = e.pointerId; camDrag.x = e.clientX; camDrag.y = e.clientY; camDrag.moved = 0; camDrag.btn = el === $('turnBtn');
+  try { el.setPointerCapture(e.pointerId); } catch {}
+}
+function moveCamDrag(e) {
+  if (e.pointerId !== camDrag.pid) return false;
+  const dx = e.clientX - camDrag.x, dy = e.clientY - camDrag.y; camDrag.x = e.clientX; camDrag.y = e.clientY;
+  camDrag.moved += Math.abs(dx) + Math.abs(dy);
+  camYaw -= dx * .0075;
+  if (!topView) camTilt = Math.max(CAM_TILT_LOW, Math.min(CAM_TILT_HIGH, camTilt + dy * .005));
+  return true;
+}
 const camRot = (x, z) => { const c = Math.cos(camYawNow), s = Math.sin(camYawNow); return { x: x * c + z * s, z: -x * s + z * c }; };
-function turnCam(dir) { camYaw += dir * Math.PI / 2; sfx.drop(); }
+// A tap on the button also straightens a camera that was moved by hand
+function turnCam(dir) { const q = Math.PI / 2; camYaw = Math.round(camYaw / q) * q + dir * q; camTilt = 0; sfx.drop(); }
 const panning = () => topView && panMode;
 function dragMap(dx, dy) {
   const perPx = 2 * camera.position.y * Math.tan(camera.fov * Math.PI / 360) / innerHeight;
@@ -4659,7 +4680,14 @@ $('viewBtn').addEventListener('click', () => {
   topView = !topView; $('viewBtn').textContent = topView ? '🧑‍🌾' : '🗺️'; $('panBtn').hidden = !topView; if (!topView) setPan(false);
   $('viewBtn').setAttribute('aria-label', topView ? 'Volver a la vista normal' : 'Cambiar a vista desde arriba'); sfx.drop();
 });
-$('turnBtn').addEventListener('click', () => turnCam(1));
+// Dragging the 🔄 button moves the camera with just one finger; a plain tap still turns it
+const turnEl = $('turnBtn');
+turnEl.addEventListener('pointerdown', e => { if (camDrag.pid === null) startCamDrag(e, turnEl); });
+turnEl.addEventListener('pointermove', moveCamDrag);
+const turnUp = e => { if (e.pointerId !== camDrag.pid || !camDrag.btn) return; camDrag.skipClick = camDrag.moved > 8; camDrag.pid = null; };
+turnEl.addEventListener('pointerup', turnUp);
+turnEl.addEventListener('pointercancel', turnUp);
+turnEl.addEventListener('click', () => { if (camDrag.skipClick) { camDrag.skipClick = false; return; } turnCam(1); });
 addEventListener('keydown', e => { if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return; if (e.code === 'KeyQ') turnCam(-1); if (e.code === 'KeyE') turnCam(1); });
 
 /* ================= Game logic ================= */
@@ -4745,6 +4773,7 @@ function unstick() {
 }
 let hintShown = S.tut < 3, moved = 0, bankT = 30;
 function update(dt) {
+  if (TESTER && S.coins < 1e9) S.coins = 1e9; // Testers never run out of money, so they can see everything
   if (blocked(P.x, P.z)) unstick();
   // Movement
   let ix = input.jx, iz = input.jz;
@@ -5004,18 +5033,23 @@ function update(dt) {
 
   // Camera
   // The map button lifts the camera high above to see the whole farm at once
-  const portrait = innerWidth / innerHeight < .8, off = topView ? (portrait ? { y: 46, z: 7 } : { y: 34, z: 5 }) : portrait ? { y: 14.5, z: 13.8 } : { y: 10, z: 9.5 };
+  const portrait = innerWidth / innerHeight < .8; let off = topView ? (portrait ? { y: 46, z: 7 } : { y: 34, z: 5 }) : portrait ? { y: 14.5, z: 13.8 } : { y: 10, z: 9.5 };
   const k = Math.min(1, dt * 5);
-  camYawNow += (camYaw - camYawNow) * k;
+  // While the finger is on the camera it follows closely; otherwise it glides
+  const kc = camDrag.pid !== null ? Math.min(1, dt * 16) : k;
+  camYawNow += (camYaw - camYawNow) * kc; camTiltNow += (camTilt - camTiltNow) * kc;
   // While a film take is on, the camera pulls back and centres on the set, so everything that goes wrong is on screen
   const wide = topView ? 0 : DEC.camWide || 0, wideK = 1 + .65 * wide, aimX = wide * (DEC.camX || 0), aimZ = wide * (DEC.camZ || 0);
+  // Hand-moved height: the lower it goes the closer it gets, so buildings get in the way less. Film takes go back to the normal angle.
+  const tilt = topView ? 0 : camTiltNow * (1 - wide), low = Math.max(0, tilt / CAM_TILT_LOW);
+  if (tilt) { const a = Math.atan2(off.y, off.z) + tilt, d = Math.hypot(off.y, off.z) * (1 - .42 * low); off = { y: d * Math.sin(a), z: d * Math.cos(a) }; }
   const back = camRot(0, off.z * wideK);
-  camera.position.x += (P.x + camPan.x + aimX + back.x - camera.position.x) * k;
-  camera.position.y += (off.y * wideK - camera.position.y) * k;
-  camera.position.z += (P.z + camPan.z + aimZ + back.z - camera.position.z) * k;
+  camera.position.x += (P.x + camPan.x + aimX + back.x - camera.position.x) * kc;
+  camera.position.y += (off.y * wideK - camera.position.y) * kc;
+  camera.position.z += (P.z + camPan.z + aimZ + back.z - camera.position.z) * kc;
   // Upright phones show Sonia a little below the middle, so the cards at the top cover the land ahead and not her
   const ahead = camRot(0, -off.z * wideK - (portrait && !topView ? 2.6 : .4));
-  camera.lookAt(camera.position.x + ahead.x, 0, camera.position.z + ahead.z);
+  camera.lookAt(camera.position.x + ahead.x, low * 1.1, camera.position.z + ahead.z);
   sunFollow(P.x, P.z);
 }
 
@@ -8338,6 +8372,9 @@ function updateLamps(glow) {
 // each get one or two cards the first time they appear (once per player, S.meta.tips), in the tutorial's own window.
 if (!S.meta.tips || typeof S.meta.tips !== 'object') S.meta.tips = {};
 const TIPS = [
+  { id: 'cam', when: () => S.mission >= 3, cards: [
+    { icon: '🎥', title: 'Mueve la cámara', text: 'Arrastra el botón 🔄 para girar y subir o bajar la vista, o usa un segundo dedo mientras andas. Un toque en 🔄 la deja recta otra vez.' },
+  ] },
   { id: 'film', when: () => filmHere(), cards: [
     { icon: '🎬', title: 'Vas a dirigir películas', text: 'Pisa el círculo rosa del plató y elige un guion. Después lleva allí lo que pide, y el decorado se irá montando.' },
     { icon: '🎥', title: '¡Acción!', text: 'En las tomas, corre a los círculos rojos para arreglar lo que falle y toca a los curiosos antes de que entren en el plano. Cada fallo quita una estrella.' },
