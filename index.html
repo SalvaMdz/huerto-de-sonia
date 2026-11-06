@@ -258,6 +258,16 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
 .santabar { position: fixed; z-index: 4; left: 50%; transform: translateX(-50%); bottom: calc(14px + env(safe-area-inset-bottom, 0px)); max-width: 92vw; white-space: nowrap; pointer-events: none; background: rgba(59, 42, 30, .9); color: #fff8e7; border-radius: 999px; padding: 6px 14px; font-weight: 900; font-size: .85rem; }
 .dmrow { display: flex; align-items: center; gap: 8px; text-align: left; margin-bottom: 6px; padding: 6px 8px; background: #fff; border: 2px solid var(--ink); border-radius: 12px; }
 .dmrow.off { background: #e6d9bf; }
+.dmrow.done { background: #e4f4dc; }
+.sthead { margin: 6px 0 4px; text-align: left; font-size: .95rem; }
+.wages { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.survey .wages button { width: auto; padding: 6px 2px; font-size: .9rem; background: #fff; }
+.survey .wages button.on { background: var(--leaf); color: #fff; }
+.survey .wages small { display: block; font-size: .7rem; font-weight: 700; }
+.santabar.shipbar { bottom: calc(52px + env(safe-area-inset-bottom, 0px)); background: rgba(31, 79, 143, .94); }
+.dmrow small.good { color: #2f7d3b; }
+.dmrow small.bad { color: #b5392b; }
+.survey .dmrow button:disabled { opacity: .5; }
 .dmrow > span { font-size: 1.5rem; }
 .dmrow b { flex: 1; font-size: .92rem; min-width: 0; }
 .dmrow small { display: block; font-weight: 700; color: var(--ink-soft); }
@@ -335,7 +345,7 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
 .news .nk { font-size: .7rem; letter-spacing: .6px; text-transform: uppercase; color: var(--ink-soft); display: flex; justify-content: space-between; gap: 10px; }
 .news .nk button { all: unset; cursor: pointer; color: var(--ink-soft); }
 .nightveil { position: fixed; inset: 0; z-index: 2; pointer-events: none; opacity: 0; transition: opacity 1s;
-  background: radial-gradient(circle at 50% 52%, rgba(10,16,40,0) 0 9%, rgba(10,16,40,.45) 22%, rgba(8,12,32,.78) 55%); }
+  background: radial-gradient(circle at var(--veil-x, 50%) var(--veil-y, 52%), rgba(10,16,40,0) 0 9%, rgba(10,16,40,.45) 22%, rgba(8,12,32,.78) 55%); }
 .chip.thief { background: var(--red); animation: bump 1.2s ease-in-out infinite; }
 /* Free building on a grid: the bar at the bottom while placing */
 .gridbar { position: fixed; left: 50%; bottom: max(16px, env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(420px, calc(100% - 32px)); z-index: 30; pointer-events: auto;
@@ -529,6 +539,10 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
   <button id="testBtn" hidden>🧪 Pruebas</button>
   <button id="starsBtn">⭐ Estrellas</button>
   <button id="xmasBtn" hidden>🎄 Calendario</button>
+  <button id="filmBtn" hidden>🎬 Películas</button>
+  <button id="staffBtn" hidden>👥 Equipo</button>
+  <button id="weekBtn">🗓️ Semana</button>
+  <button id="lawBtn" hidden>⚖️ Leyes</button>
   <button id="albumBtn">📖 Colección</button>
   <button id="decorBtn" hidden>⛄ Decoraciones</button>
   <button id="achvBtn">🏆 Logros</button>
@@ -658,6 +672,45 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
     <button id="surveySend" disabled>Faltan 5 respuestas</button>
   </div>
 </div>
+<div class="overlay" id="filmOverlay" hidden>
+  <div class="adbox panel survey">
+    <h3>🎬 Estudios Luna</h3>
+    <p id="filmTop"></p>
+    <div id="filmBody"></div>
+    <button class="ghost" id="filmClose">Cerrar</button>
+  </div>
+</div>
+<div class="overlay" id="staffOverlay" hidden>
+  <div class="adbox panel survey">
+    <h3>👥 Tu equipo</h3>
+    <p id="staffTop"></p>
+    <h4 class="sthead">💰 Sueldo</h4>
+    <div class="wages" id="staffWage"></div>
+    <h4 class="sthead">Comida</h4>
+    <div id="staffFood"></div>
+    <h4 class="sthead">Casas</h4>
+    <div id="staffHouse"></div>
+    <button class="ghost" id="staffClose">Cerrar</button>
+  </div>
+</div>
+<div class="overlay" id="lawOverlay" hidden>
+  <div class="adbox panel survey">
+    <h3>⚖️ Leyes de la granja</h3>
+    <p id="lawTop"></p>
+    <div id="lawList"></div>
+    <button class="ghost" id="lawClose">Cerrar</button>
+  </div>
+</div>
+<div class="overlay" id="weekOverlay" hidden>
+  <div class="adbox panel survey">
+    <h3>🗓️ Misiones de la semana</h3>
+    <p id="weekTop"></p>
+    <div id="weekList"></div>
+    <button id="weekAd" hidden>📺 Ver anuncio: cofre ×2</button>
+    <button class="ghost" id="weekOpen" hidden>Abrir el cofre</button>
+    <button class="ghost" id="weekClose">Cerrar</button>
+  </div>
+</div>
 <div class="overlay" id="decorOverlay" hidden>
   <div class="adbox panel survey">
     <h3>⛄ Decoraciones</h3>
@@ -685,6 +738,8 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
   </div>
 </div>
 <div class="santabar" id="santaBar" hidden></div>
+<div class="santabar shipbar" id="shipBar" hidden></div>
+<div class="santabar shipbar" id="filmBar" hidden></div>
 <div class="creator" id="creator" hidden>
   <div class="cbox">
     <h3>Crea tu personaje</h3>
@@ -854,6 +909,34 @@ const ITEMS = {
   cocktail:   { name: 'Piñas coladas',  icon: '🍹', value: 320,  shape: 'jar',  wrap: 0xfff3c4, top: [0xf5c518] },
   pineapple:  { name: 'Piñas',          icon: '🍍', value: 210,  shape: 'box',  wrap: 0xa8703a, top: [0xf5c518] },
   smoothie:   { name: 'Batidos de mango', icon: '🥭', value: 620, shape: 'jar', wrap: 0xf5a524, top: [0x3fa34d] },
+  // Estudios Luna: the old lots grow what a studio really uses, and the workshops turn it into costumes, sets and cinema sweets
+  cotton:     { name: 'Algodón',              icon: '☁️', value: 2,    shape: 'box',  wrap: 0xfdf6ea, top: [0xffffff] },
+  filmcorn:   { name: 'Maíz',                 icon: '🌽', value: 5,    shape: 'box',  wrap: 0xa8703a, top: [0xf5c518] },
+  sugarcane:  { name: 'Caña de azúcar',       icon: '🎋', value: 12,   shape: 'loaf', wrap: 0x9fc36a, top: [0xe8e0a0] },
+  costume:    { name: 'Vestuario',            icon: '👗', value: 9,    shape: 'box',  wrap: 0xfdf6ea, top: [0x8a3f7a] },
+  popcorn2:   { name: 'Palomitas',            icon: '🍿', value: 22,   shape: 'jar',  wrap: 0xd8402f, top: [0xfff3c4] },
+  floss:      { name: 'Algodón de azúcar',    icon: '🍭', value: 55,   shape: 'jar',  wrap: 0xf7c6dc, top: [0xf06aa8, 0x7fc8e8] },
+  reed:       { name: 'Cañas',                icon: '🎍', value: 25,   shape: 'loaf', wrap: 0xc9b36a, top: [0x8f8a3a] },
+  dyeflower:  { name: 'Flores de tinte',      icon: '🌺', value: 50,   shape: 'box',  wrap: 0xfdf6ea, top: [0xe8384a, 0x3f7fd0, 0xf5c518] },
+  prop:       { name: 'Atrezo',               icon: '🗿', value: 110,  shape: 'box',  wrap: 0xc9a266, top: [0xf6c445] },
+  backdrop:   { name: 'Decorados',            icon: '🖼️', value: 220,  shape: 'loaf', wrap: 0x7fc8e8, top: [0x5f9a5a] },
+  feather:    { name: 'Plumas',               icon: '🪶', value: 15,   shape: 'box',  wrap: 0xfdf6ea, top: [0xf06aa8] },
+  leather:    { name: 'Cuero',                icon: '🤠', value: 45,   shape: 'loaf', wrap: 0x8f5a2b, top: [0xb98a50] },
+  hemp:       { name: 'Cáñamo',               icon: '🌿', value: 90,   shape: 'loaf', wrap: 0x7a9a4a, top: [0xc9b36a] },
+  curtain:    { name: 'Telones',              icon: '🎭', value: 380,  shape: 'loaf', wrap: 0xa8283a, top: [0xf6c445] },
+  wax:        { name: 'Cera',                 icon: '🕯️', value: 160,  shape: 'jar',  wrap: 0xfff3c4, top: [0xf5c518] },
+  cacao:      { name: 'Cacao',                icon: '🌰', value: 70,   shape: 'box',  wrap: 0xa8703a, top: [0x6b4426] },
+  fleece:     { name: 'Lana',                 icon: '🐑', value: 150,  shape: 'box',  wrap: 0xfdf6ea, top: [0xffffff] },
+  goatcheese: { name: 'Queso de cantina',     icon: '🧀', value: 230,  shape: 'pie',  wrap: 0xf5e6c0, top: [0xf6c445] },
+  signedpic:  { name: 'Fotos firmadas',       icon: '🐷', value: 340,  shape: 'box',  wrap: 0xfdfdfd, top: [0xf2a7b5] },
+  fakesnow:   { name: 'Nieve falsa',          icon: '❄️', value: 650,  shape: 'pie',  wrap: 0xeef6ff, top: [0x7fb0d8] },
+  studiolog:  { name: 'Troncos',              icon: '🪵', value: 190,  shape: 'loaf', wrap: 0x8f5a2b, top: [0xd9a96a] },
+  setpiece:   { name: 'Piezas de plató',      icon: '🎪', value: 470,  shape: 'box',  wrap: 0xc9a266, top: [0xd8402f] },
+  castle:     { name: 'Castillos de cartón',  icon: '🏰', value: 1250, shape: 'box',  wrap: 0xa8a49c, top: [0x5a5f6a] },
+  bonbon:     { name: 'Bombones',             icon: '🍫', value: 320,  shape: 'box',  wrap: 0x6b4426, top: [0xd8402f] },
+  wicker:     { name: 'Mimbre',               icon: '🧺', value: 210,  shape: 'loaf', wrap: 0xc9a266, top: [0x9a6a38] },
+  dirchair:   { name: 'Sillas de director',   icon: '🪑', value: 620,  shape: 'box',  wrap: 0x2a2a30, top: [0xd8402f] },
+  makeup:     { name: 'Maquillaje',           icon: '💄', value: 720,  shape: 'jar',  wrap: 0xf7c6dc, top: [0xd8402f] },
   // The Costa's first island (testers only for now)
   seaweed:    { name: 'Algas',              icon: '🌿', value: 2,   shape: 'box',  wrap: 0x9fd3e8, top: [0x3f8f5a] },
   clam:       { name: 'Almejas',            icon: '🐚', value: 5,   shape: 'fish', wrap: 0x9fd3e8, top: [0xf0d8c0] },
@@ -991,8 +1074,8 @@ const MAPS = [];
 const mapOf = n => MAPS[n % MAPS.length];
 const mapById = id => MAPS.find(m => m.id === id);
 // The version goes up with every release; the build (vite.config.js) stamps the date (while developing it says 'en pruebas')
-const GAME_VERSION = '41';
-const BUILD_DATE = '06/11/2026 04:07';
+const GAME_VERSION = '42';
+const BUILD_DATE = '06/11/2026 12:47';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -1230,11 +1313,85 @@ MAPS.push({
   },
 });
 
-/* ---------- Map 3: Bosque Otoñal ---------- */
-// Each map is described here as data: its look, its bonus, the mechanic it adds and what it changes in the zones.
+/* ---------- Map 3: Estudios Luna (film studios) ---------- */
+// Each map is described here as data. Only testers see it until it is finished. Ids stay the same as in the Valley (missions and saves refer to them).
 MAPS.push({
-  id: 'bosque', mechanic: 'Felicidad de los trabajadores: casa, descanso y sueldo',
-  name: 'Bosque Otoñal',      icon: '🍁', sky: 0xf3d9b0, grass: 0xc8a64a, grassDark: 0xbb963c, pine: 0xc9541f, pine2: 0xe08a2a, hedge: 0x9a6a2a, meadow: 0xa88a4a, leaves: 0xd86a24, path: 0xd8b07a, water: 0x4a98c8, trees: 'round',    weather: 'leaves', bonus: { kind: 'wood',    text: 'Madera, tablones y muebles valen ×3' },
+  id: 'cine', beta: true, mechanic: 'Dirigir películas: guion, plató, tomas en directo, montaje y estreno',
+  name: 'Estudios Luna', icon: '🎬', sky: 0xffd9b0, grass: 0xa89f86, grassDark: 0x9c9379, pine: 0x4a7a4a, pine2: 0x7a9a4a, hedge: 0xe6dcc6, meadow: 0xb8a67a, leaves: 0x7a9a4a, path: 0x6b6870, water: 0x3f8fc8, trees: 'round', weather: 'none',
+  bonus: { kind: 'tickets', text: 'Las atracciones dan el doble de entradas' },
+  content: {
+    // The lot: a walled compound with one straight avenue from the entrance (south) to the far end, and yards on both sides
+    layout: {
+      lot: true,
+      shift: { 2: [0, -2.35], 3: [-55.3, 0], 4: [55.3, 0], 6: [21.1, -34.2], 7: [-21.1, -34.2], 8: [0, -94.7], 9: [0, -138.8] },
+      areas: { 1: { x0: -18, x1: 18, z0: -14, z1: 30 }, 8: { x0: -37 } },
+      stall1: [-15, 12.4],
+      doors: {
+        gate: { x0: -2.2, x1: 2.2, z0: -17, z1: -14, pad: [0, -12.4] },
+        gate3: { x0: -21, x1: -18, z0: -.3, z1: 3.3, pad: [-16.4, 1.5] },
+        gate4: { x0: 18, x1: 21, z0: -.3, z1: 3.3, pad: [16.4, 1.5] },
+        gate5: { x0: -14.6, x1: -11.6, z0: -31, z1: -27.5, pad: [-10.2, -25] },
+        gate6: { x0: 11.6, x1: 14.6, z0: -31, z1: -27.5, pad: [10.2, -25] },
+        gate7: { x0: -2.2, x1: 2.2, z0: -50.4, z1: -43.55, pad: [0, -41.8] },
+        gate8: { x0: .6, x1: 3.9, z0: -74.6, z1: -71.5, pad: [4.8, -70] },
+      },
+      pos: {
+        'shop:farm': [-11, 3.2], 'spawn:farm': [-1, 29.6], 'shop:forest': [-7.8, -41],
+        // Two fields with their workshop right below them, and the third by the kitchen
+        A: [-6.2, -9.6], B: [-13.4, -9.6], C: [10.6, 3.6],
+        florist: [-6.2, -3.4, 0], mill: [-13.4, -3.4, 0], kitchen: [10.6, 9.8, 2],
+        move: [-16.2, 26.4], van: [-25.75, 4.6],
+        // The neighbourhood behind the cinema's square
+        house1: [5.2, 15.2], cafe: [9.4, 15.2], house2: [13.6, 15.2], park: [5.2, 19], house3: [9.4, 19], house4: [13.6, 19],
+        hotel: [5.2, 22.8], police: [9.4, 22.8], bank: [13.6, 22.8], townhall: [5.2, 26.6], music: [9.4, 26.6], house5: [13.6, 26.6], fountain: [0, 12.4],
+      },
+    },
+    patches: { A: { crop: 'cotton' }, B: { crop: 'filmcorn' }, C: { crop: 'sugarcane' }, D: { crop: 'reed' }, E: { crop: 'dyeflower' }, F: { crop: 'hemp' }, G: { crop: 'cacao' }, H: { crop: 'studiolog' }, I: { crop: 'wicker' } },
+    procs: {
+      florist: { name: 'Sastrería', input: 'cotton', output: 'costume', body: 0xf3e3ef, roof: 0x8a3f7a },
+      mill: { name: 'Palomitería', input: 'filmcorn', output: 'popcorn2', body: 0xfff3c4, roof: 0xd8402f },
+      kitchen: { name: 'Dulcería', input: 'sugarcane', output: 'floss', body: 0xfde3f0, roof: 0xe86a9a },
+      press: { name: 'Taller de atrezo', input: 'reed', output: 'prop', body: 0xf3e0c4, roof: 0x8f5a2b },
+      jam: { name: 'Taller de decorados', input: 'dyeflower', output: 'backdrop', body: 0xdff0f5, roof: 0x3f7fd0 },
+      icecream: { name: 'Sala de maquillaje', input: 'dyeflower', output: 'makeup', body: 0xfde3ee, roof: 0xd8487a },
+      cider: { name: 'Taller de telones', input: 'hemp', output: 'curtain', body: 0xf5e0d0, roof: 0xa8283a },
+      loom: { name: 'Sala de nieve falsa', input: 'fleece', output: 'fakesnow', body: 0xeef6ff, roof: 0x7fb0d8 },
+      sawmill: { name: 'Carpintería de platós', input: 'studiolog', output: 'setpiece', body: 0xf3e3c4, roof: 0x8f5a2b },
+      carpentry: { name: 'Constructora de castillos', input: 'setpiece', output: 'castle', body: 0xd8d4cc, roof: 0x5a5f6a },
+      popstand: { name: 'Bombonería del estreno', input: 'cacao', output: 'bonbon', body: 0xf3e0c4, roof: 0x6b4426 },
+      lemonbar: { name: 'Taller de sillas', input: 'wicker', output: 'dirchair', body: 0xe6e6ea, roof: 0x2a2a30 },
+    },
+    animals: {
+      coop: { name: 'Gallinas de las plumas', output: 'feather' }, dairy: { name: 'Vacas del oeste', output: 'leather' }, hive: { name: 'Colmenas de cera', output: 'wax' },
+      sheep: { name: 'Ovejas', output: 'fleece' }, pigs: { name: 'Cerdos famosos', output: 'signedpic' }, goats: { name: 'Cabras de la cantina', output: 'goatcheese' },
+    },
+    shops: {
+      farm: { name: 'Tienda del estudio', icon: '🎬', awning: 0x8a3f7a, goods: ['cotton', 'filmcorn', 'sugarcane', 'costume', 'popcorn2', 'floss'] },
+      forest: { name: 'Almacén de atrezo', icon: '🎭', awning: 0xe8a23a, goods: ['reed', 'dyeflower', 'prop', 'backdrop', 'feather', 'leather'] },
+      lake: { name: 'Cantina del tanque', icon: '🐟', awning: 0x3f7fd0 },
+      meadow: { name: 'Tienda de la calle vieja', icon: '🤠', awning: 0xb98a50, goods: ['hemp', 'curtain', 'wax'] },
+      barn: { name: 'Agencia de animales', icon: '🐐', awning: 0x3fa34d, goods: ['cacao', 'fleece', 'goatcheese', 'signedpic', 'fakesnow'] },
+      lumber: { name: 'Tienda de decorados', icon: '🏰', awning: 0x5a5f6a, goods: ['studiolog', 'setpiece', 'castle'] },
+      fair: { name: 'Puesto de bombones', icon: '🍫', awning: 0x6b4426, goods: ['bonbon'] },
+      beach: { name: 'Cine de verano', icon: '🍿', awning: 0xe83f8a, goods: ['wicker', 'dirchair', 'makeup'] },
+    },
+    gates: { gate: { name: 'Abrir el almacén', icon: '🎭' }, gate3: { name: 'Abrir la calle vieja', icon: '🤠' }, gate4: { name: 'Abrir el tanque de agua', icon: '🌊' }, gate5: { name: 'Abrir los corrales', icon: '🐐' }, gate6: { name: 'Abrir el aserradero', icon: '🏰' }, gate7: { name: 'Abrir el parque temático', icon: '🎡' }, gate8: { name: 'Abrir el cine de verano', icon: '🍿' } },
+    gateToasts: { gate: '🎭 ¡El almacén! Cañas, tintes y el plató del musical', gate3: '🤠 ¡La calle vieja! Hay que limpiarla: aquí irá el plató del oeste', gate4: '🌊 ¡El tanque de agua! Se llenó de peces cuando cerró el estudio', gate5: '🐐 ¡Los corrales! Ovejas, cabras y el plató de terror', gate6: '🏰 ¡El aserradero! Madera, castillos y el plató del espacio', gate7: '🎡 ¡El parque temático! Atracciones de película y el plató de acción', gate8: '🍿 ¡El cine de verano! Sillas y maquillaje' },
+    zones: { 2: 'el almacén', 3: 'la calle vieja', 4: 'el tanque de agua', 6: 'los corrales', 7: 'el aserradero', 8: 'el parque temático', 9: 'el cine de verano' },
+    rides: { carousel: ['Tiovivo de película', '🎠'], haunted: ['Casa de terror', '👻'], bumper: ['Coches de persecución', '🏎️'], ferris: ['Noria del estudio', '🎡'], coaster: ['Montaña rusa de acción', '🎢'], pool: ['Piscina de sirenas', '🧜'], slide: ['Tobogán de especialistas', '🛝'], waves: ['Tanque de olas', '🌊'] },
+    missions: {
+      'Abre el campo de trigo': 'Planta el maíz', 'Construye la floristería': 'Construye la sastrería', 'Construye el molino': 'Construye la palomitería', 'Abre el campo de calabazas': 'Planta la caña de azúcar', 'Construye la cocina': 'Construye la dulcería',
+      'Abre el bosque': 'Abre el almacén', 'Atiende a 10 clientes en la tienda del bosque': 'Atiende a 10 clientes en el almacén de atrezo', 'Abre el campo de girasoles': 'Planta las cañas', 'Construye el gallinero': 'Pon las gallinas de las plumas', 'Construye la prensa de aceite': 'Construye el taller de atrezo',
+      'Contrata una cajera en la tienda del bosque': 'Contrata una cajera en el almacén de atrezo', 'Abre el campo de fresas': 'Planta las flores de tinte', 'Construye la vaquería': 'Pon las vacas del oeste', 'Construye la fábrica de mermelada': 'Construye el taller de decorados', 'Abre la segunda caja del bosque': 'Abre la segunda caja del almacén',
+      'Abre el prado abandonado': 'Abre la calle vieja', 'Limpia una parcela entera del prado': 'Limpia una parcela de la calle vieja', 'Planta los manzanos': 'Planta el cáñamo', 'Construye el lagar': 'Construye el taller de telones', 'Atiende a 10 clientes en el mercado del prado': 'Atiende a 10 clientes en la tienda de la calle vieja',
+      'Contrata una cajera en el mercado del prado': 'Contrata una cajera en la tienda de la calle vieja', 'Construye el colmenar': 'Pon las colmenas de cera', 'Limpia todo el prado': 'Limpia toda la calle vieja',
+      'Abre la granja de animales': 'Abre los corrales', 'Compra las ovejas': 'Compra las ovejas', 'Planta el maizal': 'Planta el cacao', 'Construye el telar': 'Construye la sala de nieve falsa', 'Compra las cabras': 'Pon las cabras de la cantina', 'Compra los cerdos trufferos': 'Pon los cerdos famosos',
+      'Contrata una cajera en la tienda de la granja': 'Contrata una cajera en la agencia de animales', 'Abre el aserradero': 'Abre el aserradero', 'Planta el bosque para talar': 'Planta el bosque del estudio', 'Construye el aserradero': 'Construye la carpintería de platós', 'Construye la carpintería': 'Construye la constructora de castillos',
+      'Contrata una cajera en la tienda de muebles': 'Contrata una cajera en la tienda de decorados', 'Abre la feria': 'Abre el parque temático', 'Construye la palomitería': 'Construye la bombonería del estreno', 'Construye la casa del terror': 'Construye la casa de terror', 'Contrata al mecánico de la feria': 'Contrata al mecánico del parque',
+      'Construye los autos de choque': 'Construye los coches de persecución', 'Construye la noria': 'Construye la noria del estudio', 'Sube el tiovivo al nivel 3': 'Sube el tiovivo de película al nivel 3', 'Construye el tiovivo': 'Construye el tiovivo de película', 'Construye la montaña rusa': 'Construye la montaña rusa de acción', 'Abre las piscinas': 'Abre el cine de verano',
+      'Construye la piscina': 'Construye la piscina de sirenas', 'Planta los limoneros': 'Planta el mimbre', 'Construye la limonadería': 'Construye el taller de sillas', 'Construye el tobogán': 'Construye el tobogán de especialistas', 'Construye la piscina de olas': 'Construye el tanque de olas',
+    },
+  },
 });
 
 /* ---------- Map 4: Montaña Nevada ---------- */
@@ -1344,6 +1501,8 @@ function loadWorld() {
   return w;
 }
 const WORLD = loadWorld();
+// Test games of the first film studios used products that no longer exist: they start again
+if (WORLD.farms.cine && !(WORLD.farms.cine.film && WORLD.farms.cine.film.v2)) { delete WORLD.farms.cine; if (WORLD.map === 'cine') WORLD.farms.cine = {}; }
 const mapIndex = id => MAPS.findIndex(m => m.id === id);
 let S = sanitize(window.claude?.hot?.data?.state || { farm: mapIndex(WORLD.map), ...WORLD.farms[WORLD.map], ...WORLD.player });
 let leaving = false; // set while going to another map, so nothing writes this farm into the next map's place
@@ -1428,6 +1587,8 @@ if (LAYOUT) {
       s.tills.forEach(t => { move(t, dx, dz); move(t.zone, dx, dz); move(t.pay, dx, dz); });
     });
   });
+  // A map may also resize a zone, once its contents have moved
+  Object.entries(LAYOUT.areas || {}).forEach(([a, r]) => Object.assign(AREAS[a], r));
   Object.entries(LAYOUT.doors || {}).forEach(([id, d]) => { DOORS[id] = { x0: d.x0, x1: d.x1, z0: d.z0, z1: d.z1 }; if (d.pad) { const g = GATES.find(x => x.id === id); g.x = d.pad[0]; g.z = d.pad[1]; } });
   // Single places: workshops and pens [x, z, quarter turns]; fields, houses, pads and the lorry [x, z]; a shop with 'shop:id'
   Object.entries(LAYOUT.pos || {}).forEach(([id, [x, z, r]]) => {
@@ -1439,6 +1600,8 @@ if (LAYOUT) {
       return;
     }
     if (id === 'spawn:farm') { FARM.spawn.x = x; FARM.spawn.z = z; return; }
+    const sell = SELLS.find(q => q.id === id);
+    if (sell) { sell.tx += x - sell.x; sell.tz += z - sell.z; sell.x = x; sell.z = z; return; }
     const b = PROCS.find(p => p.id === id) || ANIMALS.find(p => p.id === id);
     if (b) {
       const off = PROCS.includes(b) ? 2.3 : 3, a = (r ?? b.rot ?? 0) * Math.PI / 2;
@@ -1448,6 +1611,8 @@ if (LAYOUT) {
     const o = id === 'move' ? MOVE : UPGRADES[id] || [...PATCHES, ...TOWN, ...SPECIAL].find(q => q.id === id);
     if (o) { o.x = x; o.z = z; }
   });
+  // All the upgrades of the first zone stand together, where the map's stall goes
+  if (LAYOUT.stall1) Object.values(UPGRADES).forEach(u => { if (!u.attr && !u.zoneWorker && (u.area || 1) === 1) { u.x = LAYOUT.stall1[0]; u.z = LAYOUT.stall1[1]; } });
 }
 const inRect = (r, x, z) => x >= r.x0 && x <= r.x1 && z >= r.z0 && z <= r.z1;
 // The map's bonus multiplies the price of some goods (or of everything)
@@ -1461,17 +1626,22 @@ const fameOf = k => { const sh = shopFor(k); return 1 + .15 * ((sh && S.lv['fame
 const earlyF = () => (S.lv.cashier > 0 ? .6 : 1);
 // Tycoon layer (47-decisions.js): 😊 morale of the workers and ⭐ trust of the neighbours, 0–100, and short effects of the decision cards
 const DEC = { fx: {} };
+// The Coast's pier, where Sonia can walk out over the water (47d-ships.js)
+const PIER = { x0: -17, x1: -11.5, z0: 15.75, z1: 17.25 };
+// What the laws in force change (47c-laws.js)
+const LAW_BASE = { work: 1, trust: 1, price: 1, patience: 1, thief: 1, moraleTo: 55, trustTo: 55 };
+const LAW = { ...LAW_BASE };
 const decFx = k => (DEC.fx[k] || 0) > 0;
 const townOn = () => S.tut >= 3 && S.mission >= 4;
 const decPriceF = () => decFx('price') ? 1.25 : 1;
 const decClosed = () => decFx('closed');
 // Morale 50 is normal speed; 100 is 40 % quicker, 0 is 40 % slower. On strike, a day off or helping a neighbour they stop
-const workF = kind => !townOn() ? 1 : decFx('strike') || decFx(kind + 'Off') ? 0 : (1 + ((S.morale ?? 60) - 50) * .008) * (decFx('overtime') ? 2 : 1) * (decFx('fear') ? .6 : 1) * (decFx(kind + 'Slow') ? .6 : 1);
+const workF = kind => !townOn() ? 1 : decFx('strike') || decFx(kind + 'Off') ? 0 : (1 + ((S.morale ?? 60) - 50) * .008) * (decFx('overtime') ? 2 : 1) * (decFx('fear') ? .6 : 1) * (decFx(kind + 'Slow') ? .6 : 1) * LAW.work * (DEC.hungry ? .75 : 1);
 // Trust 50 is the usual flow of customers; 100 brings them 60 % more often, 0 60 % less. A reporter brings a crowd
-const trustF = () => !townOn() ? 1 : (1 - ((S.trust ?? 60) - 50) * .012) * (decFx('crowd') ? .6 : 1);
+const trustF = () => !townOn() ? 1 : (1 - ((S.trust ?? 60) - 50) * .012) * (decFx('crowd') ? .6 : 1) * LAW.trust * (DEC.boxF || 1);
 // The reporter gets in Sonia's way while he is next to her
 const decSoniaF = () => DEC.inWay ? .75 : 1;
-const priceF = () => earlyF() * priceOf(S.lv.sign) * (isBuilt('townhall') ? 1.25 : 1) * (1 + .1 * (S.perks.price || 0)) * decPriceF();
+const priceF = () => earlyF() * priceOf(S.lv.sign) * (isBuilt('townhall') ? 1.25 : 1) * (1 + .1 * (S.perks.price || 0)) * decPriceF() * LAW.price;
 const fishersOn = () => ANIMALS.filter(a => a.dock && isBuilt(a.id)).slice(0, S.lv.fisher);
 // The vehicle Sonia rides: the tractor harvests more at once, the mower cuts down weeds; S.vehicle 'none' means on foot
 const vehicleNow = () => (S.vehicle === 'mower' && S.lv.mower ? 'mower' : S.vehicle !== 'none' && S.vehicle !== 'mower' && S.lv.tractor && S.tractorOn ? 'tractor' : null);
@@ -1668,7 +1838,7 @@ function sunFollow(x, z) {
 }
 
 /* ---------- Ground & scenery ---------- */
-const ISLANDS = !!(LAYOUT && LAYOUT.islands);
+const ISLANDS = !!(LAYOUT && LAYOUT.islands), LOT = !!(LAYOUT && LAYOUT.lot);
 // A spot given as in the Valle, moved along with its zone when the map shifts that zone
 const atA = (a, x, z) => { const sh = areaShift(a); return sh ? [x + sh[0], z + sh[1]] : [x, z]; };
 const flatA = (a, geo, material, x, y, z) => { const [ax, az] = atA(a, x, z); return flat(geo, material, ax, y, az); };
@@ -1692,16 +1862,31 @@ if (ISLANDS) {
     flat(roundRect(w + 1.6, d + 1.6, 3), M.grass, cx, .0017, cz);
   });
 } else {
-flat(new T.PlaneGeometry(220, 200), M.grass, 0, 0, 10);
+// The studio lot is long, so its ground reaches further north
+const groundD = LOT ? 300 : 200, groundZ = LOT ? -30 : 10;
+flat(new T.PlaneGeometry(220, groundD), M.grass, 0, 0, groundZ);
 blotchTex.repeat.set(10, 9);
-flat(new T.PlaneGeometry(220, 200), new T.MeshBasicMaterial({ map: blotchTex, transparent: true, depthWrite: false }), 0, .0035, 10);
+flat(new T.PlaneGeometry(220, groundD), new T.MeshBasicMaterial({ map: blotchTex, transparent: true, depthWrite: false }), 0, .0035, groundZ);
 }
 // Fair walkways and the tiled floor around the pools
 flatA(8, new T.PlaneGeometry(3, 22.5), M.path, 2.25, .006, 33.6);
 flatA(8, new T.PlaneGeometry(48, 2.6), M.path, 0, .006, 32.5);
 const tileTex = canvasTex(64, 64, (g, w, h) => { g.fillStyle = '#f4f1ea'; g.fillRect(0, 0, w, h); g.fillStyle = '#d9e8ee'; g.fillRect(0, 0, w / 2, h / 2); g.fillRect(w / 2, h / 2, w / 2, h / 2); g.strokeStyle = 'rgba(120,140,150,.35)'; g.strokeRect(0, 0, w, h); }, 24, 10);
 flatA(9, new T.PlaneGeometry(49, 19.6), new LitMat({ map: tileTex }), 0, .005, 55);
-if (LAYOUT && LAYOUT.beachStart) {
+if (LAYOUT && LAYOUT.lot) {
+  // The studio lot: every zone is a concrete yard inside its wall, and one straight avenue runs from the entrance to the far end
+  const yard = new LitMat({ color: 0xc4bbab });
+  Object.values(AREAS).forEach(r => flat(new T.PlaneGeometry(r.x1 - r.x0 + 1, r.z1 - r.z0 + 1), yard, (r.x0 + r.x1) / 2, .002, (r.z0 + r.z1) / 2));
+  flatA(3, new T.PlaneGeometry(22, 21.6), M.meadow, 23.6, .003, -3);
+  Object.values(DOORS).forEach(d => flat(new T.PlaneGeometry(d.x1 - d.x0 + 1.4, d.z1 - d.z0 + 1.4), M.path, (d.x0 + d.x1) / 2, .006, (d.z0 + d.z1) / 2));
+  const A1 = AREAS[1], A2 = AREAS[2], avZ0 = A2.z0 - 1, avZ1 = A1.z1 + .6, avL = avZ1 - avZ0, avC = (avZ0 + avZ1) / 2;
+  flat(new T.PlaneGeometry(4.4, avL), M.path, 0, .007, avC);
+  for (let z = avZ0 + 1; z < avZ1; z += 2.2) flat(new T.PlaneGeometry(.14, 1), M.roadLine, 0, .009, z);
+  // The walk of fame: a star on the pavement every few steps, on both sides of the avenue
+  const starGeo = new T.CircleGeometry(.34, 5), starMat = new T.MeshBasicMaterial({ color: 0xf0c64a });
+  flat(new T.PlaneGeometry(1, avL), M.sidewalk, -2.7, .008, avC); flat(new T.PlaneGeometry(1, avL), M.sidewalk, 2.7, .008, avC);
+  for (let z = avZ0 + 1.5; z < avZ1; z += 4.2) [-2.7, 2.7].forEach(x => flat(starGeo, starMat, x, .01, z + (x > 0 ? 2.1 : 0)));
+} else if (LAYOUT && LAYOUT.beachStart) {
   // The Costa's landing: sand instead of lawn, a plaza at the market and a wooden boardwalk from the beach, no road
   flatA(3, new T.PlaneGeometry(22, 21.6), M.meadow, 23.6, .003, -3);
   flatA(2, new T.PlaneGeometry(3, 20), M.path, 0, .006, -23); flatA(3, new T.PlaneGeometry(4, 21.6), M.path, 14.6, .006, -3);
@@ -1819,7 +2004,7 @@ if (ISLANDS) {
   for (let x = -24; x <= 24; x += 6) { const um = mesh(new T.ConeGeometry(.7, .35, 10), mat(pick([0xe8384a, 0x2fb5a0, 0xf5c518]))); um.position.set(x + rr(), 1.5, 67.4); scene.add(um); const pole = mesh(new T.CylinderGeometry(.03, .03, 1.5, 5), M.white); pole.position.set(um.position.x, .75, 67.4); scene.add(pole); }
   if (LAYOUT && LAYOUT.seaEast) { flat(new T.PlaneGeometry(5, 200), M.sand, 64.6, .012, 10); flat(new T.PlaneGeometry(90, 260), M.water, 112, .03, 10); }
 } else for (let x = -25; x <= 25; x += 2) tree(x + rr(), 66.6 + rr(), 1 + rr() * .3);
-function hedge(x, z, w, d) { const h = mesh(new T.BoxGeometry(w, .8, d), M.hedge); h.position.set(x, .4, z); scene.add(h); return h; }
+function hedge(x, z, w, d) { const tall = LOT ? 1.1 : .8, h = mesh(new T.BoxGeometry(w, tall, d), M.hedge); h.position.set(x, tall / 2, z); scene.add(h); return h; }
 if (!LAYOUT) {
 for (let x = -11; x <= 11; x += 2.4) if (Math.abs(x) > 2.5) tree(x, -15.2 - rr() * .4, .8 + rr() * .3);
 hedge(-7.25, -14, 10.5, .9); hedge(7.25, -14, 10.5, .9); hedge(0, -41.9, 25.7, .9);
@@ -1881,7 +2066,7 @@ hedge(-12.95, 44.9, 23.9, .9); hedge(12.95, 44.9, 23.9, .9); hedge(0, 64.9, 50.7
     for (let z = r.z0 - 1; z <= r.z1 + 1; z += 2.2) [r.x0 - 2.4 - rr() * .6, r.x1 + 2.4 + rr() * .6].forEach(x => { if (!busy(x, z)) tree(x, z + rr() * .5, 1 + rr() * .3); });
   });
   // Wild land beyond the zones: a few clumps so the empty corners are not bare
-  for (let i = 0; i < 420; i++) { const x = (rr() - .5) * 170, z = -55 + rr() * 125; if (!busy(x, z)) tree(x, z, .9 + rr() * .5); }
+  for (let i = 0; i < (LOT ? 300 : 420); i++) { const x = (rr() - .5) * (LOT ? 200 : 170), z = LOT ? -130 + rr() * 190 : -55 + rr() * 125; if (!busy(x, z)) tree(x, z, .9 + rr() * .5); }
 }
 plantTrees();
 function fence(x, z, w, rotY, parent = scene) {
@@ -1903,6 +2088,7 @@ const gateMeshes = ISLANDS ? Object.fromEntries(Object.entries(DOORS).map(([id, 
 // Grass tufts and wild flowers scattered where nothing else stands
 {
   const free = (x, z) => {
+    if (LOT) return false;
     if (LAYOUT && LAYOUT.beachStart && inRect(AREAS[1], x, z)) return false;
     const boxes = [[-11.6, -13.3, 11.6, 0], [-11, 0, 11, 8], [-11.6, 9.4, 11.6, 14.4], [-11.6, 14, 11.6, 21.8]];
     if (z > -13.3 && z < 8.2 && Math.abs(x) < 11.6) {
@@ -1933,7 +2119,7 @@ const gateMeshes = ISLANDS ? Object.fromEntries(Object.entries(DOORS).map(([id, 
   for (let i = 0; i < 2600 && spots.length < 700; i++) {
     const r = Math.random(), x = r < .4 ? -36.5 - Math.random() * 24 : r < .8 ? 36.5 + Math.random() * 24 : (Math.random() - .5) * 47;
     const z = r < .8 ? -12.5 + Math.random() * 29 : 23.5 + Math.random() * 20.5;
-    if (clear(x, z)) spots.push([x, z]);
+    if (!LOT && clear(x, z)) spots.push([x, z]);
   }
   if (ISLANDS) { const land = spots.filter(([x, z]) => Object.values(AREAS).some(r => x > r.x0 && x < r.x1 && z > r.z0 && z < r.z1)); spots.length = 0; spots.push(...land); }
   const tufts = new T.InstancedMesh(tuftGeo, gfxWind(new LitMat({ color: new T.Color(THEME.grass).multiplyScalar(.7) }), .09), spots.length), flowers = new T.InstancedMesh(flowerGeo, gfxWind(new LitMat({ color: 0xffffff }), .09), Math.ceil(spots.length / 3));
@@ -2201,6 +2387,53 @@ const CROP_PARTS = {
     { geo: pg(new T.ConeGeometry(.12, .3, 5), .63), mat: M.leaf },
     { geo: pg(new T.SphereGeometry(.2, 6, 4).scale(1.5, .12, .5).rotateY(1), .05), mat: M.leaf },
   ],
+  // Estudios Luna: what grows in its plots are the things a film is made of
+  cotton: [
+    { geo: pg(new T.CylinderGeometry(.03, .04, .6, 5), .3), mat: M.stem },
+    { geo: pg(new T.IcosahedronGeometry(.13, 0).translate(.11, 0, .03), .58), mat: mat(0xffffff) },
+    { geo: pg(new T.IcosahedronGeometry(.12, 0).translate(-.1, 0, -.05), .66), mat: mat(0xfdf6ea) },
+    { geo: pg(new T.SphereGeometry(.15, 6, 4).scale(1.5, .3, 1), .32), mat: M.leaf },
+  ],
+  filmcorn: [
+    { geo: pg(new T.CylinderGeometry(.03, .05, 1, 6), .5), mat: mat(0x6fa03a) },
+    { geo: pg(new T.SphereGeometry(.09, 7, 5).scale(1, 2, 1).translate(.08, 0, .03), .72), mat: mat(0xf5c518) },
+    { geo: pg(new T.SphereGeometry(.18, 6, 4).scale(1.5, .12, .5).rotateZ(.5), .55), mat: M.leaf },
+  ],
+  sugarcane: [
+    { geo: pg(new T.CylinderGeometry(.035, .04, 1.2, 5).translate(.08, 0, 0), .6), mat: mat(0x9fc36a) },
+    { geo: pg(new T.CylinderGeometry(.035, .04, 1, 5).translate(-.1, 0, .06), .5), mat: mat(0x8fb35a) },
+    { geo: pg(new T.SphereGeometry(.2, 5, 4).scale(.3, 1.6, .3).translate(.08, 0, 0), 1.3), mat: M.leaf },
+    { geo: pg(new T.SphereGeometry(.18, 5, 4).scale(.3, 1.5, .3).translate(-.1, 0, .06), 1.08), mat: M.leaf },
+  ],
+  reed: [
+    { geo: pg(new T.CylinderGeometry(.03, .03, .95, 5).rotateZ(.06), .48), mat: mat(0xc9b36a) },
+    { geo: pg(new T.CylinderGeometry(.03, .03, .8, 5).rotateZ(-.1).translate(.12, 0, .05), .4), mat: mat(0xb9a35a) },
+    { geo: pg(new T.CylinderGeometry(.03, .03, .85, 5).rotateZ(.14).translate(-.12, 0, -.06), .42), mat: mat(0xd9c37a) },
+    { geo: pg(new T.SphereGeometry(.06, 5, 4).scale(1, 2.4, 1), 1.02), mat: mat(0x7a5a30) },
+  ],
+  dyeflower: [
+    { geo: pg(new T.SphereGeometry(.2, 6, 4).scale(1.1, .55, 1.1), .14), mat: M.bush },
+    { geo: pg(new T.SphereGeometry(.09, 6, 4).scale(1, .6, 1).translate(.11, 0, .08), .31), mat: mat(0xe8384a) },
+    { geo: pg(new T.SphereGeometry(.09, 6, 4).scale(1, .6, 1).translate(-.12, 0, .05), .33), mat: mat(0x3f7fd0) },
+    { geo: pg(new T.SphereGeometry(.09, 6, 4).scale(1, .6, 1).translate(0, 0, -.12), .32), mat: mat(0xf5c518) },
+  ],
+  hemp: [
+    { geo: pg(new T.CylinderGeometry(.05, .07, .7, 6), .35), mat: M.stem },
+    { geo: pg(new T.ConeGeometry(.42, .9, 7), .98), mat: mat(0x5f8f3a) },
+    { geo: pg(new T.ConeGeometry(.28, .6, 7), 1.5), mat: mat(0x7aa84a) },
+  ],
+  cacao: [
+    { geo: pg(new T.CylinderGeometry(.07, .1, .75, 6), .37), mat: M.trunk },
+    { geo: pg(new T.IcosahedronGeometry(.42, 1).scale(1, .8, 1), 1), mat: M.crown },
+    { geo: pg(new T.SphereGeometry(.07, 6, 5).scale(1, 1.5, 1).translate(.11, 0, .08), .55), mat: mat(0xc9702a) },
+    { geo: pg(new T.SphereGeometry(.07, 6, 5).scale(1, 1.5, 1).translate(-.11, 0, .06), .62), mat: mat(0xd8a03a) },
+  ],
+  wicker: [
+    { geo: pg(new T.CylinderGeometry(.11, .15, .22, 7), .11), mat: mat(0x8f6a3a) },
+    { geo: pg(new T.CylinderGeometry(.02, .03, .95, 4).rotateZ(.22).translate(.14, 0, 0), .55), mat: mat(0xc98a4b) },
+    { geo: pg(new T.CylinderGeometry(.02, .03, 1, 4).rotateZ(-.2).translate(-.14, 0, .05), .58), mat: mat(0xb97a3b) },
+    { geo: pg(new T.CylinderGeometry(.02, .03, .9, 4).rotateX(.22).translate(0, 0, .14), .52), mat: mat(0xd99a5b) },
+  ],
   seaweed: [
     { geo: pg(new T.SphereGeometry(.1, 6, 4).scale(.5, 3.2, .25).rotateZ(.25), .3), mat: mat(0x3f8f5a) },
     { geo: pg(new T.SphereGeometry(.1, 6, 4).scale(.5, 2.6, .25).rotateZ(-.35).translate(.1, 0, .06), .25), mat: mat(0x6fbf4a) },
@@ -2242,6 +2475,7 @@ const CROP_PARTS = {
     { geo: pg(new T.SphereGeometry(.08, 6, 5).scale(1, 1.25, 1).translate(.04, 0, .42), 1.22), mat: M.orange },
   ],
 };
+CROP_PARTS.studiolog = CROP_PARTS.log;
 PATCHES.forEach(p => {
   const n = p.cols * p.rows, sp = p.spacing || SPACING, w = p.cols * sp + .5, d = p.rows * sp + .5;
   p.decor = [];
@@ -3263,7 +3497,7 @@ function updateAttrs(dt) {
 }
 
 /* ---------- Town life: lamps and cars ---------- */
-const ROAD = !(LAYOUT && LAYOUT.beachStart);
+const ROAD = !(LAYOUT && (LAYOUT.beachStart || LAYOUT.lot));
 if (ROAD) for (let x = -10; x <= 10; x += 5) {
   const pole = mesh(new T.CylinderGeometry(.05, .06, 2, 6), M.dark); pole.position.set(x, 1, 10.3); scene.add(pole);
   const lamp = mesh(new T.SphereGeometry(.16, 8, 6), M.lamp, false); lamp.position.set(x, 2.05, 10.3); scene.add(lamp);
@@ -3655,7 +3889,7 @@ function updateWorkers(dt) {
 /* ---------- Customers (with patience), each shop with its own ---------- */
 const customers = [];
 let angryToastT = 0;
-const patienceMax = s => (s.id === 'farm' ? 35 : 32) * (1 + (isBuilt('park') ? .3 : 0) + (isBuilt('cafe') ? .4 : 0) + (isBuilt('music') ? .15 : 0)) * (1 + .1 * (S.perks.patience || 0));
+const patienceMax = s => (s.id === 'farm' ? 35 : 32) * (1 + (isBuilt('park') ? .3 : 0) + (isBuilt('cafe') ? .4 : 0) + (isBuilt('music') ? .15 : 0)) * (1 + .1 * (S.perks.patience || 0)) * LAW.patience;
 // The first field is always open, whatever it grows on this map
 function shopKinds(s) {
   const k = new Set([PATCHES[0].crop]);
@@ -3924,7 +4158,7 @@ function updateThieves(dt) {
   if (moodOn() && shopOpen() && S.gate && S.served > 40) {
     thiefT -= dt;
     if (thiefT <= 0) {
-      thiefT = Math.max(45, 120 - townCount() * 4) * (.7 + Math.random() * .6);
+      thiefT = Math.max(45, 120 - townCount() * 4) * (.7 + Math.random() * .6) * LAW.thief;
       const open = SHOPS.filter(s => s.open && customers.some(c => c.shop === s && !c.angry && c.state !== 'leave'));
       if (open.length && thieves.length < 2) {
         const s = pick(open), m = makeThief();
@@ -4073,7 +4307,8 @@ function updateLitter(dt) {
     if ((l.x - P.x) ** 2 + (l.z - P.z) ** 2 < 1.2 && S.sack < sackOf(S.lv.bin)) { removeLitter(l); S.sack++; sfx.sweep(); }
   }
 }
-const skyNight = new T.Color(0x0f1631), skyNow = new T.Color(), skyHaze = new T.Color(0xfff1dc), nightVeil = $('nightVeil');
+const skyNight = new T.Color(0x0f1631), skyNow = new T.Color(), skyHaze = new T.Color(0xfff1dc), skyDusk = new T.Color(0xff9a58), sunNoon = sun.color.clone(), sunDusk = new T.Color(0xff9d5c), nightVeil = $('nightVeil');
+let veilX = '', veilY = '';
 let nightNow = 0;
 // At night Sonia carries a warm lantern so the farm around her can still be seen
 const lantern = new T.PointLight(0xffc98a, 0, 10, 1.6); lantern.position.y = 2.4; scene.add(lantern);
@@ -4112,21 +4347,31 @@ function updateStorm(dt) {
 function updateSky() {
   const day = dayLight();
   const nightF = 1 - day; nightNow = nightF;
+  // Golden hour: strongest halfway between day and night
+  const dusk = Math.min(1, 4 * day * (1 - day)) * (1 - stormK);
+  sun.color.copy(sunNoon).lerp(sunDusk, dusk * .75);
   sun.intensity = LIGHT.sun * (.1 + .9 * day) * (1 - .72 * stormK); hemi.intensity = LIGHT.hemi * (.3 + .7 * day) * (1 - .55 * stormK) + stormFlash * 1.6;
   hemi.color.setHex(0xc4dcff).lerp(skyNight, nightF * .5);
   skyNow.setHex(THEME.sky).lerp(skyNight, nightF * .9).lerp(stormGrey, stormK * .85);
   GFX.uDay.value = day * (1 - .5 * stormK);
   { const on = !topView && GFX.tier > 0; if (clouds[0].visible !== on) clouds.forEach(c => { c.visible = on; }); }
   const dome = skyDome.material.uniforms;
-  dome.top.value.copy(skyNow).multiplyScalar(.62); dome.hor.value.copy(skyNow).lerp(skyHaze, .42 * day);
+  dome.top.value.copy(skyNow).multiplyScalar(.62); dome.hor.value.copy(skyNow).lerp(skyHaze, .42 * day).lerp(skyDusk, dusk * .6);
   scene.background.copy(dome.hor.value); scene.fog.color.copy(dome.hor.value); skyDome.position.copy(camera.position);
   lantern.intensity = Math.max(0, nightF - .3) * 2.2; lantern.position.x = P.x; lantern.position.z = P.z;
   // A dark veil over the screen with a pool of light around Sonia: the night shows even on unlit ground
-  const veil = (Math.round(nightF * 20) / 20).toFixed(2); if (nightVeil.style.opacity !== veil) nightVeil.style.opacity = veil;
+  // The pool follows Sonia wherever she is on screen; while looking around with ✋ the veil gets lighter, so the map can be seen far from her
+  const veil = (Math.round(nightF * (panning() ? .55 : 1) * 20) / 20).toFixed(2); if (nightVeil.style.opacity !== veil) nightVeil.style.opacity = veil;
+  if (nightF > .03) {
+    const p = toScreen(P.x, 1, P.z), vx = (p.x / innerWidth * 100).toFixed(1) + '%', vy = (p.y / innerHeight * 100).toFixed(1) + '%';
+    if (vx !== veilX) { veilX = vx; nightVeil.style.setProperty('--veil-x', vx); }
+    if (vy !== veilY) { veilY = vy; nightVeil.style.setProperty('--veil-y', vy); }
+  }
   // Seen from above, the fog moves back so the whole farm shows
   const far = topView ? 95 : 52; if (scene.fog.far !== far) { scene.fog.far = far; scene.fog.near = topView ? 60 : 26; }
-  const glow = Math.max(0, nightF - .45) * 1.8;
-  M.lamp.emissiveIntensity = glow; M.window.emissiveIntensity = glow * .6;
+  // Lamps and windows come on little by little as it gets dark
+  const glow = Math.min(1, Math.max(0, nightF - .22) * 1.7);
+  M.lamp.emissiveIntensity = glow; M.window.emissiveIntensity = glow * .6; updateLamps(glow);
 }
 /* ---------- Weeds ---------- */
 // Once the forest is clean, weeds sprout in the fields. Each one slows its field down by 20%: with 5 it stops growing,
@@ -4439,6 +4684,7 @@ function sellAtVehicle(s) {
   return true;
 }
 function inArea(x, z) {
+  if (THEME.id === 'costa' && inRect(PIER, x, z)) return true;
   if (LAYOUT) return Object.entries(AREAS).some(([a, r]) => areaOpen(+a) && inRect(r, x, z)) || Object.entries(DOORS).some(([g, r]) => S[g] && inRect(r, x, z));
   if (z > 21.5) {
     if (!S.gate7) return false;
@@ -4740,12 +4986,14 @@ function update(dt) {
   const portrait = innerWidth / innerHeight < .8, off = topView ? (portrait ? { y: 46, z: 7 } : { y: 34, z: 5 }) : portrait ? { y: 14.5, z: 13.8 } : { y: 10, z: 9.5 };
   const k = Math.min(1, dt * 5);
   camYawNow += (camYaw - camYawNow) * k;
-  const back = camRot(0, off.z);
-  camera.position.x += (P.x + camPan.x + back.x - camera.position.x) * k;
-  camera.position.y += (off.y - camera.position.y) * k;
-  camera.position.z += (P.z + camPan.z + back.z - camera.position.z) * k;
+  // While a film take is on, the camera pulls back and centres on the set, so everything that goes wrong is on screen
+  const wide = topView ? 0 : DEC.camWide || 0, wideK = 1 + .65 * wide, aimX = wide * (DEC.camX || 0), aimZ = wide * (DEC.camZ || 0);
+  const back = camRot(0, off.z * wideK);
+  camera.position.x += (P.x + camPan.x + aimX + back.x - camera.position.x) * k;
+  camera.position.y += (off.y * wideK - camera.position.y) * k;
+  camera.position.z += (P.z + camPan.z + aimZ + back.z - camera.position.z) * k;
   // Upright phones show Sonia a little below the middle, so the cards at the top cover the land ahead and not her
-  const ahead = camRot(0, -off.z - (portrait && !topView ? 2.6 : .4));
+  const ahead = camRot(0, -off.z * wideK - (portrait && !topView ? 2.6 : .4));
   camera.lookAt(camera.position.x + ahead.x, 0, camera.position.z + ahead.z);
   sunFollow(P.x, P.z);
 }
@@ -5347,11 +5595,13 @@ const shopOpen = () => !dayOn() || S.dayT < DAY_OPEN_END;
 function dayLight() {
   if (!dayOn()) return 1;
   const t = S.dayT;
-  if (t < 15) return .35 + .65 * t / 15;
-  if (t < 220) return 1;
-  if (t < 245) return 1 - .85 * (t - 220) / 25;
-  if (t < 290) return .15;
-  return .15 + .2 * (t - 290) / 10;
+  // Dawn and dusk are long and soft, so night never falls all at once
+  const soft = k => { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); };
+  if (t < 40) return .3 + .7 * soft(t / 40);
+  if (t < 165) return 1;
+  if (t < 255) return 1 - .85 * soft((t - 165) / 90);
+  if (t < 280) return .15;
+  return .15 + .15 * soft((t - 280) / 20);
 }
 function updateDay(dt) {
   if (!dayOn() || !$('dayOverlay').hidden) return;
@@ -5426,7 +5676,7 @@ function frame(now) {
   if (!window.gameReady) { last = now; return; } // in development the scripts arrive one by one: wait for the last one
   const dt = Math.min(.1, (now - last) / 1000); last = now;
   if (creatorOn) creatorView(dt);
-  else if (!S.over && $('dayOverlay').hidden && $('tutOverlay').hidden && $('decOverlay').hidden && $('sceneOverlay').hidden && $('surveyOverlay').hidden && $('albumOverlay').hidden && $('decorOverlay').hidden && $('xmasOverlay').hidden) {
+  else if (!S.over && $('dayOverlay').hidden && $('tutOverlay').hidden && $('decOverlay').hidden && $('sceneOverlay').hidden && $('surveyOverlay').hidden && $('albumOverlay').hidden && $('decorOverlay').hidden && $('weekOverlay').hidden && $('lawOverlay').hidden && $('staffOverlay').hidden && $('filmOverlay').hidden && $('xmasOverlay').hidden) {
     S.meta.playT = (S.meta.playT || 0) + dt; update(dt); updateDay(dt); updateMood(dt); updateExtras(dt); updateTrouble(dt); updateChores(dt); updateIncome(dt); updateTown(dt); updateGrid(); updateStorm(dt); xmasPlay(dt); }
   gfxTick(now, dt); updateXmas(dt); renderer.render(scene, camera); updateLabels(dt);
   uiT += dt; if (uiT > .25) { uiT = 0; refreshWorld(); checkMission(); renderMood(); renderDaily(); renderWorks(); renderStalls(); renderZone(); renderTrouble(); renderTown(); renderStory(); renderExtras(); tidyHud(); renderTips(); checkSurvey(); checkXmas(); }
@@ -5994,6 +6244,75 @@ completePad = pad => { if (pad.kind !== 'move' && pad.info && pad.info.cost) dai
 renderDaily();
 $('chestBtn').addEventListener('click', () => { if (S.meta.dayStreakLost && S.meta.dayStreakLostDay === todayKey()) stat('anuncio_ofrecido', { sitio: 'racha' }); });
 
+/* ================= Weekly missions ================= */
+// Four goals from Monday to Sunday, added up across every map, with a big chest at the end. They live in S.meta, like the daily ones.
+const weekKey = () => { const n = dayNum(todayKey()); return n - ((n + 3) % 7); }; // day 0 of the calendar count was a Thursday
+const WEEK_KINDS = {
+  days:    { icon: '📅', text: n => `Juega ${n} días distintos`, goal: () => 4 },
+  serve:   { icon: '🧺', text: n => `Atiende a ${n} clientes`, goal: () => pick([120, 150, 200]) },
+  harvest: { icon: '🌾', text: n => `Cosecha ${n} plantas`, goal: () => pick([250, 350, 500]) },
+  earn:    { icon: '💰', text: n => `Gana ${fmt(n)} monedas`, goal: () => niceNum(chestValue() * 10) },
+  chest:   { icon: '🎁', text: n => `Abre ${n} cofres del día`, goal: () => 3 },
+  decide:  { icon: '🗳️', text: n => `Toma ${n} decisiones`, goal: () => 6, ok: () => townOn() },
+};
+const weekSeen = { served: S.served, earned: S.earned };
+function weekState() {
+  const m = S.meta, key = weekKey();
+  if (!m.weekly || m.weekly.key !== key) {
+    const rest = Object.keys(WEEK_KINDS).filter(k => k !== 'days' && (!WEEK_KINDS[k].ok || WEEK_KINDS[k].ok())).sort(() => Math.random() - .5).slice(0, 3);
+    m.weekly = { key, list: ['days', ...rest].map(k => ({ k, goal: WEEK_KINDS[k].goal(), got: 0 })), claimed: false, lastDay: '' };
+  }
+  const w = m.weekly, t = todayKey();
+  if (w.lastDay !== t && S.tut >= 2) { w.lastDay = t; weekAdd('days'); }
+  return w;
+}
+const weekDone = () => { const w = S.meta.weekly; return !!w && w.list.every(m => m.got >= m.goal); };
+const weekCount = () => (S.meta.weekly ? S.meta.weekly.list.filter(m => m.got >= m.goal).length : 0);
+function weekAdd(k, n = 1) {
+  const w = S.meta.weekly; if (!w || w.claimed || S.tut < 2) return;
+  const m = w.list.find(x => x.k === k); if (!m || m.got >= m.goal) return;
+  m.got = Math.min(m.goal, m.got + n);
+  if (m.got >= m.goal) { sfx.mission(); toast(`🗓️ Misión de la semana: ${WEEK_KINDS[k].text(m.goal)}${weekDone() ? ' · ¡Cofre en el menú ☰!' : ` (${weekCount()}/4)`}`); }
+}
+const weekValue = () => niceNum(chestValue() * 6);
+function openWeek(times) {
+  const w = S.meta.weekly; if (!weekDone() || w.claimed) return;
+  const v = weekValue() * times; w.claimed = true; S.meta.weekChests = (S.meta.weekChests || 0) + 1;
+  addCoins(v); giveStars(3); flyCoins(P.x, 1.5, P.z, 16); sfx.mission(); puff(P.x, 1, P.z, 0xf6c445, 20, 1.8, 4); burst(P.x, 2.2, P.z, '🗓️ +' + fmt(v));
+  toast(`🗓️ ¡Cofre de la semana! +${fmt(v)} monedas y ⭐ 3`); stat('cofre_semana', { veces: times });
+  setTimeout(() => (xmasOn() ? giveDecor() : collectFind()), 2600);
+  save(); renderWeek();
+}
+function renderWeek() {
+  const w = weekState(), done = weekDone();
+  $('weekTop').textContent = w.claimed ? '¡Cofre abierto! El lunes llegan misiones nuevas.' : done ? '¡Lo has conseguido todo! Abre tu cofre.' : `Cuentan en todos los mapas. Premio: ${fmt(weekValue())} monedas, ⭐ 3 y una sorpresa.`;
+  $('weekList').innerHTML = w.list.map(m => {
+    const ok = m.got >= m.goal;
+    return `<div class="dmrow${ok ? ' done' : ''}"><span>${ok ? '✅' : WEEK_KINDS[m.k].icon}</span><b>${WEEK_KINDS[m.k].text(m.goal)}<small>${fmt(m.got)} de ${fmt(m.goal)}</small></b></div>`;
+  }).join('');
+  $('weekOpen').hidden = $('weekAd').hidden = !done || w.claimed;
+}
+function weekLabel() {
+  const b = $('weekBtn'), n = weekCount(), w = S.meta.weekly, t = w && weekDone() && !w.claimed ? '🗓️ Semana · ¡Cofre! 🎁' : `🗓️ Semana · ${n}/4`;
+  if (b._t !== t) { b.textContent = t; b._t = t; }
+}
+function watchWeek() {
+  weekState();
+  [['served', 'serve'], ['earned', 'earn']].forEach(([s, k]) => { const d = S[s] - weekSeen[s]; if (d > 0) weekAdd(k, d); weekSeen[s] = S[s]; });
+  weekLabel();
+}
+const renderDailyWeek = renderDaily;
+renderDaily = () => { renderDailyWeek(); watchWeek(); };
+const cutPlantWeek = cutPlant;
+cutPlant = pl => { cutPlantWeek(pl); weekAdd('harvest'); };
+const openDailyWeek = openDaily;
+openDaily = times => { const d = S.meta.daily, was = d && d.claimed; openDailyWeek(times); if (!was && S.meta.daily.claimed) weekAdd('chest'); };
+$('weekBtn').addEventListener('click', () => { $('menu').hidden = true; renderWeek(); $('weekOverlay').hidden = false; });
+$('weekClose').addEventListener('click', () => { $('weekOverlay').hidden = true; last = performance.now(); });
+$('weekOpen').addEventListener('click', () => openWeek(1));
+$('weekAd').addEventListener('click', () => { stat('anuncio_ofrecido', { sitio: 'semana' }); showAd(() => openWeek(2), 'semana'); });
+watchWeek();
+
 /* ================= Building works ================= */
 // Big buildings take a while to build once paid. The clock keeps running with the game closed.
 // Standing on the circle offers to finish at once with an ad or a star. Free-building maps (the Costa) still build at once for now.
@@ -6457,7 +6776,7 @@ $('decOpts').addEventListener('click', e => {
   if (o.act) o.act();
   if (o.say) toast(o.say);
   S.decToday = [...(S.decToday || []).slice(-1), { icon: c.icon, title: c.title, choice: o.label }];
-  stat('decision', { carta: c.id, opcion: +b.dataset.i });
+  stat('decision', { carta: c.id, opcion: +b.dataset.i }); weekAdd('decide');
   decCard = null; $('decOverlay').hidden = true; last = performance.now();
   sfx.mission(); burst(P.x, 2.2, P.z, o.label, 'white'); save();
 });
@@ -6552,7 +6871,7 @@ function updateStaffLook(dt) {
 function updateTown(dt) {
   updateActors(dt);
   if (!townOn()) return;
-  updateStaffLook(dt);
+  updateStaffLook(dt); lawTick();
   Object.keys(DEC.fx).forEach(k => {
     DEC.fx[k] -= dt; if (DEC.fx[k] > 0) return;
     delete DEC.fx[k];
@@ -6566,8 +6885,8 @@ function updateTown(dt) {
   S.trust = clamp100(S.trust + (td.served - lastServed) * .03 - (td.angry - lastAngry) * 1.5);
   lastServed = td.served; lastAngry = td.angry;
   // Morale slowly settles back towards normal
-  S.morale += (55 - S.morale) * Math.min(1, dt / 600);
-  S.trust += (55 - S.trust) * Math.min(1, dt / 900);
+  S.morale += (Math.max(0, Math.min(100, LAW.moraleTo + staffMorale())) - S.morale) * Math.min(1, dt / 600);
+  S.trust += (LAW.trustTo - S.trust) * Math.min(1, dt / 900);
   if (S.morale < 15 && !decFx('strike') && hasStaff('helper')) { DEC.fx.strike = 30; sfx.angry(); toast('🪧 ¡Huelga! Ardillas, repartidores, jardineros y cajeras paran 30 segundos'); }
   else if (S.morale < 30 && performance.now() - townWarn.m > 60000) { townWarn.m = performance.now(); toast('😟 Los trabajadores están desanimados y van más despacio'); }
   if (S.trust < 30 && performance.now() - townWarn.t > 60000) { townWarn.t = performance.now(); toast('😒 Los vecinos no se fían de la granja y vienen menos clientes'); }
@@ -6597,7 +6916,7 @@ function renderTown() {
   const b = $('townBar'); b.hidden = !townOn(); if (b.hidden) return;
   const m = Math.round(S.morale), t = Math.round(S.trust);
   const fx = Object.entries(DEC.fx).map(([k, s]) => `<span class="tfx" title="${FX_NAMES[k]}">${[...FX_NAMES[k]][0]} ${Math.ceil(s)}s</span>`).join('');
-  const h = `<span class="${m < 30 ? 'low' : ''}" title="Ánimo de los trabajadores">${m < 30 ? '😟' : m >= 70 ? '😄' : '😊'} ${m}</span><span class="${t < 30 ? 'low' : ''}" title="Confianza de los vecinos">⭐ ${t}</span>${fx}`;
+  const h = `<span class="${m < 30 ? 'low' : ''}" title="Ánimo de los trabajadores">${m < 30 ? '😟' : m >= 70 ? '😄' : '😊'} ${m}</span><span class="${t < 30 ? 'low' : ''}" title="Confianza de los vecinos">⭐ ${t}</span>${fx}${debtChip()}${staffChip()}`;
   if (h !== townShown) { b.innerHTML = h; townShown = h; }
 }
 // Day summary: the medal also moves trust and morale, and the summary shows how the town is doing
@@ -6622,6 +6941,756 @@ showSummary = () => {
   const tip = d.morale < 30 ? '😟 El equipo está desanimado: dales un descanso o paga la fiesta.' : d.trust < 30 ? '😒 El pueblo no se fía: atiende bien y piensa en los vecinos.' : '';
   if (tip) $('dayHint').textContent += ' ' + tip;
 };
+
+/* ================= Background pressure: the bank's bill ================= */
+// Every few game days the bank charges a bill that follows what the farm earns, so there is always a date to save up for.
+// It is charged by itself at the end of the day. Not having the money never blocks anything: it hurts morale and trust, and the bill grows and comes back soon.
+const DEBT_EVERY = 5, DEBT_RETRY = 2, DEBT_FROM_MISSION = 8;
+const debtOn = () => townOn() && dayOn() && S.mission >= DEBT_FROM_MISSION;
+const debtAmount = () => niceNum(Math.max(300 * fscale(), incMin(6)));
+const debtDays = () => (S.debt ? Math.max(0, S.debt.due - S.dayN) : 0);
+function debtChip() {
+  if (!S.debt || !debtOn()) return '';
+  const d = debtDays(), short = S.coins < S.debt.amount;
+  return `<span class="tfx${d <= 1 && short ? ' low' : ''}" title="Letra del banco: ${fmt(S.debt.amount)} monedas">🏦 ${d ? d + ' d' : 'hoy'}</span>`;
+}
+function debtEndOfDay() {
+  if (!debtOn()) return null;
+  if (!S.debt) { S.debt = { due: S.dayN + DEBT_EVERY, amount: debtAmount(), missed: 0 }; stat('letra', { accion: 'empieza' }); return { start: true, days: DEBT_EVERY, v: S.debt.amount }; }
+  if (S.dayN < S.debt.due) { const d = debtDays(); return { days: d, v: S.debt.amount, warn: d <= 2 }; }
+  const v = S.debt.amount;
+  if (S.coins >= v) {
+    S.coins -= v; $('coinsTxt').textContent = fmt(S.coins); S.trust = clamp100(S.trust + 4); S.morale = clamp100(S.morale + 2);
+    S.debt = { due: S.dayN + DEBT_EVERY, amount: debtAmount(), missed: 0 }; S.meta.billsPaid = (S.meta.billsPaid || 0) + 1;
+    stat('letra', { accion: 'pagada', valor: v });
+    return { paid: true, v, days: DEBT_EVERY, next: S.debt.amount };
+  }
+  S.trust = clamp100(S.trust - 15); S.morale = clamp100(S.morale - 10);
+  S.debt = { due: S.dayN + DEBT_RETRY, amount: niceNum(v * 1.25), missed: (S.debt.missed || 0) + 1 };
+  stat('letra', { accion: 'impago', valor: v, veces: S.debt.missed });
+  return { failed: true, v, days: DEBT_RETRY, next: S.debt.amount };
+}
+const endDayDebt = endDay;
+endDay = () => {
+  endDayDebt();
+  if (!S.pendingSum) return;
+  const r = debtEndOfDay(); if (!r) return;
+  S.pendingSum.debt = r; save(); showSummary();
+};
+const showSummaryDebt = showSummary;
+showSummary = () => {
+  showSummaryDebt();
+  const r = S.pendingSum && S.pendingSum.debt; if (!r) return;
+  const line = r.start ? ['🏦 El banco te ha prestado para crecer', `${fmt(r.v)} en ${r.days} días`]
+    : r.paid ? ['🏦 Letra pagada', `−${fmt(r.v)} · ⭐ +4 😊 +2`]
+    : r.failed ? ['🏦 ¡Sin dinero para la letra!', '⭐ −15 😊 −10']
+    : ['🏦 Próxima letra', `${fmt(r.v)} en ${r.days} ${r.days === 1 ? 'día' : 'días'}`];
+  $('dayStats').innerHTML += `<span>${line[0]}</span><b>${line[1]}</b>`;
+  if (r.failed) $('dayHint').textContent += ` 😰 Ahora debes ${fmt(r.next)} y el banco vuelve en ${r.days} días: ahorra antes de gastar.`;
+  else if (r.start) $('dayHint').textContent += ' 🏦 Cada 5 días el banco cobra una letra: guarda monedas para ese día.';
+  else if (r.warn && S.coins < r.v) $('dayHint').textContent += ` ⚠️ Te faltan ${fmt(r.v - S.coins)} monedas para la letra del banco.`;
+};
+
+/* ================= Laws ================= */
+// Long-lasting rules for each farm, unlocked as the story goes on. Each has a good side and a bad side. Few can be on at once,
+// and only one change per game day, so choosing one is a real decision. The numbers they move are in LAW (03-state.js).
+if (!S.laws || typeof S.laws !== 'object') S.laws = {};
+const LAWS = [
+  { id: 'dobles', icon: '💪', name: 'Turnos largos', from: 12, good: 'Los trabajadores van un 30 % más rápido', bad: 'El Ánimo tiende a bajar hasta 35', fx: { work: 1.3, moraleTo: 35 } },
+  { id: 'justos', icon: '🤝', name: 'Precios justos', from: 16, good: 'La Confianza tiende a subir hasta 80', bad: 'Todo se vende un 10 % más barato', fx: { price: .9, trustTo: 80 } },
+  { id: 'mercado', icon: '🛒', name: 'Mercado sin descanso', from: 22, good: 'Llegan clientes un 25 % más a menudo', bad: 'Los clientes tienen un 20 % menos de paciencia', fx: { trust: .75, patience: .8 } },
+  { id: 'descanso', icon: '🛌', name: 'Descanso pagado', from: 28, good: 'El Ánimo tiende a subir hasta 80', bad: 'Los trabajadores van un 10 % más lentos', fx: { work: .9, moraleTo: 80 } },
+  { id: 'lujo', icon: '💎', name: 'Precios de lujo', from: 35, good: 'Todo se vende un 15 % más caro', bad: 'La Confianza tiende a bajar hasta 35', fx: { price: 1.15, trustTo: 35 } },
+  { id: 'vigilancia', icon: '🚓', name: 'Vigilancia', from: 42, good: 'Vienen la mitad de ladrones', bad: 'Cada día pagas 1 minuto de ventas', fx: { thief: 2 }, dailyMin: 1 },
+];
+const lawsOpen = () => LAWS.filter(l => S.mission >= l.from);
+const lawMax = () => (S.mission >= 50 ? 3 : 2);
+const lawsActive = () => LAWS.filter(l => S.laws[l.id]);
+const lawChanged = () => S.lawDay === S.dayN;
+function applyLaws() {
+  Object.assign(LAW, LAW_BASE);
+  lawsActive().forEach(l => Object.entries(l.fx).forEach(([k, v]) => {
+    if (k === 'moraleTo' || k === 'trustTo') LAW[k] = v; else LAW[k] *= v;
+  }));
+}
+applyLaws();
+function renderLaws() {
+  const on = lawsActive().length, spent = lawChanged();
+  $('lawTop').textContent = `Activas ${on} de ${lawMax()}. ${spent ? 'Hoy ya has cambiado una ley: vuelve mañana.' : 'Puedes cambiar una ley al día.'}`;
+  $('lawList').innerHTML = LAWS.map(l => {
+    if (S.mission < l.from) return `<div class="dmrow off law"><span>🔒</span><b>Ley sin descubrir<small>Se abre en la misión ${l.from}</small></b></div>`;
+    const act = !!S.laws[l.id], full = !act && on >= lawMax();
+    return `<div class="dmrow law${act ? ' done' : ''}"><span>${l.icon}</span><b>${l.name}<small class="good">+ ${l.good}</small><small class="bad">− ${l.bad}</small></b><button data-law="${l.id}" ${spent || full ? 'disabled' : ''}>${act ? 'Quitar' : full ? 'Llena' : 'Aprobar'}</button></div>`;
+  }).join('');
+}
+function lawTick() {
+  $('lawBtn').hidden = !townOn() || !lawsOpen().length;
+  const n = lawsOpen().length;
+  if ((S.lawSeen || 0) < n && townOn()) { S.lawSeen = n; const l = lawsOpen()[n - 1]; sfx.mission(); toast(`⚖️ Ley nueva: ${l.icon} ${l.name}. Apruébala en el menú ☰`); stat('ley_nueva', { ley: l.id }); }
+}
+$('lawBtn').addEventListener('click', () => { $('menu').hidden = true; renderLaws(); $('lawOverlay').hidden = false; });
+$('lawClose').addEventListener('click', () => { $('lawOverlay').hidden = true; last = performance.now(); });
+$('lawList').addEventListener('click', e => {
+  const b = e.target.closest('[data-law]'); if (!b || b.disabled || lawChanged()) return;
+  const l = LAWS.find(x => x.id === b.dataset.law), on = !S.laws[l.id];
+  if (on && lawsActive().length >= lawMax()) return;
+  if (on) S.laws[l.id] = 1; else delete S.laws[l.id];
+  S.lawDay = S.dayN; applyLaws(); sfx.mission(); stat('ley', { ley: l.id, activa: on }); toast(`⚖️ ${l.name}: ${on ? 'aprobada' : 'quitada'}`); save(); renderLaws();
+});
+// Laws with a running cost are charged at the end of the day, only as far as the money goes, and shown in the summary
+const endDayLaw = endDay;
+endDay = () => {
+  endDayLaw();
+  if (!S.pendingSum) return;
+  const mins = lawsActive().reduce((a, l) => a + (l.dailyMin || 0), 0); if (!mins) return;
+  const v = Math.min(S.coins, Math.round(incMin(mins)));
+  S.coins -= v; $('coinsTxt').textContent = fmt(S.coins); S.pendingSum.lawCost = v; save(); showSummary();
+};
+const showSummaryLaw = showSummary;
+showSummary = () => {
+  showSummaryLaw();
+  const d = S.pendingSum; if (!d) return;
+  if (d.lawCost) $('dayStats').innerHTML += `<span>⚖️ Coste de las leyes</span><b>−${fmt(d.lawCost)}</b>`;
+};
+
+/* ================= Coast: ships with orders against the clock ================= */
+// On the Coast a ship moors at the pier now and then and asks for goods within a time limit. Leaving with less only pays part and costs some trust: nothing ever blocks.
+const SHIP = { on: false, t: 150, state: 'away', timer: 0, order: [], x: 0, z: 0 };
+const SHIP_WAIT = () => 240 + Math.random() * 180, SHIP_TIME = 150, SHIP_SAIL = 7;
+const shipsHere = () => THEME.id === 'costa' && townOn();
+// The pier: on the west shore of the first island, the only stretch with open water wide enough for the ship.
+// Sonia walks to its far end (PIER in 03-state.js), so the ship is on screen while she hands over the goods
+const shipSpot = THEME.id === 'costa' ? { x: -16, z: 16.5, pierX: -10.6, dx: -1, dz: 0, boatX: -19.4, boatZ: 16.5 } : null;
+const shipModel = (() => {
+  if (!shipSpot) return null;
+  const { x, z, pierX, dx, dz, boatX, boatZ } = shipSpot, along = dz !== 0, w = 0x9a6a38, hull = 0x2f4f8f;
+  const pier = new T.Group(), parts = [];
+  for (let i = 0; i < 14; i++) parts.push(along ? pBox(1.7, .1, .42, 0, .34, dz * (1 + i * .45), i % 2 ? w : shade(w, .85)) : pBox(.42, .1, 1.7, dx * (1 + i * .45), .34, 0, i % 2 ? w : shade(w, .85)));
+  [1.2, 3.5, 6.2].forEach(d => [-.8, .8].forEach(o => parts.push(along ? pCyl(.08, 1, o, .1, dz * d, BEAM, 6) : pCyl(.08, 1, dx * d, .1, o, BEAM, 6))));
+  addDetails(pier, parts); pier.position.set(pierX, 0, z); scene.add(pier);
+  const ring = flat(new T.RingGeometry(1.25, 1.55, 28), mat(0x3f7fd0), x, .03, z); ring.visible = false;
+  const boat = new T.Group();
+  addDetails(boat, [pBox(4.6, .9, 1.9, 0, .5, 0, hull), pBox(4.7, .14, 2, 0, .98, 0, 0xfdf6ea), pBox(1.1, .9, 1.9, 2.6, .55, 0, hull), { geo: new T.CylinderGeometry(0, .95, 1, 4).rotateY(Math.PI / 4).rotateZ(-Math.PI / 2).translate(3.5, .55, 0), color: hull },
+    pBox(1.5, 1, 1.3, -1.1, 1.5, 0, 0xfff8e7), pBox(1.7, .12, 1.5, -1.1, 2.05, 0, 0xd8402f), pCyl(.22, .9, -1.1, 2.5, 0, 0xd8402f, 9), pBox(.5, .3, .03, -1.1, 1.6, .66, 0x7fc8e8), pBox(.5, .3, .03, -1.1, 1.6, -.66, 0x7fc8e8),
+    ...crate(1, .2, .55), ...crate(.2, -.3, .5).map(p => { p.geo.translate(0, 1.04, 0); return p; })].map((p, i) => { if (i >= 9 && i < 12) p.geo.translate(0, 1.04, 0); return p; }));
+  boat.rotation.y = along ? 0 : Math.PI / 2; boat.visible = false; scene.add(boat);
+  return { boat, ring, boatX, boatZ, farX: boatX + dx * 60 + (along ? 30 : 0), farZ: boatZ + dz * 60 + (along ? 0 : 30) };
+})();
+function shipGoods() {
+  const out = new Set();
+  PATCHES.forEach(p => { if (unlocked(p.id) && reachable(p)) out.add(p.crop); });
+  BUILDS.forEach(b => { if (isBuilt(b.id) && b.output) out.add(b.output); });
+  return [...out].filter(k => ITEMS[k]);
+}
+function shipArrive() {
+  const goods = shipGoods().sort(() => Math.random() - .5).slice(0, 2); if (!goods.length) { SHIP.t = 60; return; }
+  SHIP.order = goods.map(k => ({ k, need: 4 + Math.floor(Math.random() * 5), got: 0 }));
+  SHIP.state = 'in'; SHIP.sail = 0; shipModel.boat.visible = true;
+  sfx.bell(); toast(`⛴️ ¡Un barco viene con un pedido! Llévalo al final del muelle, al oeste, antes de que zarpe`); stat('barco', { accion: 'llega' });
+}
+function shipLeave(done) {
+  const got = SHIP.order.reduce((a, o) => a + o.got, 0), need = SHIP.order.reduce((a, o) => a + o.need, 0), worth = SHIP.order.reduce((a, o) => a + o.got * ITEMS[o.k].value, 0);
+  const pay = Math.max(1, Math.round((incMin(done ? 3 : 1) * got / need) + worth * (done ? 4 : 1) * priceF()));
+  if (got) { addCoins(pay); flyCoins(P.x, 1.5, P.z, done ? 16 : 6); }
+  if (done) { giveStars(1); S.trust = clamp100(S.trust + 3); S.meta.ships = (S.meta.ships || 0) + 1; sfx.mission(); toast(`⛴️ ¡Pedido completo! +${fmt(pay)} monedas y ⭐ 1`); burst(P.x, 2.3, P.z, '⛴️ +' + fmt(pay)); }
+  else { S.trust = clamp100(S.trust - 4); toast(got ? `⛴️ El barco zarpa con el pedido a medias: +${fmt(pay)} monedas` : '⛴️ El barco se va sin nada. ⭐ Confianza −4'); }
+  stat('barco', { accion: done ? 'completo' : 'se_va', llevado: got, pedido: need });
+  SHIP.state = 'out'; SHIP.sail = 0; SHIP.order = []; shipModel.ring.visible = false; save();
+}
+function shipBar() {
+  const b = $('shipBar'), show = SHIP.state === 'in' || SHIP.state === 'moored';
+  if (b.hidden === show) b.hidden = !show;
+  if (!show) return;
+  const items = SHIP.order.map(o => `${ITEMS[o.k].icon} ${o.got}/${o.need}`).join(' · '), s = Math.ceil(SHIP.timer);
+  const t = SHIP.state === 'in' ? `⛴️ Llega un barco: ${items}` : `⛴️ Final del muelle: ${items} · ⏱️ ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  if (b._t !== t) { b.textContent = t; b._t = t; }
+}
+function updateShip(dt) {
+  if (!shipModel || !shipsHere()) return;
+  const M2 = shipModel, sw = Math.sin(performance.now() / 700) * .04;
+  if (SHIP.state === 'away') { if (S.mission >= 6 && dayOn() && shopOpen() && (SHIP.t -= dt) <= 0) shipArrive(); return; }
+  if (SHIP.state === 'in' || SHIP.state === 'out') {
+    SHIP.sail += dt / SHIP_SAIL; const k = Math.min(1, SHIP.sail), e = k * k * (3 - 2 * k), f = SHIP.state === 'in' ? 1 - e : e;
+    M2.boat.position.set(M2.boatX + (M2.farX - M2.boatX) * f, -.1, M2.boatZ + (M2.farZ - M2.boatZ) * f);
+    if (k >= 1) { if (SHIP.state === 'in') { SHIP.state = 'moored'; SHIP.timer = SHIP_TIME; M2.ring.visible = true; sfx.bell(); } else { SHIP.state = 'away'; SHIP.t = SHIP_WAIT(); M2.boat.visible = false; } }
+    shipBar(); return;
+  }
+  M2.boat.rotation.z = sw; SHIP.timer -= dt; 
+  if (Math.hypot(P.x - shipSpot.x, P.z - shipSpot.z) < 1.7 && (SHIP.give = (SHIP.give || 0) - dt) <= 0) {
+    const o = SHIP.order.find(x => x.got < x.need && P.stack.some(b => b.parent === sonia.stack && b.userData.item === x.k));
+    if (o) {
+      const b = takeFromStack(k => k === o.k);
+      if (b) { o.got++; SHIP.give = .12; sfx.drop(); flyTo(b, new T.Vector3(M2.boatX, 1.4, M2.boatZ), .4, () => scene.remove(b)); }
+    }
+  }
+  shipBar();
+  if (SHIP.order.every(o => o.got >= o.need)) shipLeave(true); else if (SHIP.timer <= 0) shipLeave(false);
+}
+const updateTownShip = updateTown;
+updateTown = dt => { updateTownShip(dt); updateShip(dt); };
+
+/* ================= The team: wages, food and houses ================= */
+// Keeping the workers happy costs something every day. Wages are charged at the end of the day, food is real goods Sonia carries to the
+// canteen, and houses are built by hand. All of it decides the level morale settles at. Nothing blocks the game: a neglected team just works worse.
+if (!S.staff || typeof S.staff !== 'object') S.staff = { wage: 1, pot: 8, houses: [], spot: null };
+const WAGES = [
+  { name: 'Bajo', k: 0, morale: -15, note: 'Gratis, pero se quejan' },
+  { name: 'Normal', k: 1, morale: 0, note: 'Lo justo' },
+  { name: 'Alto', k: 2.2, morale: 15, note: 'Trabajan contentos' },
+];
+const HOUSE_ROOM = 3, STAFF_FROM_MISSION = 10;
+const staffOn = () => townOn() && dayOn() && S.mission >= STAFF_FROM_MISSION;
+const staffCount = () => squirrels.length + carriers.length + gardeners.length + SHOPS.reduce((a, s) => a + s.tills.filter(t => S.lv[t.staff] > 0).length, 0);
+const wageCost = () => Math.round(incMin(Math.min(4, .25 * staffCount())) * WAGES[S.staff.wage].k);
+const potPerDay = () => Math.max(1, staffCount() * .6);
+const potCap = () => Math.max(12, Math.ceil(potPerDay() * 4));
+const potDays = () => S.staff.pot / potPerDay();
+const homeless = () => Math.max(0, staffCount() - S.staff.houses.length * HOUSE_ROOM);
+const housePrice = () => !S.staff.houses.length ? 0 : niceNum(Math.max(500 * fscale(), incMin(5)) * (1 + .25 * S.staff.houses.length));
+const isHungry = () => staffOn() && S.staff.pot <= 0;
+// The level morale drifts towards, on top of the laws
+function staffMorale() {
+  if (!staffOn()) return 0;
+  return WAGES[S.staff.wage].morale + (isHungry() ? -20 : 0) + (homeless() ? -Math.min(20, homeless() * 4) : 8);
+}
+const houseParts = () => [
+  pBox(2, 1.3, 1.7, 0, .65, 0, 0xf4e6c8), pBox(2.1, .12, 1.8, 0, .06, 0, 0x8d8a82),
+  { geo: new T.CylinderGeometry(1, 1, 1.9, 3).rotateX(-Math.PI / 2).scale(1.3, .75, 1).translate(0, 1.3 + .37, 0), color: 0xc25a3c },
+  pBox(.5, .85, .03, 0, .42, .86, 0x6b4426), pBox(.42, .38, .03, -.65, .85, .86, 0xa8d8f0), pBox(.42, .38, .03, .65, .85, .86, 0xa8d8f0), pGem(.03, .15, .42, .9, 0xf6c445),
+];
+const canteenParts = () => [
+  pBox(1.9, .08, .9, 0, .72, 0, 0x9a6a38), pBox(.1, .7, .7, -.8, .35, 0, 0x6b4426), pBox(.1, .7, .7, .8, .35, 0, 0x6b4426),
+  pBox(1.9, .06, .28, 0, .36, .72, 0x9a6a38), pBox(1.9, .06, .28, 0, .36, -.72, 0x9a6a38),
+  pCyl(.27, .34, 0, .93, 0, 0x3a3a40, 10), pCyl(.29, .04, 0, 1.11, 0, 0x55504a, 10), pCyl(.03, 1.9, -1.05, .95, .55, 0x6b4426, 6), pCyl(.03, 1.9, 1.05, .95, .55, 0x6b4426, 6), pCyl(.03, 1.9, -1.05, .95, -.55, 0x6b4426, 6), pCyl(.03, 1.9, 1.05, .95, -.55, 0x6b4426, 6),
+  pBox(2.4, .08, 1.5, 0, 1.92, 0, 0xe8a23a), pBox(.5, .08, 1.52, -.7, 1.925, 0, 0xfff1d6), pBox(.5, .08, 1.52, .7, 1.925, 0, 0xfff1d6),
+];
+function drawHouse(h) { const g = new T.Group(); addDetails(g, houseParts()); g.position.set(h.x, 0, h.z); scene.add(g); }
+S.staff.houses.forEach(drawHouse);
+let canteen = null, staffAsked = false, staffWarnT = 0, potGive = 0;
+function canteenSpot() {
+  if (S.staff.spot) return S.staff.spot;
+  const c = FARM.counter;
+  for (let r = 5; r < 13; r += 1) for (let i = 0; i < 16; i++) {
+    const a = i / 16 * Math.PI * 2, x = c.x + Math.cos(a) * r, z = c.z + Math.sin(a) * r;
+    if (inArea(x, z) && !blocked(x, z) && !decorBlocked(x, z)) return (S.staff.spot = { x: +x.toFixed(2), z: +z.toFixed(2) });
+  }
+  return (S.staff.spot = { x: c.x + 5, z: c.z + 3 });
+}
+function buildCanteen() {
+  const s = canteenSpot(), g = new T.Group(); addDetails(g, canteenParts()); g.position.set(s.x, 0, s.z); scene.add(g);
+  const ring = flat(new T.RingGeometry(1.55, 1.85, 28), mat(0xe8a23a), s.x, .03, s.z + 1.7);
+  canteen = { g, ring, x: s.x, z: s.z + 1.7 };
+}
+function staffChip() {
+  if (!staffOn()) return '';
+  const d = potDays();
+  return `<span class="tfx${d < 1 ? ' low' : ''}" title="Comida del comedor">🍲 ${d <= 0 ? '¡0!' : d < 1 ? '<1 d' : Math.floor(d) + ' d'}</span>`;
+}
+function updateStaff(dt) {
+  $('staffBtn').hidden = !staffOn();
+  DEC.hungry = false;
+  if (!staffOn()) return;
+  if (!staffAsked && !S.meta.staffSeen) { S.meta.staffSeen = 1; toast('👥 Tu equipo ya necesita sueldo, comida y casa. Míralo en el menú ☰ → Equipo'); stat('equipo', { accion: 'empieza' }); }
+  staffAsked = true;
+  if (!canteen) buildCanteen();
+  S.staff.pot = Math.max(0, S.staff.pot - potPerDay() / DAY_LEN * dt);
+  DEC.hungry = S.staff.pot <= 0;
+  if (DEC.hungry && performance.now() - staffWarnT > 45000) { staffWarnT = performance.now(); sfx.angry(); toast('🍲 ¡El comedor está vacío! Lleva cosecha al círculo naranja: el equipo trabaja más lento'); }
+  // Standing on the ring hands over what Sonia carries, one by one, until the pot is full
+  if ((potGive -= dt) <= 0 && Math.hypot(P.x - canteen.x, P.z - canteen.z) < 1.8 && S.staff.pot < potCap()) {
+    const b = takeFromStack(() => true);
+    if (b) { S.staff.pot = Math.min(potCap(), S.staff.pot + 1); potGive = .15; sfx.drop(); flyTo(b, new T.Vector3(canteen.x, 1.1, canteen.z - 1.7), .35, () => scene.remove(b)); if (S.staff.pot >= potCap()) toast('🍲 ¡Comedor lleno!'); }
+  }
+}
+const updateTownStaff = updateTown;
+updateTown = dt => { updateTownStaff(dt); updateStaff(dt); };
+function renderStaff() {
+  const n = staffCount(), st = S.staff, d = potDays(), hl = homeless(), bad = decorBlocked(P.x, P.z), price = housePrice(), target = Math.round(Math.max(0, Math.min(100, LAW.moraleTo + staffMorale())));
+  $('staffTop').textContent = `${n} trabajadores. Con lo que les das, el 😊 Ánimo tiende a ${target}.`;
+  $('staffWage').innerHTML = WAGES.map((w, i) => `<button data-wage="${i}" class="${st.wage === i ? 'on' : ''}">${w.name}<small>${w.k ? fmt(Math.round(incMin(Math.min(4, .25 * n)) * w.k)) + ' al día' : 'Gratis'} · 😊 ${w.morale > 0 ? '+' : ''}${w.morale}</small></button>`).join('');
+  $('staffFood').innerHTML = `<div class="dmrow${d < 1 ? ' off' : ''}"><span>🍲</span><b>${Math.floor(st.pot)} de ${potCap()} raciones<small>${d <= 0 ? '¡Vacío! Trabajan un 25 % más lento y 😊 −20' : `Dura ${d < 1 ? 'menos de 1 día' : Math.floor(d) + (Math.floor(d) === 1 ? ' día' : ' días')}. Gastan ${potPerDay().toFixed(1)} al día`}<br>Lleva cualquier cosa al círculo naranja del comedor</small></b></div>`;
+  $('staffHouse').innerHTML = `<div class="dmrow${hl ? ' off' : ' done'}"><span>🏠</span><b>${st.houses.length} ${st.houses.length === 1 ? 'casa' : 'casas'} · sitio para ${st.houses.length * HOUSE_ROOM}<small>${hl ? `${hl} sin casa: 😊 −${Math.min(20, hl * 4)}` : 'Todos con casa: 😊 +8'}${bad ? '<br>Aquí no cabe: ponte en un sitio libre' : '<br>Se construye donde está Sonia'}</small></b><button id="staffBuild" ${bad || S.coins < price ? 'disabled' : ''}>${price ? fmt(price) : '¡Gratis!'}</button></div>`;
+}
+$('staffBtn').addEventListener('click', () => { $('menu').hidden = true; renderStaff(); $('staffOverlay').hidden = false; });
+$('staffClose').addEventListener('click', () => { $('staffOverlay').hidden = true; last = performance.now(); });
+$('staffOverlay').addEventListener('click', e => {
+  const w = e.target.closest('[data-wage]');
+  if (w) { S.staff.wage = +w.dataset.wage; sfx.drop(); stat('equipo', { accion: 'sueldo', nivel: S.staff.wage }); save(); renderStaff(); return; }
+  if (!e.target.closest('#staffBuild') || e.target.closest('#staffBuild').disabled) return;
+  const price = housePrice(); if (S.coins < price || decorBlocked(P.x, P.z)) return;
+  S.coins -= price; $('coinsTxt').textContent = fmt(S.coins);
+  const h = { x: +P.x.toFixed(2), z: +(P.z - 2.2).toFixed(2) }; S.staff.houses.push(h); drawHouse(h);
+  puff(h.x, 1, h.z, 0xc25a3c, 14, 1.4, 3); sfx.mission(); stat('equipo', { accion: 'casa', n: S.staff.houses.length }); toast(`🏠 ¡Casa nueva! Ya hay sitio para ${S.staff.houses.length * HOUSE_ROOM}`); save(); $('staffOverlay').hidden = true; last = performance.now();
+});
+// Wages at the end of the day: not paying them in full hurts, but nothing stops
+const endDayStaff = endDay;
+endDay = () => {
+  endDayStaff();
+  if (!S.pendingSum || !staffOn()) return;
+  const cost = wageCost(), paid = Math.min(S.coins, cost);
+  S.coins -= paid; $('coinsTxt').textContent = fmt(S.coins);
+  if (paid < cost) S.morale = clamp100(S.morale - 8);
+  S.pendingSum.wage = { paid, short: paid < cost }; save(); showSummary();
+};
+const showSummaryStaff = showSummary;
+showSummary = () => {
+  showSummaryStaff();
+  const d = S.pendingSum && S.pendingSum.wage; if (!d) return;
+  if (d.paid || d.short) $('dayStats').innerHTML += `<span>👥 Sueldos del equipo</span><b>−${fmt(d.paid)}${d.short ? ' · 😊 −8' : ''}</b>`;
+  const tip = isHungry() ? ' 🍲 El comedor está vacío: lleva comida.' : potDays() < 1 ? ' 🍲 Queda poca comida en el comedor.' : homeless() ? ` 🏠 ${homeless()} trabajadores sin casa: mira ☰ → Equipo.` : '';
+  if (tip) $('dayHint').textContent += tip;
+};
+
+/* ================= Film studios: Sonia directs ================= */
+// Script → dress the set with what the workshops make → shoot the takes live (Sonia runs to fix what goes wrong and to send away whoever walks in)
+// → editing (real time, it goes on with the game closed; an ad or a star finishes it) → premiere at the Cine Luna → box office for some game days.
+// The takes decide the reviews, with a nudge from morale, trust and the on-set decisions. Nothing blocks the game.
+const filmHere = () => THEME.id === 'cine' && townOn();
+if (!S.film || typeof S.film !== 'object' || !S.film.v2) S.film = { v2: 1, stage: 'idle', sets: ['comedia'], run: [], hist: [], made: 0, q: 0 };
+const GENRES = [
+  { id: 'comedia', icon: '😂', name: 'Comedia', set: 'Salón de comedia', at: [10.2, -8.4], area: 1, cost: 0, takes: 2, gap: 5, life: 7, mins: 2, money: .8, note: 'Rápida y sin riesgo', size: .7, wants: ['costume', 'popcorn2', 'floss'],
+    titles: ['La gallina que sabía demasiado', 'Mi suegra es un cerdo', 'Tres bodas y una cabra'], say: ['🤣', '🍌', '¡Ay!', '😂'], wall: 0xf5e6c0,
+    cast: [{ c: 0xf5a524, pts: [[-2.6, -.4], [2.4, .4]], sp: 2.3 }, { c: 0x3f7fd0, pts: [[-3.6, .4], [1.4, -.4]], sp: 2.7 }] },
+  { id: 'western', icon: '🤠', name: 'Oeste', set: 'Calle del oeste', at: [-26, 10.2], area: 3, cost: 25000, takes: 3, gap: 4.6, life: 6.5, mins: 3, money: 1, note: 'Lo clásico', size: 1, wants: ['leather', 'prop', 'costume', 'curtain'],
+    titles: ['Duelo en Valle Verde', 'El vaquero sin vacas', 'Por un puñado de tomates'], say: ['💥', '🤠', '🌵', '¡Desenfunda!'], wall: 0xb98a50,
+    cast: [{ c: 0x2a2a30, hat: 0x2a2a30, pts: [[-3.4, .6], [-1.6, .6]], sp: 1 }, { c: 0xfdf6ea, hat: 0xf5e6c0, pts: [[3.4, .6], [1.6, .6]], sp: 1 }] },
+  { id: 'musical', icon: '🎶', name: 'Musical', set: 'Gran escenario', at: [6.9, -39.9], area: 2, cost: 70000, takes: 3, gap: 4.2, life: 6, mins: 3, money: 1.25, note: 'El equipo debe estar contento', needMorale: 1, size: 1.2, wants: ['feather', 'costume', 'curtain', 'backdrop'],
+    titles: ['Cantando bajo el riego', 'Sonia, la musical', 'West Valle Story'], say: ['🎶', '💃', '🎵', '✨'], wall: 0x3a1a4a,
+    cast: [-3, -1, 1, 3].map((x, i) => ({ c: [0xe86a8a, 0xf5c518, 0x2fb5a0, 0x8e5bd0][i], pts: [[x, .4]], dance: true })) },
+  { id: 'terror', icon: '👻', name: 'Terror', set: 'Cementerio de cartón', at: [-34.4, -23.6], area: 6, cost: 450000, takes: 3, gap: 3.8, life: 5.5, mins: 4, money: 1.1, note: 'Si te sale bien, triunfa', swing: 1, size: .9, wants: ['makeup', 'backdrop', 'wax', 'prop'],
+    titles: ['La noche de las calabazas', 'El espantapájaros vive', 'Algo en el maizal'], say: ['😱', '👻', '🕯️', '¡Aaah!'], wall: 0x1f2430,
+    cast: [{ c: 0xf0f0f0, pts: [[-3, -1], [2.6, 0]], sp: 2.4 }, { c: 0xd8402f, pts: [[-1.4, -.4], [3.8, .6]], sp: 3 }] },
+  { id: 'scifi', icon: '🚀', name: 'Ciencia ficción', set: 'Nave espacial', at: [33.8, -23.6], area: 7, cost: 1400000, takes: 4, gap: 3.6, life: 5.2, mins: 5, money: 1.4, note: 'Encanta si el público confía en ti', needTrust: 1, size: 1.3, wants: ['setpiece', 'backdrop', 'wax', 'fakesnow'],
+    titles: ['Huerto en Marte', 'La guerra de los girasoles', 'Encuentros en el corral'], say: ['🛸', '⚡', '👽', '🚀'], wall: 0x101a3a,
+    cast: [{ c: 0x5fb548, pts: [[-3, .4], [-.8, -.6]], sp: 1.4 }, { c: 0xe6e6ea, pts: [[3, .4], [.8, -.6]], sp: 1.4 }] },
+  { id: 'accion', icon: '💥', name: 'Acción', set: 'Calle en llamas', at: [-31, -61], area: 8, cost: 4000000, takes: 4, gap: 3.2, life: 4.8, mins: 6, money: 1.7, note: 'Cara y difícil, pero da mucho', size: 1.5, wants: ['castle', 'setpiece', 'prop', 'makeup'],
+    titles: ['A todo tractor', 'Misión: cosecha', 'Jungla de trigo'], say: ['💥', '🔥', '🏃', '¡Corre!'], wall: 0x5a6a7a,
+    cast: [{ c: 0x2a2a30, pts: [[-3.6, .8], [3.6, .8], [3.6, -1], [-3.6, -1]], sp: 3.4 }, { c: 0xd8402f, pts: [[-1.6, .8], [3.6, .8], [3.6, -1], [-3.6, -1], [-3.6, .8]], sp: 3.4 }] },
+];
+const genreOf = id => GENRES.find(g => g.id === id);
+const FILM_DAYS = 5, TAKE_LEN = 19;
+const FIXES = [['💡', 'Se ha fundido un foco'], ['💄', 'La estrella pide retoque'], ['🎤', 'Se ve el micro en el plano'], ['📜', 'Han olvidado la frase'], ['🔌', 'Se ha soltado un cable']];
+const REVIEWS = {
+  1: ['«Salí a por palomitas y no volví.»', '«Se ve hasta el micro.»', '«Mi abuela actúa mejor, y no actúa.»'],
+  2: ['«Tiene un par de momentos. Un par.»', '«Se deja ver si llueve.»', '«El decorado se mueve más que el guion.»'],
+  3: ['«Entretenida, sin más.»', '«Una tarde bien aprovechada.»', '«El público sale contento.»'],
+  4: ['«Una sorpresa de las buenas.»', '«Hacía tiempo que no me reía así.»', '«Los Estudios Luna han vuelto.»'],
+  5: ['«¡Obra maestra!»', '«La veré diez veces.»', '«Una película que hará historia.»'],
+};
+const CINE = { x: -10.6, z: 18.5, door: { x: -10.6, z: 20 }, ring: { x: -10.6, z: 25.4 } };
+const setBuilt = id => S.film.sets.includes(id);
+const setRing = g => ({ x: g.at[0], z: g.at[1] + 5 });
+const nearRing = (q, r = 1.4) => Math.hypot(P.x - q.x, P.z - q.z) < r;
+
+/* ---------- What it looks like ---------- */
+function signPlane(w, h, draw) {
+  const c = document.createElement('canvas'); c.width = Math.round(128 * w); c.height = Math.round(128 * h);
+  const t = new T.CanvasTexture(c); t.encoding = T.sRGBEncoding;
+  const m = new T.Mesh(new T.PlaneGeometry(w, h), new T.MeshBasicMaterial({ map: t, side: T.DoubleSide }));
+  m.userData.paint = (...a) => { draw(c.getContext('2d'), c.width, c.height, ...a); t.needsUpdate = true; };
+  m.userData.paint(); return m;
+}
+const signText = (g, w, h, text, bg, fg, font = .55) => {
+  g.fillStyle = bg; g.fillRect(0, 0, w, h); g.fillStyle = fg; g.textAlign = 'center'; g.textBaseline = 'middle';
+  let px = h * font; g.font = `bold ${px}px system-ui, sans-serif`;
+  while (g.measureText(text).width > w * .94 && px > 8) { px -= 2; g.font = `bold ${px}px system-ui, sans-serif`; }
+  g.fillText(text, w / 2, h / 2);
+};
+// Bare set: floor, back wall, props of the crew. It is dressed in three stages as the material arrives
+const DRESS = {
+  comedia: [
+    [pBox(1.6, 1.4, .05, -2.4, 1.8, -3.3, 0x7fc8e8), pBox(1.8, .1, .08, -2.4, 2.55, -3.28, BEAM), pBox(1.8, .1, .08, -2.4, 1.05, -3.28, BEAM), pBox(1.1, .8, .05, 2.4, 2.1, -3.3, 0xd8402f)],
+    [pBox(2.6, .5, .9, 0, .35, -2.3, 0x8a3f7a), pBox(2.6, .8, .2, 0, .75, -2.8, 0x8a3f7a), pBox(1.1, .1, .6, 0, .42, -.9, BEAM), pBox(.1, .36, .5, .4, .2, -.9, BEAM), pBox(.1, .36, .5, -.4, .2, -.9, BEAM)],
+    [pBox(1.05, 2.2, .06, 3.2, 1.1, -3.3, BEAM), pCyl(.05, 1.5, -3.6, .75, -2.5, 0x2a2a30), pCyl(.28, .35, -3.6, 1.6, -2.5, 0xf6c445)],
+  ],
+  western: [
+    [...[0, 1, 2, 3, 4].map(i => pBox(9, .05, .05, 0, .55 + i * .55, -3.3, BEAM)), pBox(3.4, .7, .08, 0, 3, -3.28, 0x8f5a2b)],
+    [pBox(.5, 1, .05, -.3, 1, -3.26, 0xc9a266), pBox(.5, 1, .05, .3, 1, -3.26, 0xc9a266), pBox(.14, 2.4, .14, -2.8, 1.2, -2.4, BEAM), pBox(.14, 2.4, .14, 2.8, 1.2, -2.4, BEAM), pBox(6, .1, 1.2, 0, 2.4, -2.9, BEAM)],
+    [...barrel(-3.6, -1.6), ...barrel(-3.1, -1), ...crate(3.5, -1.6, .6), pCyl(.18, 1.2, 3.8, .6, .6, 0x4f9a4a), pCyl(.09, .5, 4.05, .85, .6, 0x4f9a4a)],
+  ],
+  musical: [
+    [pBox(1.7, 3.2, .3, -3.65, 1.6, -3.2, 0xa8283a), pBox(1.7, 3.2, .3, 3.65, 1.6, -3.2, 0xa8283a), pBox(9, .6, .3, 0, 3.1, -3.2, 0xc8323f)],
+    [pBox(5, .22, 1, 0, .17, -2.5, 0xf6c445), pBox(3.6, .22, .9, 0, .38, -2.8, 0xfdf6ea), pBox(2.2, .22, .6, 0, .6, -3, 0xf6c445)],
+    [...[-3, -1.5, 0, 1.5, 3].map(x => pGem(.2, x, 2.5, -3.2, 0xf6c445)), ...[-3.6, -1.8, 0, 1.8, 3.6].map(x => pBox(.3, .14, .2, x, .14, 2.8, 0xfff2b0))],
+  ],
+  terror: [
+    [pBox(1.3, 1.3, .05, 2.6, 2.3, -3.3, 0xeef2f6), ...[-3, -1, 1].map(x => pGem(.06, x, 2.6, -3.3, 0xffffff))],
+    [...[-3.2, -1.2, 1.2, 3.2].flatMap(x => [pBox(.7, .9, .14, x, .45, -2.2, 0x8d8a82), pBox(.14, .3, .15, x, .7, -2.13, 0x55504a)])],
+    [pCyl(.18, 2.2, -3.8, 1.1, -1.2, 0x3a2a1e), pBox(1.2, .1, .1, -3.3, 2, -1.2, 0x3a2a1e, .5), pBox(.9, .1, .1, -4.2, 1.7, -1.2, 0x3a2a1e, -.6), ...barrel(3.8, -.6)],
+  ],
+  scifi: [
+    [...[-4, -3, -1.6, -.4, 1, 2.4, 3.6].map((x, i) => pGem(.07, x, 1 + (i * 37 % 20) / 10, -3.3, 0xffffff)), pBox(1.2, 1.2, .05, 2.8, 2.2, -3.3, 0xd8703a)],
+    [{ geo: new T.ConeGeometry(.8, 2.4, 9).translate(0, 1.6, -2.3), color: 0xdfe3e8 }, pCyl(.8, .4, 0, .2, -2.3, 0x5a5f6a, 9), pGem(.24, 0, 1.6, -1.65, 0x7fc8e8), pBox(.2, .9, 1, -.9, .5, -2.3, 0xd8402f), pBox(.2, .9, 1, .9, .5, -2.3, 0xd8402f)],
+    [pBox(1.3, 1.1, .5, -3.6, .55, -2.2, 0x3a3a48), pBox(.9, .5, .05, -3.6, .85, -1.93, 0x4fe0e0), pBox(1.3, 1.1, .5, 3.6, .55, -2.2, 0x3a3a48), pBox(.9, .5, .05, 3.6, .85, -1.93, 0xe83f8a)],
+  ],
+  accion: [
+    [...[-3.4, -1.7, 0, 1.7, 3.4].flatMap(x => [pBox(1, .8, .05, x, 1, -3.3, 0xf6c445), pBox(1, .8, .05, x, 2.3, -3.3, 0x7fc8e8)])],
+    [pBox(2.4, .5, 1.1, 1.8, .45, -1.9, 0xd8402f, .16), pBox(1.2, .4, .9, 1.6, .9, -1.9, 0x7fc8e8, .16), pCyl(.22, .2, .9, .2, -1.3, 0x2a2a30), pCyl(.22, .2, 2.7, .3, -1.3, 0x2a2a30)],
+    [...barrel(-3.5, -1.6), ...barrel(-2.9, -1.1), pGem(.4, -3.2, 1, -1.4, 0xf08a24), pGem(.25, -3, 1.45, -1.3, 0xf5c518), ...crate(3.8, -.8, .7)],
+  ],
+};
+const filmSets = {}; // what is drawn for each genre, and the empty plots
+function drawSet(g) {
+  const old = filmSets[g.id]; if (old) { scene.remove(old.g); if (old.ring) scene.remove(old.ring); if (old.sign) scene.remove(old.sign); }
+  const root = new T.Group(), DARK = 0x2a2a30, [x, z] = g.at, q = setRing(g), o = { g: root, x, z, ring: flat(new T.RingGeometry(1.1, 1.5, 32), new T.MeshBasicMaterial({ color: 0xff2f8e, transparent: true, opacity: .9 }), q.x, .03, q.z) };
+  root.position.set(x, 0, z); scene.add(root);
+  if (!setBuilt(g.id)) {
+    // An empty plot: stakes, tape and a sign saying what will stand here
+    addDetails(root, [...[[-4.5, -3.4], [4.5, -3.4], [-4.5, 3.2], [4.5, 3.2]].map(([a, b]) => pBox(.12, .9, .12, a, .45, b, BEAM)), pBox(9, .04, .04, 0, .8, -3.4, 0xf5c518), pBox(9, .04, .04, 0, .8, 3.2, 0xf5c518), pBox(.04, .04, 6.6, -4.5, .8, -.1, 0xf5c518), pBox(.04, .04, 6.6, 4.5, .8, -.1, 0xf5c518)]);
+    o.ring.material.color.setHex(0x3a7bd5);
+    o.sign = iconSprite(g.icon, 1.2, '#3a7bd5'); o.sign.position.set(x, 2.2, z); scene.add(o.sign);
+    root.visible = o.ring.visible = o.sign.visible = false;
+    filmSets[g.id] = o; return o;
+  }
+  addDetails(root, [
+    pBox(9, .08, 6.6, 0, .04, -.1, 0x8f6a44), pBox(9, 3.3, .14, 0, 1.65, -3.42, g.wall), pBox(.14, 3.5, .9, -4.55, 1.75, -3.2, BEAM), pBox(.14, 3.5, .9, 4.55, 1.75, -3.2, BEAM), pBox(9.2, .14, .5, 0, 3.5, -3.3, BEAM),
+    // Crew: camera on its rails, two lights, boom and the director's chair
+    pBox(5, .05, .1, 0, .04, 3.7, 0x77747a), pBox(5, .05, .1, 0, .04, 4.1, 0x77747a), pBox(.8, .3, .8, -1.4, .2, 3.9, 0x3a3a48), pCyl(.05, .9, -1.4, .75, 3.9, DARK, 6), pBox(.45, .36, .75, -1.4, 1.35, 3.8, DARK), pCyl(.16, .34, -1.4, 1.36, 3.3, 0x3a3a48, 8),
+    ...[-4.4, 4.4].flatMap(px => [pCyl(.04, 2.4, px, 1.2, 2.5, DARK, 5), pBox(.5, .4, .34, px, 2.5, 2.4, 0xf6c445), pBox(.7, .04, .04, px, .05, 2.5, DARK), pBox(.04, .04, .7, px, .05, 2.5, DARK)]),
+    pCyl(.03, 2.6, 2.2, 1.3, 3.5, DARK, 5), pBox(1.6, .05, .05, 1.5, 2.55, 3, DARK), pBox(.14, .14, .34, .8, 2.45, 2.7, 0x55504a),
+    pBox(.64, .06, .5, 2, .62, 4.5, 0xd8402f), pBox(.05, .6, .05, 1.75, .3, 4.3, BEAM), pBox(.05, .6, .05, 2.25, .3, 4.3, BEAM), pBox(.05, .6, .05, 1.75, .3, 4.7, BEAM), pBox(.05, .6, .05, 2.25, .3, 4.7, BEAM), pBox(.6, .4, .05, 2, .9, 4.7, 0xd8402f),
+  ]);
+  o.dress = DRESS[g.id].map(parts => { const m = addDetails(root, parts.map(p => p)); m.visible = false; return m; });
+  filmSets[g.id] = o; return o;
+}
+function dressSets() {
+  const f = S.film;
+  GENRES.forEach(g => {
+    const o = filmSets[g.id]; if (!o || !o.dress) return;
+    let n = (f.done && f.done[g.id]) ? 3 : 0;
+    if (f.g === g.id && f.stage === 'prep') { const all = f.need.reduce((s, x) => s + x.need, 0), got = f.need.reduce((s, x) => s + x.got, 0); n = Math.floor(got / all * 3 + .001); }
+    else if (f.g === g.id && f.stage !== 'idle') n = 3;
+    o.dress.forEach((m, i) => { m.visible = i < n; });
+  });
+}
+let cineSign = null, cineCarpet = null, cineRing = null;
+function drawCine() {
+  const g = new T.Group(), RED = 0xa8283a, GOLD = 0xf6c445;
+  addDetails(g, [
+    pBox(12, 4.8, 5, 0, 2.4, 0, 0xe8d4b0), pBox(12.2, .4, 5.2, 0, 4.9, 0, RED), pBox(7, 1, 3, 0, 5.5, -.5, 0xe8d4b0), pBox(7.2, .2, 3.2, 0, 6.05, -.5, RED),
+    pBox(8.6, .28, 1.9, 0, 3, 3.3, 0x2a2a30), pBox(8.4, 1, .2, 0, 3.6, 4.2, 0x2a2a30), pBox(8.6, .1, .24, 0, 4.14, 4.2, GOLD), pBox(8.6, .1, .24, 0, 3.08, 4.2, GOLD),
+    ...[-4, 4].map(x => pCyl(.14, 2.9, x, 1.45, 4, GOLD, 8)),
+    pBox(3.4, 2.5, .08, 0, 1.25, 2.52, 0x2a3a4a), pBox(.1, 2.5, .1, 0, 1.25, 2.56, GOLD), pBox(3.6, .12, .12, 0, 2.55, 2.56, GOLD), pBox(5, .16, 1.6, 0, .08, 3.2, 0xd9cdb8),
+    ...[-4.6, -3, 3, 4.6].flatMap((x, i) => [pBox(1.2, 1.8, .06, x, 1.5, 2.52, GOLD), pBox(1.04, 1.64, .08, x, 1.5, 2.54, [0x2f4f8f, 0xd8402f, 0x3fa34d, 0x8e5bd0][i])]),
+    pBox(1.5, 2.2, 1.3, -6.9, 1.1, 2, RED), pBox(1.7, .2, 1.5, -6.9, 2.3, 2, GOLD), pBox(1.1, .7, .06, -6.9, 1.35, 2.68, 0x7fc8e8),
+    ...[-4, -3, -2, -1, 0, 1, 2, 3, 4].map(x => pGem(.07, x, 3.08, 4.34, 0xfff2b0)),
+  ]);
+  g.position.set(CINE.x, 0, CINE.z - 1.5); scene.add(g);
+  cineSign = signPlane(8, .85, (c, w, h, text = 'CINE LUNA') => signText(c, w, h, text, '#fff8e0', '#2a1a30', .62));
+  cineSign.position.set(CINE.x, 3.6, CINE.z + 2.82); scene.add(cineSign);
+  cineCarpet = flat(new T.PlaneGeometry(2.4, 6.2), new T.MeshBasicMaterial({ color: 0xc8202f }), CINE.x, .012, CINE.ring.z - 3); cineCarpet.visible = false;
+  cineRing = flat(new T.RingGeometry(1.1, 1.5, 32), new T.MeshBasicMaterial({ color: 0xff2f8e, transparent: true, opacity: .9 }), CINE.ring.x, .03, CINE.ring.z); cineRing.visible = false;
+}
+// The rest of the lot, only to look at: the entrance arch, a water tower and the great closed sound stages beyond the walls
+function drawLot() {
+  const arch = new T.Group(), A = AREAS[1], z = A.z1;
+  addDetails(arch, [pBox(1, 5.2, 1, -4.2, 2.6, z, 0xe8d4b0), pBox(1, 5.2, 1, 4.2, 2.6, z, 0xe8d4b0), pBox(1.2, .3, 1.2, -4.2, 5.3, z, 0xa8283a), pBox(1.2, .3, 1.2, 4.2, 5.3, z, 0xa8283a), pBox(9.4, .24, .7, 0, 4.1, z, 0xa8283a), pGem(.5, 0, 6.1, z, 0xf6c445)]);
+  scene.add(arch);
+  const sign = signPlane(7.4, 1, c => signText(c, c.canvas.width, c.canvas.height, '🌙 ESTUDIOS LUNA', '#2a1a48', '#f6c445', .6)); sign.position.set(0, 4.85, z + .02); scene.add(sign);
+  const tower = new T.Group(), DARK = 0x55504a;
+  addDetails(tower, [...[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([a, b]) => pBox(.16, 5, .16, a, 2.5, b, DARK)), pBox(2.2, .1, .1, 0, 2.4, 1, DARK), pBox(2.2, .1, .1, 0, 2.4, -1, DARK), pCyl(1.5, 2, 0, 6, 0, 0xdfe3e8, 12), { geo: new T.ConeGeometry(1.6, .8, 12).translate(0, 7.4, 0), color: 0xa8283a }]);
+  tower.position.set(-25, 0, 24); scene.add(tower);
+  const towerSign = signPlane(2.4, .8, c => signText(c, c.canvas.width, c.canvas.height, 'LUNA', '#dfe3e8', '#a8283a', .7)); towerSign.position.set(-25, 6, 25.55); scene.add(towerSign);
+  [[-54, -4, 1], [54, -4, 2], [-50, -35, 3], [50, -35, 4], [38, -62, 5], [-52, -68, 6]].forEach(([x, hz, n]) => {
+    const h = new T.Group(); addDetails(h, [pBox(15, 6, 11, 0, 3, 0, 0xd9cdb8), { geo: new T.CylinderGeometry(5.6, 5.6, 15, 12, 1, false, -Math.PI / 2, Math.PI).rotateZ(Math.PI / 2).scale(1, .32, 1).translate(0, 6, 0), color: 0x8f8a82 }, pBox(4, 3.4, .1, 0, 1.7, 5.52, 0x77747a)]);
+    h.position.set(x, 0, hz); scene.add(h);
+    const nm = signPlane(2.4, 2.4, c => signText(c, c.canvas.width, c.canvas.height, String(n), '#d9cdb8', '#a8283a', .9)); nm.position.set(x, 4.5, hz + 5.54); scene.add(nm);
+  });
+}
+if (THEME.id === 'cine') { drawCine(); drawLot(); GENRES.forEach(drawSet); dressSets(); }
+const filmBlocked = (x, z) => {
+  if (Math.abs(x - CINE.x) < 6.1 && z > CINE.z - 4 && z < CINE.z + 1.2) return true;
+  if (Math.abs(x - (CINE.x - 6.9)) < .9 && z > CINE.z - .3 && z < CINE.z + 1.3) return true;
+  return S.film.sets.some(id => { const [sx, sz] = genreOf(id).at; return Math.abs(x - sx) < 4.7 && z > sz - 3.7 && z < sz - 3; });
+};
+const blockedFilm = blocked;
+blocked = (x, z) => blockedFilm(x, z) || (THEME.id === 'cine' && filmBlocked(x, z));
+
+/* ---------- Choosing a script ---------- */
+function filmScripts() {
+  const goods = shipGoods(); if (!goods.length) return [];
+  const pool = GENRES.filter(g => setBuilt(g.id)).sort(() => Math.random() - .5), used = [];
+  return [0, 1, 2].map(i => {
+    const g = pool[i % pool.length], count = g.size > 1 ? 3 : 2, kinds = g.wants.filter(k => goods.includes(k)).slice(0, count);
+    goods.slice().sort(() => Math.random() - .5).forEach(k => { if (kinds.length < count && !kinds.includes(k)) kinds.push(k); });
+    const left = g.titles.filter(t => !used.includes(t)), title = pick(left.length ? left : g.titles); used.push(title);
+    return { g: g.id, title, need: kinds.map(k => ({ k, need: Math.max(3, Math.round((4 + Math.random() * 5) * g.size)), got: 0 })) };
+  });
+}
+/* ---------- The premiere ---------- */
+function filmRating() {
+  const f = S.film, g = genreOf(f.g), takes = f.takes.length ? f.takes : [2], avg = takes.reduce((a, b) => a + b, 0) / takes.length;
+  let r = 1 + (avg - 1) * 1.5 + (f.q || 0);
+  r += S.morale >= 65 ? .5 : S.morale < 35 ? -.5 : 0; r += S.trust >= 65 ? .5 : S.trust < 35 ? -.5 : 0;
+  if (g.needMorale) r += S.morale >= 60 ? .7 : -.7;
+  if (g.needTrust) r += S.trust >= 60 ? .7 : -.7;
+  if (g.swing) r += Math.random() < .5 ? 1 : -.7;
+  return Math.max(1, Math.min(5, Math.round(r + (Math.random() - .5) * .5)));
+}
+let premT = 0;
+function startPremiere() {
+  const r = CINE.ring, f = S.film; f.stage = 'premiere'; premT = 3.2; cineCarpet.visible = true; cineRing.visible = false; sfx.bell(); toast(`🌟 ¡Noche de estreno de «${f.title}»!`);
+  for (let i = 0; i < 8; i++) { const sd = i % 2 ? 1 : -1, x = r.x + sd * (1.8 + (i >> 1) * .15), z = r.z - 3.6 + (i >> 1) * 1.1; addActor(makeCustomer(), FARM, [{ x, z, wait: 6, say: pick(['📸', '👏', '🌟', '❤️']) }, { x: FARM.spawn.x, z: FARM.spawn.z }], { speed: 3.2 + Math.random() }); }
+}
+function filmPremiere() {
+  const f = S.film, g = genreOf(f.g), rating = filmRating(), perDay = Math.max(1, Math.round(incMin(3.5) * g.money * rating / 3));
+  f.run = [...(f.run || []).slice(-2), { title: f.title, icon: g.icon, rating, left: FILM_DAYS, perDay }];
+  f.hist = [{ title: f.title, icon: g.icon, rating }, ...(f.hist || [])].slice(0, 8);
+  f.made = (f.made || 0) + 1; S.meta.films = (S.meta.films || 0) + 1; f.done = f.done || {}; f.done[g.id] = 1;
+  const open = Math.round(perDay * 1.5); addCoins(open); addXP(rating * 20); if (rating === 5) giveStars(2); else if (rating === 4) giveStars(1);
+  S.trust = clamp100(S.trust + (rating - 3) * 3); S.morale = clamp100(S.morale + (rating - 3) * 2);
+  f.last = { title: f.title, rating, open, quotes: REVIEWS[rating].slice().sort(() => Math.random() - .5).slice(0, 2) };
+  f.stage = 'idle'; f.scripts = null; f.q = 0; f.takes = []; cineCarpet.visible = false;
+  sfx.mission(); flyCoins(P.x, 1.5, P.z, 14); puff(P.x, 1, P.z, 0xf6c445, 18, 1.6, 3.5); stat('pelicula', { genero: g.id, nota: rating });
+  dropCast(); dressSets(); renderFilm(); $('filmOverlay').hidden = false; last = performance.now(); save();
+}
+/* ---------- The panel ---------- */
+const mmss = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+function renderFilm() {
+  const f = S.film, runs = (f.run || []).filter(r => r.left > 0);
+  const stars = n => '⭐'.repeat(n);
+  let top = '', body = '';
+  if (f.last) {
+    top = `«${f.last.title}» ${stars(f.last.rating)} · +${fmt(f.last.open)} monedas la primera noche.`;
+    body += `<h4 class="sthead">Lo que dice la crítica</h4>` + f.last.quotes.map(q => `<div class="dmrow done"><span>📰</span><b>${q}</b></div>`).join('');
+    f.last = null;
+  }
+  if (f.stage === 'idle') {
+    if (!f.scripts || !f.scripts.length) f.scripts = filmScripts();
+    top = top || 'Elige un guion. Luego vistes el plató con lo que hacen los talleres y a rodar.';
+    body += `<h4 class="sthead">Guiones</h4>` + (f.scripts.length ? f.scripts.map((s, i) => { const g = genreOf(s.g); return `<div class="dmrow"><span>${g.icon}</span><b>${s.title}<small>${g.name} · ${g.takes} tomas · ${g.note}</small><small>Para el plató: ${s.need.map(n => `${n.need} ${ITEMS[n.k].icon}`).join(' · ')}</small></b><button data-script="${i}">Elegir</button></div>`; }).join('') : '<p>Abre primero algún campo o taller.</p>');
+    const more = GENRES.filter(g => !setBuilt(g.id));
+    if (more.length) body += `<h4 class="sthead">Platós nuevos</h4>` + more.map(g => {
+      const open = areaOpen(g.area), zone = (MAPC.zones && MAPC.zones[g.area]) || 'otra zona';
+      return `<div class="dmrow"><span>${g.icon}</span><b>${g.set}<small>${g.name} · ${open ? fmt(g.cost) + ' monedas' : 'se abre con ' + zone}</small></b>${open ? `<button data-build="${g.id}" ${S.coins < g.cost ? 'disabled' : ''}>Construir</button>` : ''}</div>`;
+    }).join('');
+  } else if (f.stage === 'prep') {
+    top = top || `«${f.title}»: lleva todo esto al círculo rosa del ${genreOf(f.g).set.toLowerCase()}.`;
+    body += `<div class="dmrow"><span>${genreOf(f.g).icon}</span><b>${f.need.map(n => `${ITEMS[n.k].icon} ${n.got}/${n.need}`).join(' · ')}</b></div><button class="ghost" id="filmDrop">Dejar este guion</button>`;
+  } else if (f.stage === 'shoot') {
+    top = top || `«${f.title}»: toma ${f.retake !== undefined && f.retake !== null ? 'repetida' : (f.takes.length + 1) + ' de ' + genreOf(f.g).takes}. Pisa el círculo rosa del plató para gritar ¡Acción!`;
+  } else if (f.stage === 'review') {
+    top = top || `Se acabó el rodaje de «${f.title}». Esto es lo que ha salido:`;
+    body += `<h4 class="sthead">Las tomas</h4>` + f.takes.map((n, i) => `<div class="dmrow done"><span>🎞️</span><b>Toma ${i + 1}<small>${stars(n)}</small></b></div>`).join('');
+    body += `<button id="filmEdit">✂️ Al montaje</button>`;
+    if (f.takes.some(n => n < 3)) body += `<button class="ghost" id="filmRetake">📺 Ver anuncio: repetir la peor toma</button>`;
+  } else if (f.stage === 'edit') {
+    const s = Math.max(0, Math.ceil((f.end - Date.now()) / 1000));
+    top = top || `Montando «${f.title}»: quedan ${mmss(s)}.`;
+    body += `<button id="filmAd">📺 Ver anuncio: terminar el montaje</button><button class="ghost" id="filmStar" ${S.stars < 1 ? 'disabled' : ''}>⭐ Terminar con 1 estrella</button>`;
+  } else if (f.stage === 'ready') {
+    top = top || `«${f.title}» está lista. Ve al círculo rosa del Cine Luna: ¡noche de estreno!`;
+  }
+  if (runs.length) body += `<h4 class="sthead">En cartelera</h4>` + runs.map(r => `<div class="dmrow done"><span>${r.icon}</span><b>${r.title}<small>${stars(r.rating)} · ${fmt(r.perDay)} al día · ${r.left} ${r.left === 1 ? 'día' : 'días'} más</small></b></div>`).join('');
+  const old = (f.hist || []).filter(h => !runs.some(r => r.title === h.title));
+  if (old.length) body += `<h4 class="sthead">Filmoteca</h4>` + old.map(r => `<div class="dmrow done"><span>${r.icon}</span><b>${r.title}<small>${stars(r.rating)}</small></b></div>`).join('');
+  $('filmTop').textContent = top; $('filmBody').innerHTML = body;
+}
+function filmBar() {
+  const b = $('filmBar'), f = S.film, st = f.stage;
+  const show = filmHere() && st !== 'idle' && st !== 'premiere';
+  if (b.hidden === show) b.hidden = !show;
+  if (!show) return;
+  let t = '';
+  if (take) t = `🎥 Toma ${f.retake != null ? 'repetida' : (f.takes.length + 1) + '/' + genreOf(f.g).takes} · ${Math.ceil(take.t)} s · ${take.miss ? '❌'.repeat(Math.min(3, take.miss)) : '✨ perfecta'}`;
+  else if (st === 'prep') t = `🎬 Viste el plató: ${f.need.map(n => `${ITEMS[n.k].icon} ${n.got}/${n.need}`).join(' · ')}`;
+  else if (st === 'shoot') t = `🎬 ${f.retake != null ? 'Toma repetida' : 'Toma ' + (f.takes.length + 1) + '/' + genreOf(f.g).takes}: pisa el círculo rosa del plató`;
+  else if (st === 'review') t = `🎞️ Rodaje acabado: pisa el círculo rosa`;
+  else if (st === 'edit') t = `✂️ Montando… ${mmss(Math.max(0, Math.ceil((f.end - Date.now()) / 1000)))}`;
+  else if (st === 'ready') t = `🍿 ¡Lista! Ve al estreno en el Cine Luna`;
+  if (b._t !== t) { b.textContent = t; b._t = t; }
+}
+/* ---------- The cast on set (not saved) ---------- */
+let cast = [], castFor = null;
+function dropCast() { cast.forEach(a => scene.remove(a.m.g)); cast = []; castFor = null; }
+function ensureCast() {
+  const f = S.film, g = genreOf(f.g);
+  if (castFor === f.g && cast.length) return;
+  dropCast(); castFor = f.g;
+  cast = g.cast.map(c => {
+    const m = makePerson({ shirt: mat(c.c), pants: mat(pick([0x2f3f5f, 0x4a3a2e, 0x2a2a30])), hair: mat(pick(HAIRS)), skin: mat(pick(SKINS)), long: Math.random() < .4, cap: c.hat ? mat(c.hat) : null });
+    const a = { m, c, i: 0, x: g.at[0] + c.pts[0][0], z: g.at[1] + c.pts[0][1], face: 0, walk: 0, t: Math.random() * 6 };
+    m.g.position.set(a.x, 0, a.z); scene.add(m.g); return a;
+  });
+}
+function updateCast(dt, live) {
+  const g = genreOf(S.film.g);
+  cast.forEach(a => {
+    let moving = false, hop = 0;
+    if (live) {
+      a.t += dt;
+      if (a.c.dance) { hop = Math.abs(Math.sin(a.t * 5)) * .32; a.face += dt * 3; }
+      else if (a.c.pts.length > 1) {
+        const q = a.c.pts[a.i]; moving = !stepToward(a, g.at[0] + q[0], g.at[1] + q[1], a.c.sp, dt);
+        if (!moving) a.i = (a.i + 1) % a.c.pts.length;
+      }
+    } else { const q = a.c.pts[0]; moving = !stepToward(a, g.at[0] + q[0], g.at[1] + q[1], 2.2, dt); if (!moving) a.face = 0; }
+    a.m.g.position.set(a.x, hop, a.z); walkAnim(a.m, moving, a.walk); a.m.g.rotation.y = lerpAngle(a.m.g.rotation.y, a.face, Math.min(1, dt * 10));
+  });
+}
+/* ---------- A take, live ---------- */
+let take = null; // { t, miss, next, inc: [] }: not saved, a reload starts the take again
+function incidentSpots(g) {
+  const [x, z] = g.at;
+  return [[-5.6, .8], [5.6, .8], [-3.8, 4.8], [3.8, 4.8], [-2, 6.4], [2.6, 6.4], [-3.2, 1.2], [3.2, 1.2], [0, 2.4]].map(([a, b]) => ({ x: x + a, z: z + b })).filter(q => inArea(q.x, q.z) && !blocked(q.x, q.z));
+}
+function startTake() {
+  const f = S.film; ensureCast();
+  take = { t: TAKE_LEN, miss: 0, next: 1.6, inc: [], sayT: 1 };
+  sfx.bell(); toast('🎬 ¡Luces, cámara… acción!'); burst(P.x, 2.6, P.z, '🎬');
+  stat('pelicula', { genero: f.g, accion: 'toma' });
+}
+function addIncident(g) {
+  const used = take.inc.filter(i => i.kind === 'fix').map(i => i.q), free = incidentSpots(g).filter(q => !used.includes(q) && !used.some(u => Math.hypot(u.x - q.x, u.z - q.z) < 1.5) && Math.hypot(q.x - P.x, q.z - P.z) > 1.6);
+  if (Math.random() < .33 && take.inc.every(i => i.kind !== 'nosy')) {
+    // Somebody walks onto the set: touch them before they get there
+    const side = Math.random() < .5 ? -1 : 1, x = g.at[0] + side * 9, z = g.at[1] + 2 + Math.random() * 4, inside = inArea(x, z) ? [x, z] : [g.at[0] - side * 9, z];
+    const m = makeCustomer(), a = { m, x: inside[0], z: inside[1], face: 0, walk: 0 };
+    m.g.position.set(a.x, 0, a.z); scene.add(m.g);
+    const sign = iconSprite(pick(['📸', '🗣️', '🐔']), 1.1, '#d8402f'); scene.add(sign);
+    take.inc.push({ kind: 'nosy', a, sign }); toast('🚷 ¡Alguien se cuela en el plató! Tócalo para echarlo'); return;
+  }
+  if (!free.length) return;
+  const q = pick(free), [icon, text] = pick(FIXES), sign = iconSprite(icon, 1.3, '#d8402f'), ring = fixRing(q.x, q.z, 'red');
+  sign.position.set(q.x, 2.3, q.z); scene.add(sign);
+  take.inc.push({ kind: 'fix', q, sign, ring, life: g.life, hold: 0 }); toast(`${icon} ${text}`);
+}
+function endIncident(i) {
+  scene.remove(i.sign); if (i.ring) scene.remove(i.ring);
+  if (i.kind === 'nosy') { const a = i.a; addActor(a.m, { spawn: { x: a.x, z: a.z } }, [{ x: a.x + (a.x > P.x ? 7 : -7), z: a.z + 5 }], { speed: 4.5, face: a.face }); }
+}
+function takeMiss(i, x, z, text) { take.miss++; burst(x, 2.6, z, text); puff(x, 1, z, 0xd8402f, 8, .8, 2); sfx.drop(); take.inc.splice(take.inc.indexOf(i), 1); endIncident(i); }
+function updateTake(dt) {
+  const f = S.film, g = genreOf(f.g);
+  take.t -= dt;
+  if ((take.next -= dt) <= 0 && take.t > 3) { take.next = g.gap * (.8 + Math.random() * .4); addIncident(g); }
+  if ((take.sayT -= dt) <= 0) { take.sayT = 2.4; const a = pick(cast); if (a) burst(a.x, 2.5, a.z, pick(g.say)); if (g.id === 'accion' || g.id === 'western') puff(g.at[0] + (Math.random() - .5) * 6, 1, g.at[1], 0xf08a24, 8, 1, 2.4); }
+  for (const i of take.inc.slice()) {
+    if (i.kind === 'fix') {
+      i.life -= dt; pulse(i.sign, 1.3); i.ring.scale.setScalar(1 + .1 * Math.sin(performance.now() / 120));
+      if (onSpot(i.q)) { i.hold += dt; if (i.hold > .55) { burst(i.q.x, 2.4, i.q.z, '✅'); sfx.drop(); take.inc.splice(take.inc.indexOf(i), 1); endIncident(i); continue; } }
+      if (i.life <= 0) takeMiss(i, i.q.x, i.q.z, '❌ ¡Toma estropeada!');
+    } else {
+      const a = i.a, cx = g.at[0], cz = g.at[1] + .5; stepToward(a, cx, cz, 1.45, dt); a.m.g.position.set(a.x, 0, a.z); walkAnim(a.m, true, a.walk); a.m.g.rotation.y = a.face;
+      i.sign.position.set(a.x, 2.6, a.z); pulse(i.sign, 1.1);
+      if (Math.hypot(a.x - P.x, a.z - P.z) < 1.5) { burst(a.x, 2.4, a.z, '😅'); sfx.drop(); take.inc.splice(take.inc.indexOf(i), 1); endIncident(i); continue; }
+      if (Math.hypot(a.x - cx, a.z - cz) < 3.4) takeMiss(i, a.x, a.z, '❌ ¡Se ve en el plano!');
+    }
+  }
+  if (take.t <= 0) {
+    take.inc.slice().forEach(endIncident);
+    const n = Math.max(1, 3 - take.miss); take = null; ringHold = -1.6;
+    if (f.retake != null) { f.takes[f.retake] = Math.max(f.takes[f.retake], n); f.retake = null; } else f.takes.push(n);
+    sfx.mission(); burst(g.at[0], 3, g.at[1], '🎬 ¡Corten!'); toast(`🎬 ¡Corten! ${'⭐'.repeat(n)}`);
+    if (f.takes.length >= g.takes) { f.stage = 'review'; filmOpened = false; }
+    save();
+  }
+}
+/* ---------- Every frame ---------- */
+let filmOpened = false, filmGive = 0, spectT = 3, ringHold = 0;
+const filmFree = () => $('filmOverlay').hidden && $('dayOverlay').hidden && $('decOverlay').hidden;
+function updateFilm(dt) {
+  $('filmBtn').hidden = !filmHere();
+  if (!filmHere()) return;
+  const f = S.film, g = f.g && genreOf(f.g), st = f.stage;
+  // Plots appear when their zone opens; only the rings that do something now are shown
+  let onRing = null;
+  GENRES.forEach(h => {
+    const o = filmSets[h.id], built = setBuilt(h.id), open = areaOpen(h.area);
+    if (!built) { o.g.visible = o.sign.visible = open; if (open) pulse(o.sign, 1.2); }
+    const on = open && (st === 'idle' || (f.g === h.id && ['prep', 'shoot', 'review', 'edit'].includes(st) && !take));
+    o.ring.visible = on;
+    if (on) { const q = setRing(h); o.ring.scale.setScalar(1 + .06 * Math.sin(performance.now() / 220)); if (nearRing(q)) onRing = h; }
+  });
+  if (!onRing) { filmOpened = false; ringHold = 0; }
+  else if (!filmOpened && filmFree() && (st === 'idle' || st === 'review' || st === 'edit')) { filmOpened = true; renderFilm(); $('filmOverlay').hidden = false; }
+  // Dressing the set
+  if (st === 'prep' && onRing && (filmGive -= dt) <= 0) {
+    const n = f.need.find(x => x.got < x.need && P.stack.some(b => b.parent === sonia.stack && b.userData.item === x.k));
+    const b = n && takeFromStack(k => k === n.k);
+    if (b) { n.got++; filmGive = .12; sfx.drop(); flyTo(b, new T.Vector3(g.at[0], 1, g.at[1] - 1), .35, () => scene.remove(b)); dressSets(); }
+    if (f.need.every(x => x.got >= x.need)) { f.stage = 'shoot'; f.takes = []; f.retake = null; sfx.bell(); toast('🎭 ¡Plató listo! Espera a que el reparto ocupe su sitio y pisa el círculo'); filmOpened = true; ringHold = -1.2; ensureCast(); save(); }
+  }
+  // The takes
+  if (f.stage === 'shoot') {
+    ensureCast();
+    if (!take && onRing && filmFree() && (ringHold += dt) > .35) { ringHold = 0; startTake(); }
+    if (take) updateTake(dt);
+    updateCast(dt, !!take);
+  } else if (f.stage === 'review' || f.stage === 'edit') updateCast(dt, false);
+  // Editing goes on in real time; then to the cinema
+  if (f.stage === 'edit' && Date.now() >= f.end) { f.stage = 'ready'; sfx.bell(); toast(`🍿 ¡«${f.title}» está lista! Corre al Cine Luna`); save(); }
+  if (f.stage === 'ready') {
+    cineRing.visible = cineCarpet.visible = true; cineRing.scale.setScalar(1 + .08 * Math.sin(performance.now() / 180));
+    if (nearRing(CINE.ring) && filmFree()) startPremiere();
+  }
+  if (f.stage === 'premiere' && (premT -= dt) <= 0) { if (filmFree()) filmPremiere(); else premT = .3; }
+  // Films on show bring people: a queue at the cinema and more customers everywhere
+  const runs = (f.run || []).filter(r => r.left > 0), pull = runs.reduce((s, r) => s + Math.max(0, r.rating - 2), 0);
+  DEC.boxF = 1 - Math.min(.3, pull * .04);
+  if (runs.length && (spectT -= dt) <= 0) {
+    spectT = Math.max(2.5, 8 - pull * .8);
+    if (actors.length < 12 && Math.hypot(P.x - CINE.x, P.z - CINE.z) < 26) addActor(makeCustomer(), FARM, [{ x: CINE.door.x + (Math.random() - .5), z: CINE.door.z, say: pick(['🍿', '🎟️', '🎬']) }], { speed: 2.4 + Math.random() * .6 });
+  }
+  // The marquee shows the latest film on, also after reloading the game
+  const showing = runs[runs.length - 1], marquee = showing ? `${showing.icon} ${showing.title} ${'★'.repeat(showing.rating)}` : '';
+  if (cineSign._text !== marquee) { cineSign._text = marquee; cineSign.userData.paint(marquee || undefined); }
+  const liveG = take && genreOf(S.film.g);
+  DEC.camWide = (DEC.camWide || 0) + ((liveG ? 1 : 0) - (DEC.camWide || 0)) * Math.min(1, dt * 2.5);
+  if (liveG) { DEC.camX = (liveG.at[0] - P.x) * .75; DEC.camZ = (liveG.at[1] + 1.5 - P.z) * .75; }
+  filmBar();
+}
+const updateTownFilm = updateTown;
+updateTown = dt => { updateTownFilm(dt); updateFilm(dt); };
+$('filmBtn').addEventListener('click', () => { $('menu').hidden = true; renderFilm(); $('filmOverlay').hidden = false; });
+$('filmClose').addEventListener('click', () => { $('filmOverlay').hidden = true; last = performance.now(); });
+const closeFilm = () => { $('filmOverlay').hidden = true; last = performance.now(); };
+$('filmOverlay').addEventListener('click', e => {
+  const f = S.film, sc = e.target.closest('[data-script]'), bd = e.target.closest('[data-build]');
+  if (sc) { const s = f.scripts[+sc.dataset.script]; Object.assign(f, { stage: 'prep', g: s.g, title: s.title, need: s.need, q: 0, takes: [], retake: null }); if (f.done) delete f.done[s.g]; dropCast(); dressSets(); sfx.mission(); toast(`🎬 «${s.title}»: lleva el material al círculo rosa del plató`); stat('pelicula', { genero: s.g, accion: 'guion' }); save(); closeFilm(); return; }
+  if (bd && !bd.disabled) {
+    const g = genreOf(bd.dataset.build); if (S.coins < g.cost) return;
+    S.coins -= g.cost; $('coinsTxt').textContent = fmt(S.coins); f.sets.push(g.id); f.scripts = null; drawSet(g); dressSets(); unstick();
+    sfx.mission(); puff(g.at[0], 1.5, g.at[1], 0xf6c445, 18, 2, 3.5); toast(`${g.icon} ¡${g.set} construido!`); stat('pelicula', { genero: g.id, accion: 'plato' }); save(); renderFilm(); return;
+  }
+  if (e.target.closest('#filmDrop')) { f.stage = 'idle'; f.scripts = null; f.g = null; dropCast(); dressSets(); save(); renderFilm(); return; }
+  if (e.target.closest('#filmEdit')) { f.stage = 'edit'; f.end = Date.now() + genreOf(f.g).mins * 60000; sfx.bell(); toast('✂️ A la sala de montaje. Mientras, sigue con el estudio'); dropCast(); save(); closeFilm(); return; }
+  if (e.target.closest('#filmRetake')) {
+    stat('anuncio_ofrecido', { sitio: 'retoma' });
+    showAd(() => { f.retake = f.takes.indexOf(Math.min(...f.takes)); f.stage = 'shoot'; ringHold = 0; filmOpened = true; toast('🎬 Repetimos esa toma: pisa el círculo rosa'); save(); }, 'retoma');
+    closeFilm(); return;
+  }
+  if (e.target.closest('#filmAd')) { stat('anuncio_ofrecido', { sitio: 'montaje' }); showAd(() => { f.end = 0; }, 'montaje'); closeFilm(); return; }
+  const st = e.target.closest('#filmStar');
+  if (st && !st.disabled && S.stars >= 1) { S.stars--; f.end = 0; closeFilm(); }
+});
+// Box office: running films earn at the end of each game day
+const endDayFilm = endDay;
+endDay = () => {
+  endDayFilm();
+  if (!S.pendingSum || !filmHere()) return;
+  const runs = (S.film.run || []).filter(r => r.left > 0); if (!runs.length) return;
+  let v = 0; runs.forEach(r => { v += r.perDay; r.left--; });
+  S.film.run = S.film.run.filter(r => r.left > 0);
+  addCoins(v); S.pendingSum.box = { v, n: runs.length }; save(); showSummary();
+};
+const showSummaryFilm = showSummary;
+showSummary = () => {
+  showSummaryFilm();
+  const d = S.pendingSum && S.pendingSum.box;
+  if (d) $('dayStats').innerHTML += `<span>🎬 Taquilla (${d.n} ${d.n === 1 ? 'película' : 'películas'})</span><b>+${fmt(d.v)}</b>`;
+};
+// Decisions while a film is on: never in the middle of a take, and they change the reviews
+const filmQ = n => () => { S.film.q = (S.film.q || 0) + n; };
+const filmCard = stage => () => THEME.id === 'cine' && !take && stage.includes(S.film.stage);
+CARDS.push(
+  { id: 'estrella', icon: '🌟', title: 'La estrella se pone difícil', text: 'Exige un camerino de lujo o no sale a rodar.', ok: filmCard(['prep', 'shoot']),
+    opts: [{ label: 'Pagarle el camerino', coins: -1, note: '🎬 Mejor crítica', act: filmQ(.5) }, { label: 'Que ruede y punto', morale: -6, note: '🎬 Peor crítica', act: filmQ(-.5) }] },
+  { id: 'guionista', icon: '✍️', title: 'El montador tiene una idea', text: 'Quiere cambiar el final. Retrasaría el montaje un minuto.', ok: filmCard(['edit']),
+    opts: [{ label: 'Hacerle caso', note: '⏱️ +1 min · 🎬 Mejor crítica', act: () => { S.film.end += 60000; filmQ(.5)(); } }, { label: 'Dejarlo como está', morale: -3, note: '🎬 Crítica algo peor', act: filmQ(-.25) }] },
+  { id: 'productor', icon: '💼', title: 'El productor mete la nariz', text: 'Pone dinero si su sobrino sale en la película. Actúa fatal.', ok: filmCard(['prep', 'shoot']),
+    opts: [{ label: 'Aceptar', coins: 1.2, note: '🎬 Peor crítica', act: filmQ(-.5) }, { label: 'Ni hablar', trust: 3, note: '🎬 Mejor crítica', act: filmQ(.25) }] },
+);
 
 /* ================= Story: chapters and short scenes ================= */
 // Each map is a chapter. A chapter opens and closes with a few lines from Sonia or a neighbour, and some big steps
@@ -6657,6 +7726,28 @@ const STORY = {
       [['🧔', 'Marino, el pescador'], 'Las islas están separadas: habrá que tender puentes para llegar a todas.'],
     ] },
     steps: [],
+  },
+  cine: {
+    title: 'Los Estudios Luna',
+    intro: { icon: '🎬', lines: [
+      [['🎬', 'Fina, la directora'], '¡Sonia! Dicen que levantas lo que toques. Estos estudios fueron los mejores del país… y mira cómo están.'],
+      [SONIA, 'Yo de cine no sé nada. Pero sé de trabajar, y de cuidar a la gente.'],
+      [['🎬', 'Fina, la directora'], 'Con eso basta. Aquí cultivamos lo que usa el estudio: algodón para el vestuario, maíz para las palomitas. Y cuando rodemos, tú diriges: si un foco se funde o un curioso se cuela, corre a arreglarlo antes de que se estropee la toma.'],
+    ] },
+    steps: [
+      { id: 'film1', when: () => (S.film.made || 0) >= 1, icon: '🍿', title: '¡Vuestra primera película!', lines: [
+        [['🎬', 'Fina, la directora'], 'Mira esa cola en el Cine Luna. Hacía años que nadie venía aquí por gusto.'],
+        [SONIA, 'Pues esto solo acaba de empezar. Vamos a por el siguiente plató.'],
+      ] },
+      { id: 'film5', when: () => (S.film.hist || []).some(h => h.rating === 5), icon: '🏆', title: '¡Cinco estrellas!', lines: [
+        [['🎬', 'Fina, la directora'], '¡Cinco estrellas! Los críticos dicen que no se veía algo así desde los tiempos dorados.'],
+        [SONIA, 'Se lo debo al equipo. Y a quien echó a aquel señor de las fotos del plató.'],
+      ] },
+    ],
+    outro: { icon: '🌙', lines: [
+      [['🎬', 'Fina, la directora'], 'Los Estudios Luna vuelven a ser lo que eran. Toda la gente del cine habla de ti, Sonia.'],
+      [SONIA, 'Yo solo sé de trabajar y de cuidar a la gente. Lo demás lo habéis hecho vosotros.'],
+    ] },
   },
 };
 const story = () => STORY[THEME.id];
@@ -7135,7 +8226,8 @@ function giveDecor() {
 }
 function decorBlocked(x, z) {
   return PATCHES.some(p => { const sp = p.spacing || SPACING; return Math.abs(x - p.x) < p.cols * sp / 2 + .6 && Math.abs(z - p.z) < p.rows * sp / 2 + .6; })
-    || [...BUILDS.filter(b => isBuilt(b.id)), ...SHOPS.filter(s => s.open)].some(b => Math.hypot(x - b.x, z - b.z) < 2.6);
+    || [...BUILDS.filter(b => isBuilt(b.id)), ...SHOPS.filter(s => s.open)].some(b => Math.hypot(x - b.x, z - b.z) < 2.6)
+    || (S.staff && S.staff.spot && Math.hypot(x - S.staff.spot.x, z - S.staff.spot.z) < 4.5) || (S.film && S.film.spot && Math.hypot(x - S.film.spot.x, z - S.film.spot.z) < 5.5) || (S.staff && S.staff.houses.some(h => Math.hypot(x - h.x, z - h.z) < 3.2));
 }
 const decorNear = () => decorMeshes.filter(o => Math.hypot(o.d.x - P.x, o.d.z - P.z) < 3.5).sort((a, b) => Math.hypot(a.d.x - P.x, a.d.z - P.z) - Math.hypot(b.d.x - P.x, b.d.z - P.z))[0];
 function renderDecor() {
@@ -7163,6 +8255,46 @@ $('decorRemove').addEventListener('click', () => {
   scene.remove(o.g); decorMeshes.splice(decorMeshes.indexOf(o), 1); S.decorPut.splice(S.decorPut.indexOf(o.d), 1);
   S.meta.decorUsed[o.d.k] = Math.max(0, decorUsed(o.d.k) - 1); sfx.drop(); save(); renderDecor();
 });
+
+/* ================= Street lamps ================= */
+// Posts along the edges of every zone, all merged into one mesh. As dusk falls each pool of light on the ground grows in, without any real light (cheap on phones).
+const LAMP_SPOTS = (() => {
+  const out = [], rects = Object.values(AREAS), step = 11;
+  const free = (x, z) => rects.some(a => inRect(a, x, z)) && !blocked(x, z) && !PATCHES.some(p => { const sp = p.spacing || SPACING; return Math.abs(x - p.x) < p.cols * sp / 2 + 1 && Math.abs(z - p.z) < p.rows * sp / 2 + 1; })
+    && !SHOPS.some(s => Math.hypot(x - s.x, z - s.z) < 3.4) && !BUILDS.some(b => Math.hypot(x - b.x, z - b.z) < 3) && !out.some(o => Math.hypot(x - o.x, z - o.z) < 6);
+  rects.forEach(r => {
+    const x0 = r.x0 + 1.3, x1 = r.x1 - 1.3, z0 = r.z0 + 1.3, z1 = r.z1 - 1.3, here = [];
+    for (let x = x0; x <= x1; x += step) here.push([x, z0], [x, z1]);
+    for (let z = z0 + step; z < z1; z += step) here.push([x0, z], [x1, z]);
+    here.forEach(([x, z]) => { if (free(x, z)) out.push({ x, z }); });
+  });
+  return out.slice(0, GFX.tier ? 48 : 26);
+})();
+const lampPool = (() => {
+  const posts = [], bulbs = [];
+  LAMP_SPOTS.forEach(({ x, z }) => {
+    posts.push(pCyl(.055, 2.3, x, 1.15, z, 0x2f3338, 6), pCyl(.1, .14, x, .07, z, 0x2f3338, 6), pBox(.26, .04, .26, x, 2.34, z, 0x2f3338), pBox(.18, .05, .18, x, 2.68, z, 0x2f3338));
+    bulbs.push({ geo: new T.OctahedronGeometry(.15).scale(1, 1.25, 1).translate(x, 2.5, z), color: 0xffffff });
+  });
+  if (!LAMP_SPOTS.length) return null;
+  addDetails(scene, posts);
+  scene.add(mesh(mergeParts(bulbs), M.lamp, false));
+  // The pool: a soft spot drawn once on a small canvas, shared by all the lamps; also under the road lamps of the Valley
+  const spots = [...LAMP_SPOTS, ...(typeof ROAD !== 'undefined' && ROAD ? [-10, -5, 0, 5, 10].map(x => ({ x, z: 10.3 })) : [])];
+  const cv = document.createElement('canvas'); cv.width = cv.height = 64;
+  const c = cv.getContext('2d'), g = c.createRadialGradient(32, 32, 2, 32, 32, 32); g.addColorStop(0, 'rgba(255,214,140,1)'); g.addColorStop(.5, 'rgba(255,190,110,.55)'); g.addColorStop(1, 'rgba(255,170,90,0)');
+  c.fillStyle = g; c.fillRect(0, 0, 64, 64);
+  const material = new T.MeshBasicMaterial({ map: new T.CanvasTexture(cv), transparent: true, opacity: 0, depthWrite: false, blending: T.AdditiveBlending, fog: false });
+  const im = new T.InstancedMesh(new T.PlaneGeometry(6.4, 6.4).rotateX(-Math.PI / 2), material, spots.length), d = new T.Object3D();
+  spots.forEach(({ x, z }, i) => { d.position.set(x, .05, z); d.updateMatrix(); im.setMatrixAt(i, d.matrix); });
+  im.visible = false; im.frustumCulled = false; scene.add(im);
+  return { im, material };
+})();
+function updateLamps(glow) {
+  if (!lampPool) return;
+  const on = glow > .02; if (lampPool.im.visible !== on) lampPool.im.visible = on;
+  lampPool.material.opacity = Math.min(1, glow);
+}
 
 /* ================= Tips: each new system explains itself the first time it shows up ================= */
 // The opening tutorial stays short. Daily missions, morale and decisions, chores, mishaps, timed works and dirty zones
