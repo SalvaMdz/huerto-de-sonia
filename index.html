@@ -1074,8 +1074,8 @@ const MAPS = [];
 const mapOf = n => MAPS[n % MAPS.length];
 const mapById = id => MAPS.find(m => m.id === id);
 // The version goes up with every release; the build (vite.config.js) stamps the date (while developing it says 'en pruebas')
-const GAME_VERSION = '42';
-const BUILD_DATE = '06/11/2026 12:47';
+const GAME_VERSION = '43';
+const BUILD_DATE = '06/11/2026 13:54';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -1581,6 +1581,8 @@ if (LAYOUT) {
     if (a === 3) { MEADOW.x0 += dx; MEADOW.x1 += dx; MEADOW.midX += dx; MEADOW.z0 += dz; MEADOW.z1 += dz; MEADOW.midZ += dz; }
     if (a === 3) { [REC.hopper, REC.zone, REC.plant, REC.cash].forEach(o => move(o, dx, dz)); REC.beltX += dx; ['beltZ0', 'beltZ1', 'gapZ0', 'gapZ1'].forEach(k => { REC[k] += dz; }); }
     [...PATCHES, ...PROCS, ...ANIMALS, ...SPECIAL, ...TOWN, ...ATTRS, ...SELLS, ...Object.values(UPGRADES)].forEach(o => { if (o.area === a) move(o, dx, dz); });
+    // A ride's money travels with it
+    ATTRS.forEach(r => { if (r.area === a) move(r.cash, dx, dz); });
     SHOPS.forEach(s => {
       if (s.area !== a) return;
       [s, s.counter, s.cash, s.spawn, ...s.spots].forEach(o => move(o, dx, dz));
@@ -7248,27 +7250,29 @@ showSummary = () => {
 const filmHere = () => THEME.id === 'cine' && townOn();
 if (!S.film || typeof S.film !== 'object' || !S.film.v2) S.film = { v2: 1, stage: 'idle', sets: ['comedia'], run: [], hist: [], made: 0, q: 0 };
 const GENRES = [
-  { id: 'comedia', icon: '😂', name: 'Comedia', set: 'Salón de comedia', at: [10.2, -8.4], area: 1, cost: 0, takes: 2, gap: 5, life: 7, mins: 2, money: .8, note: 'Rápida y sin riesgo', size: .7, wants: ['costume', 'popcorn2', 'floss'],
+  { id: 'comedia', icon: '😂', name: 'Comedia', set: 'Salón de comedia', at: [10.2, -8.4], area: 1, cost: 0, takes: 2, gap: 4.2, life: 5.5, mins: 2, money: .8, note: 'Rápida y sin riesgo', size: .7, wants: ['costume', 'popcorn2', 'floss'],
     titles: ['La gallina que sabía demasiado', 'Mi suegra es un cerdo', 'Tres bodas y una cabra'], say: ['🤣', '🍌', '¡Ay!', '😂'], wall: 0xf5e6c0,
     cast: [{ c: 0xf5a524, pts: [[-2.6, -.4], [2.4, .4]], sp: 2.3 }, { c: 0x3f7fd0, pts: [[-3.6, .4], [1.4, -.4]], sp: 2.7 }] },
-  { id: 'western', icon: '🤠', name: 'Oeste', set: 'Calle del oeste', at: [-26, 10.2], area: 3, cost: 25000, takes: 3, gap: 4.6, life: 6.5, mins: 3, money: 1, note: 'Lo clásico', size: 1, wants: ['leather', 'prop', 'costume', 'curtain'],
-    titles: ['Duelo en Valle Verde', 'El vaquero sin vacas', 'Por un puñado de tomates'], say: ['💥', '🤠', '🌵', '¡Desenfunda!'], wall: 0xb98a50,
-    cast: [{ c: 0x2a2a30, hat: 0x2a2a30, pts: [[-3.4, .6], [-1.6, .6]], sp: 1 }, { c: 0xfdf6ea, hat: 0xf5e6c0, pts: [[3.4, .6], [1.6, .6]], sp: 1 }] },
-  { id: 'musical', icon: '🎶', name: 'Musical', set: 'Gran escenario', at: [6.9, -39.9], area: 2, cost: 70000, takes: 3, gap: 4.2, life: 6, mins: 3, money: 1.25, note: 'El equipo debe estar contento', needMorale: 1, size: 1.2, wants: ['feather', 'costume', 'curtain', 'backdrop'],
+  { id: 'musical', icon: '🎶', name: 'Musical', set: 'Gran escenario', at: [6.9, -39.9], area: 2, cost: 12000, takes: 3, gap: 3.4, life: 4.6, mins: 3, money: 1.25, note: 'El equipo debe estar contento', needMorale: 1, size: 1.2, wants: ['feather', 'costume', 'curtain', 'backdrop'],
     titles: ['Cantando bajo el riego', 'Sonia, la musical', 'West Valle Story'], say: ['🎶', '💃', '🎵', '✨'], wall: 0x3a1a4a,
     cast: [-3, -1, 1, 3].map((x, i) => ({ c: [0xe86a8a, 0xf5c518, 0x2fb5a0, 0x8e5bd0][i], pts: [[x, .4]], dance: true })) },
-  { id: 'terror', icon: '👻', name: 'Terror', set: 'Cementerio de cartón', at: [-34.4, -23.6], area: 6, cost: 450000, takes: 3, gap: 3.8, life: 5.5, mins: 4, money: 1.1, note: 'Si te sale bien, triunfa', swing: 1, size: .9, wants: ['makeup', 'backdrop', 'wax', 'prop'],
+  { id: 'western', icon: '🤠', name: 'Oeste', set: 'Calle del oeste', at: [-26, 10.2], area: 3, cost: 30000, takes: 3, gap: 3, life: 4.2, mins: 3, money: 1, note: 'Lo clásico', size: 1, wants: ['leather', 'prop', 'costume', 'curtain'],
+    titles: ['Duelo en Valle Verde', 'El vaquero sin vacas', 'Por un puñado de tomates'], say: ['💥', '🤠', '🌵', '¡Desenfunda!'], wall: 0xb98a50,
+    cast: [{ c: 0x2a2a30, hat: 0x2a2a30, pts: [[-3.4, .6], [-1.6, .6]], sp: 1 }, { c: 0xfdf6ea, hat: 0xf5e6c0, pts: [[3.4, .6], [1.6, .6]], sp: 1 }] },
+  { id: 'terror', icon: '👻', name: 'Terror', set: 'Cementerio de cartón', at: [-34.4, -23.6], area: 6, cost: 450000, takes: 3, gap: 2.7, life: 3.8, mins: 4, money: 1.1, note: 'Si te sale bien, triunfa', swing: 1, size: .9, wants: ['makeup', 'backdrop', 'wax', 'prop'],
     titles: ['La noche de las calabazas', 'El espantapájaros vive', 'Algo en el maizal'], say: ['😱', '👻', '🕯️', '¡Aaah!'], wall: 0x1f2430,
     cast: [{ c: 0xf0f0f0, pts: [[-3, -1], [2.6, 0]], sp: 2.4 }, { c: 0xd8402f, pts: [[-1.4, -.4], [3.8, .6]], sp: 3 }] },
-  { id: 'scifi', icon: '🚀', name: 'Ciencia ficción', set: 'Nave espacial', at: [33.8, -23.6], area: 7, cost: 1400000, takes: 4, gap: 3.6, life: 5.2, mins: 5, money: 1.4, note: 'Encanta si el público confía en ti', needTrust: 1, size: 1.3, wants: ['setpiece', 'backdrop', 'wax', 'fakesnow'],
+  { id: 'scifi', icon: '🚀', name: 'Ciencia ficción', set: 'Nave espacial', at: [33.8, -23.6], area: 7, cost: 1400000, takes: 4, gap: 2.8, life: 3.9, mins: 5, money: 1.4, note: 'Encanta si el público confía en ti', needTrust: 1, size: 1.3, wants: ['setpiece', 'backdrop', 'wax', 'fakesnow'],
     titles: ['Huerto en Marte', 'La guerra de los girasoles', 'Encuentros en el corral'], say: ['🛸', '⚡', '👽', '🚀'], wall: 0x101a3a,
     cast: [{ c: 0x5fb548, pts: [[-3, .4], [-.8, -.6]], sp: 1.4 }, { c: 0xe6e6ea, pts: [[3, .4], [.8, -.6]], sp: 1.4 }] },
-  { id: 'accion', icon: '💥', name: 'Acción', set: 'Calle en llamas', at: [-31, -61], area: 8, cost: 4000000, takes: 4, gap: 3.2, life: 4.8, mins: 6, money: 1.7, note: 'Cara y difícil, pero da mucho', size: 1.5, wants: ['castle', 'setpiece', 'prop', 'makeup'],
+  { id: 'accion', icon: '💥', name: 'Acción', set: 'Calle en llamas', at: [-31, -61], area: 8, cost: 4000000, takes: 4, gap: 2.5, life: 3.5, mins: 6, money: 1.7, note: 'Cara y difícil, pero da mucho', size: 1.5, wants: ['castle', 'setpiece', 'prop', 'makeup'],
     titles: ['A todo tractor', 'Misión: cosecha', 'Jungla de trigo'], say: ['💥', '🔥', '🏃', '¡Corre!'], wall: 0x5a6a7a,
     cast: [{ c: 0x2a2a30, pts: [[-3.6, .8], [3.6, .8], [3.6, -1], [-3.6, -1]], sp: 3.4 }, { c: 0xd8402f, pts: [[-1.6, .8], [3.6, .8], [3.6, -1], [-3.6, -1], [-3.6, .8]], sp: 3.4 }] },
 ];
 const genreOf = id => GENRES.find(g => g.id === id);
 const FILM_DAYS = 5, TAKE_LEN = 19;
+// Faster boots must not make the takes trivial: things go wrong faster too
+const filmHard = () => Math.pow(3.4 / speedOf(S.lv.boots), .25);
 const FIXES = [['💡', 'Se ha fundido un foco'], ['💄', 'La estrella pide retoque'], ['🎤', 'Se ve el micro en el plano'], ['📜', 'Han olvidado la frase'], ['🔌', 'Se ha soltado un cable']];
 const REVIEWS = {
   1: ['«Salí a por palomitas y no volví.»', '«Se ve hasta el micro.»', '«Mi abuela actúa mejor, y no actúa.»'],
@@ -7433,11 +7437,11 @@ function startPremiere() {
   for (let i = 0; i < 8; i++) { const sd = i % 2 ? 1 : -1, x = r.x + sd * (1.8 + (i >> 1) * .15), z = r.z - 3.6 + (i >> 1) * 1.1; addActor(makeCustomer(), FARM, [{ x, z, wait: 6, say: pick(['📸', '👏', '🌟', '❤️']) }, { x: FARM.spawn.x, z: FARM.spawn.z }], { speed: 3.2 + Math.random() }); }
 }
 function filmPremiere() {
-  const f = S.film, g = genreOf(f.g), rating = filmRating(), perDay = Math.max(1, Math.round(incMin(3.5) * g.money * rating / 3));
+  const f = S.film, g = genreOf(f.g), rating = filmRating(), perDay = Math.max(1, Math.round(incMin(.8) * g.money * rating / 3));
   f.run = [...(f.run || []).slice(-2), { title: f.title, icon: g.icon, rating, left: FILM_DAYS, perDay }];
   f.hist = [{ title: f.title, icon: g.icon, rating }, ...(f.hist || [])].slice(0, 8);
   f.made = (f.made || 0) + 1; S.meta.films = (S.meta.films || 0) + 1; f.done = f.done || {}; f.done[g.id] = 1;
-  const open = Math.round(perDay * 1.5); addCoins(open); addXP(rating * 20); if (rating === 5) giveStars(2); else if (rating === 4) giveStars(1);
+  const open = Math.round(perDay * 2); addCoins(open); addXP(rating * 20); if (rating === 5) giveStars(2); else if (rating === 4) giveStars(1);
   S.trust = clamp100(S.trust + (rating - 3) * 3); S.morale = clamp100(S.morale + (rating - 3) * 2);
   f.last = { title: f.title, rating, open, quotes: REVIEWS[rating].slice().sort(() => Math.random() - .5).slice(0, 2) };
   f.stage = 'idle'; f.scripts = null; f.q = 0; f.takes = []; cineCarpet.visible = false;
@@ -7553,7 +7557,7 @@ function addIncident(g) {
   if (!free.length) return;
   const q = pick(free), [icon, text] = pick(FIXES), sign = iconSprite(icon, 1.3, '#d8402f'), ring = fixRing(q.x, q.z, 'red');
   sign.position.set(q.x, 2.3, q.z); scene.add(sign);
-  take.inc.push({ kind: 'fix', q, sign, ring, life: g.life, hold: 0 }); toast(`${icon} ${text}`);
+  take.inc.push({ kind: 'fix', q, sign, ring, life: g.life * filmHard(), hold: 0 }); toast(`${icon} ${text}`);
 }
 function endIncident(i) {
   scene.remove(i.sign); if (i.ring) scene.remove(i.ring);
@@ -7563,7 +7567,7 @@ function takeMiss(i, x, z, text) { take.miss++; burst(x, 2.6, z, text); puff(x, 
 function updateTake(dt) {
   const f = S.film, g = genreOf(f.g);
   take.t -= dt;
-  if ((take.next -= dt) <= 0 && take.t > 3) { take.next = g.gap * (.8 + Math.random() * .4); addIncident(g); }
+  if ((take.next -= dt) <= 0 && take.t > 3) { take.next = g.gap * filmHard() * (.8 + Math.random() * .4); addIncident(g); }
   if ((take.sayT -= dt) <= 0) { take.sayT = 2.4; const a = pick(cast); if (a) burst(a.x, 2.5, a.z, pick(g.say)); if (g.id === 'accion' || g.id === 'western') puff(g.at[0] + (Math.random() - .5) * 6, 1, g.at[1], 0xf08a24, 8, 1, 2.4); }
   for (const i of take.inc.slice()) {
     if (i.kind === 'fix') {
@@ -7571,7 +7575,7 @@ function updateTake(dt) {
       if (onSpot(i.q)) { i.hold += dt; if (i.hold > .55) { burst(i.q.x, 2.4, i.q.z, '✅'); sfx.drop(); take.inc.splice(take.inc.indexOf(i), 1); endIncident(i); continue; } }
       if (i.life <= 0) takeMiss(i, i.q.x, i.q.z, '❌ ¡Toma estropeada!');
     } else {
-      const a = i.a, cx = g.at[0], cz = g.at[1] + .5; stepToward(a, cx, cz, 1.45, dt); a.m.g.position.set(a.x, 0, a.z); walkAnim(a.m, true, a.walk); a.m.g.rotation.y = a.face;
+      const a = i.a, cx = g.at[0], cz = g.at[1] + .5; stepToward(a, cx, cz, (1.2 + (5.5 - g.life) * .25) / filmHard(), dt); a.m.g.position.set(a.x, 0, a.z); walkAnim(a.m, true, a.walk); a.m.g.rotation.y = a.face;
       i.sign.position.set(a.x, 2.6, a.z); pulse(i.sign, 1.1);
       if (Math.hypot(a.x - P.x, a.z - P.z) < 1.5) { burst(a.x, 2.4, a.z, '😅'); sfx.drop(); take.inc.splice(take.inc.indexOf(i), 1); endIncident(i); continue; }
       if (Math.hypot(a.x - cx, a.z - cz) < 3.4) takeMiss(i, a.x, a.z, '❌ ¡Se ve en el plano!');
