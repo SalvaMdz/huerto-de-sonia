@@ -36,6 +36,7 @@ body {
 }
 #game { position: fixed; inset: 0; touch-action: none; }
 #game canvas { display: block; width: 100%; height: 100%; }
+#game::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(40, 25, 15, .26) 100%); }
 .vignette { position: fixed; inset: 0; pointer-events: none; z-index: 2; background: radial-gradient(ellipse at center, transparent 65%, rgba(30, 20, 10, .18) 100%); }
 button { font: inherit; color: inherit; }
 button:focus-visible { outline: 3px solid #3f7fd0; outline-offset: 2px; }
@@ -251,6 +252,19 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
 .crow > span { font-size: .72rem; letter-spacing: .6px; text-transform: uppercase; color: var(--ink-soft); }
 .crow input { font: inherit; font-weight: 900; font-size: 1rem; border: 2px solid var(--ink); border-radius: 10px; padding: 7px 10px; background: #fff; color: var(--ink); user-select: text; -webkit-user-select: text; }
 .opts { display: flex; flex-wrap: wrap; gap: 6px; }
+.cbox .cbtns { position: sticky; bottom: -14px; z-index: 1; margin: 0 -14px -14px; padding: 8px 14px 12px; background: var(--cream); border-top: 2px solid rgba(59, 42, 30, .15); }
+.cpage { display: flex; flex-direction: column; gap: 10px; }
+.cpage[hidden] { display: none; }
+.ctabs { display: flex; gap: 6px; }
+.ctabs button { flex: 1; min-height: 38px; padding: 4px 2px; border: 2px solid var(--ink); border-radius: 12px; background: #f3e6cf; color: var(--ink); font: inherit; font-weight: 900; font-size: .8rem; cursor: pointer; box-shadow: none; }
+.ctabs button.on { background: var(--gold); box-shadow: 0 2px 0 var(--ink); }
+.survey { max-width: 420px; width: 100%; max-height: 92vh; max-height: 92dvh; overflow-y: auto; gap: 10px; }
+.survey #surveyQs { display: flex; flex-direction: column; gap: 10px; text-align: left; }
+.survey .emoji { justify-content: space-between; }
+.survey .emoji .opt { font-size: 1.5rem; padding: 2px 10px; }
+.survey .opt { min-height: 32px; padding: 3px 9px; font-size: .8rem; }
+.survey #surveySend { position: sticky; bottom: -20px; flex-shrink: 0; z-index: 1; }
+.survey #surveySend:disabled { background: #e6d9bf; }
 .opt { min-height: 36px; border: 2px solid var(--ink); background: #f3e6cf; border-radius: 999px; padding: 4px 12px; font-weight: 900; font-size: .85rem; cursor: pointer; }
 .opt.on { background: var(--gold); box-shadow: 0 2px 0 var(--ink); }
 .sw { width: 36px; height: 36px; border-radius: 50%; border: 3px solid rgba(59, 42, 30, .25); cursor: pointer; }
@@ -592,9 +606,8 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
       <button data-rate="1" aria-label="1 de 5">😣</button><button data-rate="2" aria-label="2 de 5">😕</button><button data-rate="3" aria-label="3 de 5">😐</button><button data-rate="4" aria-label="4 de 5">🙂</button><button data-rate="5" aria-label="5 de 5">😍</button>
     </div>
     <textarea id="fbText" rows="5" maxlength="1500" placeholder="¿Qué te ha gustado? ¿Qué te ha aburrido o no has entendido? ¿Algo no funciona? ¿Qué te gustaría que tuviera?"></textarea>
-    <p class="small">Se añade solo cómo vas en el juego (misión, tiempo jugado y móvil) para entender mejor lo que cuentas.</p>
-    <button id="fbWhats">📲 Enviar por WhatsApp</button>
-    <button class="ghost" id="fbCopy">📋 Copiar el texto</button>
+    <p class="small">Le llega a Alejandro por correo, con cómo vas en el juego (misión, tiempo jugado y móvil) para entender mejor lo que cuentas.</p>
+    <button id="fbSend">📨 Enviar</button>
     <button class="ghost" id="fbClose">Cerrar</button>
   </div>
 </div>
@@ -609,15 +622,36 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
     <button class="ghost" id="moveNo">Todavía no</button>
   </div>
 </div>
+<div class="overlay" id="surveyOverlay" hidden>
+  <div class="adbox panel survey">
+    <h3>📋 ¡Nos ayudas con esto?</h3>
+    <p>Eres de los primeros en probar el juego. Son 5 toques y el juego sigue justo donde estabas.</p>
+    <div id="surveyQs"></div>
+    <textarea id="surveyText" rows="2" maxlength="800" placeholder="Si quieres: ¿qué cambiarías o añadirías?"></textarea>
+    <button id="surveySend" disabled>Faltan 5 respuestas</button>
+  </div>
+</div>
 <div class="creator" id="creator" hidden>
   <div class="cbox">
     <h3>Crea tu personaje</h3>
     <label class="crow"><span>Nombre</span><input id="avName" maxlength="12" autocomplete="off" enterkeyhint="done"></label>
-    <div class="crow"><span>Peinado</span><div class="opts" id="avHair"></div></div>
-    <div class="crow"><span>Color del pelo</span><div class="opts" id="avColor"></div></div>
-    <div class="crow"><span>Piel</span><div class="opts" id="avSkin"></div></div>
-    <div class="crow"><span>Detalles</span><div class="opts" id="avExtra"></div></div>
-    <div class="crow"><span>Gorro</span><div class="opts" id="avHat"></div></div>
+    <div class="ctabs" id="avTabs"><button class="on" data-tab="hair">💇 Pelo</button><button data-tab="face">🙂 Cara</button><button data-tab="acc">🕶️ Accesorios</button></div>
+    <div class="cpage" data-page="hair">
+      <div class="crow"><span>Peinado</span><div class="opts" id="avHair"></div></div>
+      <div class="crow"><span>Color del pelo</span><div class="opts" id="avColor"></div></div>
+      <div class="crow"><span>Barba</span><div class="opts" id="avBeard"></div></div>
+    </div>
+    <div class="cpage" data-page="face" hidden>
+      <div class="crow"><span>Piel</span><div class="opts" id="avSkin"></div></div>
+      <div class="crow"><span>Ojos</span><div class="opts" id="avEyes"></div></div>
+      <div class="crow"><span>Color de ojos</span><div class="opts" id="avEyeColor"></div></div>
+      <div class="crow"><span>Detalles</span><div class="opts" id="avExtra"></div></div>
+    </div>
+    <div class="cpage" data-page="acc" hidden>
+      <div class="crow"><span>Gafas</span><div class="opts" id="avGlasses"></div></div>
+      <div class="crow"><span>Pendientes</span><div class="opts" id="avEars"></div></div>
+      <div class="crow"><span>Gorro</span><div class="opts" id="avHat"></div></div>
+    </div>
     <div class="cbtns"><button class="ghost" id="avRandom" aria-label="Personaje al azar">🎲</button><button id="avOk">¡A jugar!</button></div>
   </div>
 </div>
@@ -643,8 +677,76 @@ const T = THREE;
   T.Color.prototype.setHex = function (h) { setHex.call(this, h); return this.convertSRGBToLinear(); };
   T.Color.prototype.getHex = function () { return getHex.call(this.clone().convertLinearToSRGB()); };
 }
-// Per-pixel lit material for everything solid: rounder shading than per-vertex light on the low-poly shapes
-class LitMat extends T.MeshStandardMaterial { constructor(p) { super({ roughness: .9, metalness: 0, ...p }); } }
+/* ---------- Quality and shared look ---------- */
+// tier 0 = low (phones with little memory), 1 = medium (most phones), 2 = high (computers). `?calidad=baja|media|alta` forces one.
+const GFX = (() => {
+  const forced = { baja: 0, media: 1, alta: 2 }[new URLSearchParams(location.search).get('calidad')];
+  let saved = null; try { saved = localStorage.getItem('huerto-gfx'); } catch (e) {}
+  const phone = /Android|iPhone|iPad|Mobi/i.test(navigator.userAgent) || navigator.maxTouchPoints > 1;
+  const auto = !phone ? 2 : ((navigator.deviceMemory || 4) <= 2 || (navigator.hardwareConcurrency || 4) <= 4) ? 0 : 1;
+  const tier = forced !== undefined ? forced : saved !== null ? Math.min(+saved, auto) : auto;
+  return { tier, forced: forced !== undefined, pr: [1.25, 1.5, 2][tier], shadow: [1024, 1536, 2048][tier], shadowEvery: [3, 2, 1][tier], uT: { value: 0 }, uDay: { value: 1 } };
+})();
+// The look of the game lives here, in a few shader lines shared by every solid thing, so it weighs nothing to download:
+// soft shade where things meet the ground, patchy ground color, drifting cloud shadows, rim light, water, wind and color curve.
+const GFX_HEAD = `varying vec3 vGW; uniform float gT; uniform float gDay;
+float gN(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.-2.*f);
+  float a=fract(sin(dot(i,vec2(127.1,311.7)))*43758.5453), b=fract(sin(dot(i+vec2(1.,0.),vec2(127.1,311.7)))*43758.5453),
+        c=fract(sin(dot(i+vec2(0.,1.),vec2(127.1,311.7)))*43758.5453), d=fract(sin(dot(i+vec2(1.,1.),vec2(127.1,311.7)))*43758.5453);
+  return mix(mix(a,b,f.x),mix(c,d,f.x),f.y); }
+vec3 gGrade(vec3 c){ c*=.63; c=clamp((c*(2.51*c+.03))/(c*(2.43*c+.59)+.14),0.,1.); return mix(vec3(dot(c,vec3(.2126,.7152,.0722))),c,1.12); }
+`;
+const GFX_SURFACE = `
+#ifdef WATER
+  { vec2 wp=vGW.xz; float a=gN(wp*.32+gT*vec2(.12,.05)), b=gN(wp*.8-gT*vec2(.1,.13)), m=a*.55+b*.45;
+    diffuseColor.rgb*=.34+m*.56;
+    float l1=1.-abs(2.*gN(wp*1.1+gT*vec2(.2,-.12))-1.), l2=1.-abs(2.*gN(wp*2.3-gT*vec2(.14,.2))-1.);
+    totalEmissiveRadiance+=vec3(.85,.93,1.)*(pow(l1,7.)*.13+pow(l2,9.)*.07)*gDay*(1.-smoothstep(12.,34.,distance(cameraPosition,vGW))); }
+#else
+  if(vGW.y<.14){ float v=(gN(vGW.xz*.13)-.5)*.3+(gN(vGW.xz*.9+7.)-.5)*.14+(gN(vGW.xz*3.4+3.)-.5)*.1; diffuseColor.rgb*=1.+v; diffuseColor.b*=1.-v*.3; }
+  diffuseColor.rgb*=1.-.32*smoothstep(.06,.14,vGW.y)*(1.-smoothstep(.14,1.3,vGW.y));
+#ifdef LEAFY
+  { float n=gN(vGW.xz*3.1+vGW.y*2.3), k=gN(vGW.xz*7.3-vGW.y*5.); diffuseColor.rgb*=.66+n*.5+k*.24; }
+#endif
+#endif
+`;
+function gfxHook(shader) {
+  shader.uniforms.gT = GFX.uT; shader.uniforms.gDay = GFX.uDay;
+  const std = shader.fragmentShader.includes('<lights_physical_fragment>');
+  shader.vertexShader = shader.vertexShader
+    .replace('#include <common>', '#include <common>\nvarying vec3 vGW; uniform float gT;')
+    .replace('#include <project_vertex>', `#if defined(WIND) && defined(USE_INSTANCING)
+      { vec4 wp=modelMatrix*instanceMatrix*vec4(transformed,1.); transformed.x+=(sin(gT*1.7+wp.x*.6+wp.z*.5)+.4*sin(gT*3.3+wp.x*1.7))*WIND*wp.y; }
+      #endif
+      #include <project_vertex>`)
+    .replace('#include <fog_vertex>', `#include <fog_vertex>
+      { vec4 gw=vec4(transformed,1.);
+      #ifdef USE_INSTANCING
+      gw=instanceMatrix*gw;
+      #endif
+      vGW=(modelMatrix*gw).xyz; }`);
+  const anchor = std ? '#include <lights_physical_fragment>' : '#include <specularmap_fragment>';
+  // Fog moves before the color curve so faraway things melt into the sky; in the stock order it comes out too dark
+  const extras = std && GFX.tier ? `gl_FragColor.rgb*=1.-.17*gDay*smoothstep(.5,.72,gN(vGW.xz*.035+vec2(gT*.018,gT*.007)));
+    gl_FragColor.rgb+=diffuseColor.rgb*pow(1.-saturate(dot(normal,normalize(vViewPosition))),3.)*.24*gDay;` : '';
+  shader.fragmentShader = shader.fragmentShader
+    .replace('#include <common>', '#include <common>\n' + GFX_HEAD)
+    .replace(anchor, GFX_SURFACE + anchor)
+    .replace('#include <fog_fragment>', '')
+    .replace('#include <tonemapping_fragment>', extras + `
+      #include <fog_fragment>
+      gl_FragColor.rgb=gGrade(gl_FragColor.rgb);`);
+}
+// Per-pixel lit material for everything solid. On low-end phones it becomes per-vertex light, which is much cheaper
+class LitMat extends (GFX.tier ? T.MeshStandardMaterial : T.MeshLambertMaterial) {
+  constructor(p) {
+    const { roughness = .9, metalness = 0, ...rest } = p || {};
+    super(GFX.tier ? { roughness, metalness, ...rest } : rest);
+    this.onBeforeCompile = gfxHook;
+  }
+}
+// Plants lean with the wind: only when drawn in bulk (instanced), so one material can be shared with other things
+function gfxWind(m, amount) { m.defines = Object.assign(m.defines || {}, { WIND: amount.toFixed(3) }); return m; }
 
 /* ================= Data ================= */
 const TULIP_COLORS = [0xe8384a, 0xf5c518, 0xf06aa8, 0xff8a1f];
@@ -829,8 +931,8 @@ const MAPS = [];
 const mapOf = n => MAPS[n % MAPS.length];
 const mapById = id => MAPS.find(m => m.id === id);
 // The version goes up with every release; the build (vite.config.js) stamps the date (while developing it says 'en pruebas')
-const GAME_VERSION = '35';
-const BUILD_DATE = '05/11/2026 10:26';
+const GAME_VERSION = '36';
+const BUILD_DATE = '06/11/2026 03:24';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -847,12 +949,19 @@ const VEHICLE_SKINS = [
   { id: 'mint',   name: 'Helado de menta', icon: '🍦', body: 0x9fe3c8, mower: 0x9fe3c8, hub: 0xf06aa8, need: 'Mira un anuncio', goal: 1, prog: () => 0, ad: true },
 ];
 // The avatar creator: hair style, hair colour and skin tone are picked from these lists
+// Every list below is data: adding a look (or later locking one behind a reward) only takes one more line here
 const AVATAR_HAIR = [
   { id: 'curly', name: 'Rizos largos' }, { id: 'long', name: 'Coletas' }, { id: 'bun', name: 'Moño' }, { id: 'short', name: 'Corto' }, { id: 'afro', name: 'Rizos cortos' },
+  { id: 'ponytail', name: 'Coleta' }, { id: 'braid', name: 'Trenza' }, { id: 'bob', name: 'Media melena' }, { id: 'straight', name: 'Melena larga' }, { id: 'spiky', name: 'Pinchos' }, { id: 'mohawk', name: 'Cresta' }, { id: 'buzz', name: 'Rapado' }, { id: 'bald', name: 'Calvo' },
 ];
-const AVATAR_COLORS = [0xf06a32, 0x7a4a2a, 0xf0c860, 0x2a1d16, 0xd8d4cc, 0xf28ab8, 0x5a8fe0];
-const AVATAR_SKINS = [0xf2c6a0, 0xf7d8c0, 0xd9a07a, 0xa86e4a, 0x7a4a2e];
-const AVATAR_DEFAULT = { name: 'Sonia', hair: 'curly', color: 0, skin: 0, freckles: true, beard: false };
+const AVATAR_COLORS = [0xf06a32, 0x7a4a2a, 0xf0c860, 0x2a1d16, 0xd8d4cc, 0xc0392b, 0xf28ab8, 0x8e5bd0, 0x5a8fe0, 0x3fa34d];
+const AVATAR_SKINS = [0xf2c6a0, 0xf7d8c0, 0xd9a07a, 0xa86e4a, 0x7a4a2e, 0x4f2f1e];
+const AVATAR_BEARD = [{ id: '', name: 'Sin barba' }, { id: 'stubble', name: 'De tres días' }, { id: 'moustache', name: 'Bigote' }, { id: 'goatee', name: 'Perilla' }, { id: 'full', name: 'Barba' }, { id: 'long', name: 'Barba larga' }];
+const AVATAR_EYES = [{ id: 'round', name: 'Redondos' }, { id: 'big', name: 'Grandes' }, { id: 'almond', name: 'Rasgados' }, { id: 'lashes', name: 'Con pestañas' }];
+const AVATAR_EYE_COLORS = [0x22150c, 0x6a3f1f, 0x2f6fc0, 0x2f8f4a, 0x7a8a96, 0x8e5bd0];
+const AVATAR_GLASSES = [{ id: '', name: 'Sin gafas' }, { id: 'read', name: 'Redondas' }, { id: 'sun', name: 'De sol' }, { id: 'aviator', name: 'Aviador' }, { id: 'party', name: 'Rosas' }];
+const AVATAR_EARS = [{ id: '', name: 'Sin pendientes' }, { id: 'hoop', name: 'Aros' }, { id: 'pearl', name: 'Perlas' }, { id: 'gem', name: 'Rojos' }, { id: 'drop', name: 'Largos' }];
+const AVATAR_DEFAULT = { name: 'Sonia', hair: 'curly', color: 0, skin: 0, freckles: true, beard: '', eyes: 'round', eyeColor: 0, glasses: '', ears: '', blush: true, lips: false };
 const avatar = () => ({ ...AVATAR_DEFAULT, ...(S.meta.avatar || {}) });
 const who = () => avatar().name || 'Sonia';
 // Sonia's outfits: unlocked as the game goes on and kept forever, even after moving. Colours are numbers; names are materials in M.
@@ -1358,23 +1467,55 @@ const sfx = {
 
 /* ================= Three setup ================= */
 const renderer = new T.WebGLRenderer({ antialias: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, GFX.pr));
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = T.PCFSoftShadowMap;
+renderer.shadowMap.type = GFX.tier ? T.PCFSoftShadowMap : T.PCFShadowMap;
+renderer.shadowMap.autoUpdate = false;
 renderer.outputEncoding = T.sRGBEncoding;
 renderer.toneMapping = T.NoToneMapping;
 $('game').appendChild(renderer.domElement);
 const scene = new T.Scene();
 scene.background = new T.Color(THEME.sky);
 scene.fog = new T.Fog(THEME.sky, 26, 52);
-const camera = new T.PerspectiveCamera(42, 1, 0.1, 140);
-const LIGHT = { hemi: .5, sun: .95 };
-const hemi = new T.HemisphereLight(0xdff0ff, 0x7a8f4a, LIGHT.hemi); scene.add(hemi);
-const sun = new T.DirectionalLight(0xfff0d8, LIGHT.sun);
-sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+const camera = new T.PerspectiveCamera(42, 1, 1, 140);
+const LIGHT = { hemi: .62, sun: 1.5 };
+const hemi = new T.HemisphereLight(0xc4dcff, 0x8f8a55, LIGHT.hemi); scene.add(hemi);
+const sun = new T.DirectionalLight(0xfff0dc, LIGHT.sun);
+sun.castShadow = true; sun.shadow.mapSize.set(GFX.shadow, GFX.shadow);
 Object.assign(sun.shadow.camera, { left: -17, right: 17, top: 17, bottom: -17, near: 1, far: 60 });
 sun.shadow.bias = -0.0006; sun.shadow.normalBias = .02; sun.shadow.radius = 3;
 scene.add(sun, sun.target);
+// Sky dome: a gradient with a glow around the sun. Its horizon is the fog color, so far land melts into it
+const skyDome = new T.Mesh(new T.SphereGeometry(125, 16, 10), new T.ShaderMaterial({
+  side: T.BackSide, depthWrite: false, fog: false, toneMapped: false,
+  uniforms: { top: { value: new T.Color() }, hor: { value: new T.Color() }, gDay: GFX.uDay },
+  vertexShader: 'varying vec3 vD; void main(){ vD=normalize(position); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }',
+  fragmentShader: `varying vec3 vD; uniform vec3 top, hor; uniform float gDay;
+    vec3 gGrade(vec3 c){ c*=.63; c=clamp((c*(2.51*c+.03))/(c*(2.43*c+.59)+.14),0.,1.); return mix(vec3(dot(c,vec3(.2126,.7152,.0722))),c,1.12); }
+    void main(){ vec3 d=normalize(vD); float s=max(dot(d,normalize(vec3(.55,.62,.35))),0.);
+      vec3 c=mix(hor,top,smoothstep(0.,.55,d.y))+vec3(1.,.8,.55)*(pow(s,18.)*.35+pow(s,300.)*2.)*gDay;
+      gl_FragColor=vec4(gGrade(c),1.);
+      #include <encodings_fragment>
+    }`,
+}));
+skyDome.frustumCulled = false; skyDome.renderOrder = -10; scene.add(skyDome);
+// Watches the speed for the first minutes of play. If this device struggles it lowers the resolution, then the shadows;
+// and if that is still not enough, the next session starts on a lower tier.
+const gfxWatch = { t: 0, n: 0, wait: 8, frame: 0 };
+function gfxTick(now, dt) {
+  GFX.uT.value = (now / 1000) % 3600;
+  if (++gfxWatch.frame % GFX.shadowEvery === 0) renderer.shadowMap.needsUpdate = true;
+  if (GFX.forced || document.hidden) return;
+  if (gfxWatch.wait > 0) { gfxWatch.wait -= dt; return; }
+  gfxWatch.t += dt; gfxWatch.n++;
+  if (gfxWatch.t < 5) return;
+  const fps = gfxWatch.n / gfxWatch.t; gfxWatch.t = gfxWatch.n = 0;
+  if (fps >= 36) return;
+  const pr = renderer.getPixelRatio();
+  if (pr > 1) { renderer.setPixelRatio(Math.max(1, pr - .25)); resize(); }
+  else if (sun.shadow.mapSize.x > 1024) { sun.shadow.mapSize.set(1024, 1024); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; } }
+  else if (GFX.tier) { try { localStorage.setItem('huerto-gfx', GFX.tier - 1); } catch (e) {} gfxWatch.wait = 1e9; }
+}
 
 // Small canvas textures give the flat colors some grain
 function canvasTex(w, h, draw, rx = 1, ry = 1) {
@@ -1426,8 +1567,8 @@ const M = {
   dirt: new LitMat({ color: 0xa06e46, map: noiseTex(255, 70, 3, 3) }), dirtLocked: mat(0x8a7a5a),
   path: new LitMat({ color: THEME.path, map: noiseTex(255, 55, 8, 3) }),
   road: new LitMat({ color: 0x60636a, map: noiseTex(255, 40, 12, 1) }), sidewalk: mat(0xd8d0c2), roadLine: mat(0xf5f0e0),
-  hedge: mat(THEME.hedge), pine: mat(THEME.pine), pine2: mat(THEME.pine2), leaves: mat(THEME.leaves), trunk: mat(0x7a4e2d), wood: mat(0xc98a4b), woodDark: mat(0x8f5a2b),
-  red: mat(0xd8402f), white: mat(0xfdf6ea), skin: mat(0xf2c6a0), hair: mat(0xf06a32), hair2: mat(0xd8521f), freckle: mat(0xc07a52), eye: mat(0x22150c), cloud: mat(0xffffff),
+  hedge: new LitMat({ color: THEME.hedge, defines: { LEAFY: 1 } }), pine: mat(THEME.pine), pine2: mat(THEME.pine2), leaves: mat(THEME.leaves), trunk: mat(0x7a4e2d), wood: mat(0xc98a4b), woodDark: mat(0x8f5a2b),
+  red: mat(0xd8402f), white: mat(0xfdf6ea), skin: mat(0xf2c6a0), hair: mat(0xf06a32), hair2: mat(0xd8521f), freckle: mat(0xc07a52), eye: mat(0x22150c), cloud: new LitMat({ color: 0xffffff, transparent: true, opacity: .72, depthWrite: false }),
   plaid: new LitMat({ map: plaidTex }), check: new LitMat({ map: checkTex }), stripes: new LitMat({ map: stripeTex }), denim: new LitMat({ map: denimTex }), kerchief: mat(0xe8402f),
   straw: mat(0xf2c94c), strawDark: mat(0xd9a93a), band: mat(0xd8402f), metal: mat(0xd9dde3), dark: mat(0x4a3a2e), boot: mat(0x6e452c),
   blush: mat(0xf09a8a), gold: mat(0xf6c445), squirrel: mat(0xd2752c), squirrelLight: mat(0xf3c08a), stem: mat(0x3f9a3a), leaf: mat(0x4caf50),
@@ -1436,7 +1577,7 @@ const M = {
   cowSpot: mat(0x2a2a2a), truck: mat(0x3f7fd0), van: mat(0xf5a524), tire: mat(0x2a2a2a), bill: mat(0x6abf5a), billDark: mat(0x3f8f3a),
   apron: mat(0x3fa34d), apple: mat(0xd8262f), crown: mat(0x3f9a3a), hive: mat(0xf2c94c), bee: mat(0xffd21f),
   weed: mat(0x6b8f2a), weed2: mat(0x8a9a3a), rock: mat(0x9a948a), junk: mat(0x8a6a4a), trash: mat(0x2e2e34), robot: mat(0xf5a524),
-  water: new LitMat({ color: THEME.water, map: rippleTex, transparent: true, opacity: .9, roughness: .15, metalness: .1 }), sand: mat(0xe8d6a0), lily: mat(0x5fae4a),
+  water: new LitMat({ color: THEME.water, defines: { WATER: 1 }, transparent: true, depthWrite: false, opacity: .9, roughness: .15, metalness: .1 }), sand: mat(0xe8d6a0), lily: mat(0x5fae4a),
   plant: mat(0x8fa8a0), funnel: mat(0xf2c521), recycle: mat(0x3fa34d), dogFur: mat(0xc8873f), dogEar: mat(0x7a4e2d), gift: mat(0xe8384a),
   window: new LitMat({ color: 0xbfe6ff, emissive: 0xffd27a, emissiveIntensity: 0 }),
   lamp: new LitMat({ color: 0xfff2b0, emissive: 0xffe08a, emissiveIntensity: 0 }),
@@ -1446,10 +1587,21 @@ const M = {
   zoneRing: new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .85 }),
 };
 M.belt = new LitMat({ map: beltTex });
+M.bush.defines = { LEAFY: 1 }; M.leaves.defines = { LEAFY: 1 };
 M.corn = mat(0xf5c518); M.lemon = mat(0xf5e01f); M.orange = mat(0xf5891f); M.wool = mat(0xf7f3ea); M.pig = mat(0xf4a6b0); M.goat = mat(0xe8dcc8);
 document.body.style.background = '#' + THEME.sky.toString(16).padStart(6, '0');
 function mesh(geo, material, shadow = true) { const m = new T.Mesh(geo, material); m.castShadow = shadow; m.receiveShadow = true; return m; }
-function flat(geo, material, x, y, z) { const m = mesh(geo, material, false); m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); scene.add(m); return m; }
+// Ground layers are only millimetres apart: spread those heights so screens with little depth precision cannot mix them up and flicker
+const layerY = y => (y <= 0 ? y : y < .012 ? y * 3 : y + .024);
+function flat(geo, material, x, y, z) { const m = mesh(geo, material, false); m.rotation.x = -Math.PI / 2; m.position.set(x, layerY(y), z); scene.add(m); return m; }
+// The sun follows the player in steps of one shadow pixel: otherwise shadow edges shimmer while walking
+const sunDir = new T.Vector3(9, 13, 5).normalize(), sunRight = new T.Vector3(0, 1, 0).cross(sunDir).normalize(), sunUp = sunDir.clone().cross(sunRight), sunO = new T.Vector3();
+function sunFollow(x, z) {
+  const step = 34 / sun.shadow.mapSize.x; sunO.set(x, 0, z);
+  const a = Math.round(sunO.dot(sunRight) / step) * step, b = Math.round(sunO.dot(sunUp) / step) * step, c = sunO.dot(sunDir);
+  sunO.copy(sunRight).multiplyScalar(a).addScaledVector(sunUp, b).addScaledVector(sunDir, c);
+  sun.target.position.copy(sunO); sun.position.copy(sunO).addScaledVector(sunDir, 17);
+}
 
 /* ---------- Ground & scenery ---------- */
 const ISLANDS = !!(LAYOUT && LAYOUT.islands);
@@ -1467,11 +1619,11 @@ function roundRect(w, d, r) {
 }
 if (ISLANDS) {
   // The archipelago: open sea everywhere and every zone an island with shallow water and a sandy shore
-  flat(new T.PlaneGeometry(420, 420), M.water, 20, 0, 20);
-  const shallow = new LitMat({ color: 0x8fe6e0, transparent: true, opacity: .55 });
+  flat(new T.PlaneGeometry(420, 420), M.water, 20, -.04, 20).renderOrder = -2;
+  const shallow = new LitMat({ color: 0x8fe6e0, transparent: true, opacity: .55, depthWrite: false });
   Object.values(AREAS).forEach(r => {
     const w = r.x1 - r.x0, d = r.z1 - r.z0, cx = (r.x0 + r.x1) / 2, cz = (r.z0 + r.z1) / 2;
-    flat(roundRect(w + 9, d + 9, 7), shallow, cx, .0008, cz);
+    flat(roundRect(w + 9, d + 9, 7), shallow, cx, -.02, cz).renderOrder = -1;
     flat(roundRect(w + 5, d + 5, 5), M.sand, cx, .0012, cz);
     flat(roundRect(w + 1.6, d + 1.6, 3), M.grass, cx, .0017, cz);
   });
@@ -1548,7 +1700,7 @@ const TREE_SHAPES = {
   ]),
   round: () => mergeParts([
     { geo: new T.CylinderGeometry(.12, .17, 1, 6).translate(0, .5, 0), color: TRUNK },
-    ...[[0, 1.45, 0, .75], [.35, 1.2, .2, .5], [-.3, 1.25, -.15, .55], [.05, 1.85, -.1, .5]].map(([dx, y, dz, r]) => ({ geo: new T.IcosahedronGeometry(r, 1).translate(dx, y, dz), color: THEME.leaves })),
+    ...[[0, 1.45, 0, .75], [.35, 1.2, .2, .5], [-.3, 1.25, -.15, .55], [.05, 1.85, -.1, .5]].map(([dx, y, dz, r], i) => ({ geo: new T.IcosahedronGeometry(r, GFX.tier > 1 || (GFX.tier === 1 && !i) ? 1 : 0).translate(dx, y, dz), color: THEME.leaves })),
   ]),
   palm: () => mergeParts([
     ...[0, 1, 2, 3].map(i => ({ geo: new T.CylinderGeometry(.11 - i * .015, .13 - i * .015, .7, 7).translate(i * .07, .35 + i * .66, 0), color: i % 2 ? 0xa8743e : 0x8f5f30 })),
@@ -1573,9 +1725,12 @@ function tree(x, z, s = 1) {
   treeAt(kind, x, z, kind === 'round' && k === 'cactus' ? s * .55 : kind === 'round' ? s * .9 : s);
 }
 function plantTrees() {
-  const mtl = new LitMat({ vertexColors: true }), d = new T.Object3D(), tint = new T.Color();
+  const mtl = gfxWind(new LitMat({ vertexColors: true }), .012), d = new T.Object3D(), tint = new T.Color();
   Object.entries(treeSpots).forEach(([kind, list]) => {
-    const im = new T.InstancedMesh(TREE_SHAPES[kind](), mtl, list.length);
+    const geo = TREE_SHAPES[kind](); geo.computeBoundingBox();
+    { const pos = geo.attributes.position, col = geo.attributes.color, top = geo.boundingBox.max.y || 1;
+      for (let i = 0; i < pos.count; i++) { const k = .62 + .62 * Math.pow(pos.getY(i) / top, 1.3); col.setXYZ(i, col.getX(i) * k, col.getY(i) * k, col.getZ(i) * k); } }
+    const im = new T.InstancedMesh(geo, mtl, list.length);
     list.forEach(([x, z, sc], i) => {
       d.position.set(x, 0, z); d.rotation.set(0, Math.random() * 6.28, 0); d.scale.set(sc, sc * (.9 + Math.random() * .25), sc); d.updateMatrix(); im.setMatrixAt(i, d.matrix);
       const l = .86 + Math.random() * .24; tint.setRGB(l, l * (.95 + Math.random() * .1), l); im.setColorAt(i, tint);
@@ -1697,8 +1852,8 @@ const gateMeshes = ISLANDS ? Object.fromEntries(Object.entries(DOORS).map(([id, 
     if (SHOPS.some(s => Math.abs(x - s.x) < 5 && z > s.z - 2.2 && z < s.z + 6)) return false;
     return !boxes.some(([x0, z0, x1, z1]) => x > x0 && x < x1 && z > z0 && z < z1);
   };
-  const tuftGeo = new T.ConeGeometry(.07, .3, 4); tuftGeo.translate(0, .15, 0);
-  const flowerGeo = new T.SphereGeometry(.07, 5, 4); flowerGeo.translate(0, .2, 0);
+  const tuftGeo = new T.ConeGeometry(.07, .3, 3, 1, true); tuftGeo.translate(0, .15, 0);
+  const flowerGeo = new T.OctahedronGeometry(.07); flowerGeo.translate(0, .2, 0);
   const spots = [];
   for (let i = 0; i < 1800 && spots.length < 640; i++) {
     const x = (Math.random() - .5) * 24, z = -41 + Math.random() * 62;
@@ -1715,11 +1870,11 @@ const gateMeshes = ISLANDS ? Object.fromEntries(Object.entries(DOORS).map(([id, 
     if (clear(x, z)) spots.push([x, z]);
   }
   if (ISLANDS) { const land = spots.filter(([x, z]) => Object.values(AREAS).some(r => x > r.x0 && x < r.x1 && z > r.z0 && z < r.z1)); spots.length = 0; spots.push(...land); }
-  const tufts = new T.InstancedMesh(tuftGeo, M.stem, spots.length), flowers = new T.InstancedMesh(flowerGeo, new LitMat({ color: 0xffffff }), spots.length);
+  const tufts = new T.InstancedMesh(tuftGeo, gfxWind(M.stem, .09), spots.length), flowers = new T.InstancedMesh(flowerGeo, gfxWind(new LitMat({ color: 0xffffff }), .09), Math.ceil(spots.length / 3));
   const d = new T.Object3D(), cols = [0xffffff, 0xf5c518, 0xf06aa8, 0xb98ae8, 0xe8384a];
   spots.forEach(([x, z], i) => {
     d.position.set(x, 0, z); d.rotation.set((Math.random() - .5) * .4, Math.random() * 6, 0); d.scale.setScalar(.7 + Math.random() * .7); d.updateMatrix(); tufts.setMatrixAt(i, d.matrix);
-    d.position.set(x + .1, 0, z + .08); d.scale.setScalar(i % 3 ? 0 : 1); d.updateMatrix(); flowers.setMatrixAt(i, d.matrix); flowers.setColorAt(i, new T.Color(pick(cols)));
+    if (i % 3 === 0) { d.position.set(x + .1, 0, z + .08); d.scale.setScalar(1); d.updateMatrix(); flowers.setMatrixAt(i / 3, d.matrix); flowers.setColorAt(i / 3, new T.Color(pick(cols))); }
   });
   tufts.receiveShadow = true; scene.add(tufts, flowers);
 }
@@ -1738,7 +1893,7 @@ const butterflies = [];
 const clouds = [];
 for (let i = 0; i < 9; i++) {
   const g = new T.Group();
-  for (let k = 0; k < 4; k++) { const b = mesh(new T.IcosahedronGeometry(1 + Math.random() * .8, 1), M.cloud); b.position.set(k * 1.3 - 2, Math.random() * .5, (Math.random() - .5) * 1.2); b.receiveShadow = false; g.add(b); }
+  for (let k = 0; k < 4; k++) { const b = mesh(new T.IcosahedronGeometry(1 + Math.random() * .8, 1), M.cloud, false); b.position.set(k * 1.3 - 2, Math.random() * .5, (Math.random() - .5) * 1.2); b.receiveShadow = false; g.add(b); }
   g.position.set(-40 + Math.random() * 80, 15 + Math.random() * 3, -40 + Math.random() * 60); g.userData.v = .4 + Math.random() * .5;
   scene.add(g); clouds.push(g);
 }
@@ -1926,7 +2081,7 @@ PATCHES.forEach(p => {
   if (p.area !== 3) {
     p.decor.push(fence(p.x, p.z - d / 2 - .15, w + .3, 0), fence(p.x - w / 2 - .15, p.z, d + .3, Math.PI / 2), fence(p.x + w / 2 + .15, p.z, d + .3, Math.PI / 2));
   }
-  p.parts = CROP_PARTS[p.crop].map(part => { const im = new T.InstancedMesh(part.geo, part.mat, n); im.castShadow = true; im.receiveShadow = true; scene.add(im); return im; });
+  p.parts = CROP_PARTS[p.crop].map(part => { const im = new T.InstancedMesh(part.geo, gfxWind(part.mat, .07), n); im.castShadow = true; im.receiveShadow = true; scene.add(im); return im; });
   for (let i = 0; i < n; i++) {
     const c = i % p.cols, r = Math.floor(i / p.cols);
     plants.push({
@@ -2238,7 +2393,6 @@ const lake = new T.Group();
 }
 const jumper = (() => { const g = new T.Group(); const b = mesh(new T.SphereGeometry(.14, 8, 6).scale(1.6, .7, .6), mat(0x7a9ab0)); g.add(b); const t = mesh(new T.ConeGeometry(.1, .18, 4), mat(0x7a9ab0)); t.rotation.z = Math.PI / 2; t.position.x = -.28; g.add(t); g.visible = false; scene.add(g); return { g, t: 2, x: 0, z: 0, k: 0 }; })();
 function updateLake(dt) {
-  M.water.opacity = .86 + Math.sin(performance.now() / 700) * .04;
   rippleTex.offset.x += dt * .02; rippleTex.offset.y += dt * .012;
   if (!S.gate4) return;
   if (jumper.k > 0) {
@@ -2276,6 +2430,42 @@ function makeItem(kind) {
 function makeBill() { const g = new T.Group(); g.add(mesh(G.bill, M.bill)); g.add(mesh(G.billBand, M.billDark)); return g; }
 
 /* ---------- Characters ---------- */
+// The creator's extra looks. Only the player's character uses them, so customers stay cheap to draw
+function avatarExtras(head, o) {
+  const add = (geo, m, x, y, z) => { const n = mesh(geo, m, false); n.position.set(x, y, z); head.add(n); return n; };
+  const H = o.hair, hs = (r, x, y, z) => add(new T.SphereGeometry(r, 8, 6), H, x, y, z);
+  if (o.eyes === 'lashes') [-1, 1].forEach(sd => [.03, .065].forEach(dx => { const l = add(new T.BoxGeometry(.012, .035, .008), M.eye, sd * (.09 + dx), .075, .232); l.rotation.z = -sd * .55; }));
+  if (o.ponytail) { hs(.1, 0, .08, -.27); for (let k = 0; k < 4; k++) hs(.085 - k * .012, 0, -.02 - k * .11, -.33 - k * .012); }
+  if (o.braid) { hs(.075, 0, -.08, -.26); for (let k = 0; k < 6; k++) hs(.066 - k * .005, (k % 2 ? .022 : -.022), -.16 - k * .082, -.27); add(new T.SphereGeometry(.035, 6, 5), M.red, 0, -.65, -.27); }
+  if (o.bob) { const b = mesh(new T.SphereGeometry(.29, 12, 8).scale(1.05, .98, .72), H); b.position.set(0, -.06, -.09); head.add(b); }
+  if (o.straight) { const b = mesh(new T.CylinderGeometry(.27, .24, .72, 12, 1).scale(1.05, 1, .6), H); b.position.set(0, -.27, -.12); head.add(b); }
+  if (o.spiky) for (let i = 0; i < 11; i++) { const a = i / 11 * 6.28, r = i % 2 ? .16 : .08, s = mesh(new T.ConeGeometry(.06, .17, 5), H, false); s.position.set(Math.cos(a) * r, .275 - r * .28, Math.sin(a) * r - .03); s.rotation.set(Math.sin(a) * r * 2, 0, -Math.cos(a) * r * 2); head.add(s); }
+  if (o.mohawk) for (let i = 0; i < 7; i++) { const a = -.95 + i * .36, s = mesh(new T.BoxGeometry(.055, .17, .085), H, false); s.position.set(0, Math.cos(a) * .31 - .01, Math.sin(a) * .31 - .02); s.rotation.x = a; head.add(s); }
+  // Beards follow the hair color
+  const bs = o.beardStyle;
+  if (bs === 'stubble') { const b = mesh(new T.SphereGeometry(.263, 14, 8, Math.PI / 2 - 1.25, 2.5, Math.PI * .6, Math.PI * .34), new LitMat({ color: H.color, transparent: true, opacity: .45 }), false); head.add(b); }
+  if (bs === 'moustache' || bs === 'goatee') { const l = mesh(new T.SphereGeometry(.075, 10, 6).scale(1.25, .4, .5), H, false); l.position.set(0, -.055, .258); head.add(l); }
+  if (bs === 'goatee') { const g = mesh(new T.SphereGeometry(.055, 8, 6).scale(1, 1.25, .7), H, false); g.position.set(0, -.19, .195); head.add(g); }
+  if (bs === 'long') { const g = mesh(new T.ConeGeometry(.17, .36, 9).rotateX(Math.PI), H, false); g.position.set(0, -.3, .13); head.add(g); }
+  if (o.specs) {
+    const frame = { read: M.eye, sun: M.eye, aviator: M.gold, party: mat(0xf06aa8) }[o.specs];
+    const glass = o.specs === 'read' ? new LitMat({ color: 0xdff2ff, transparent: true, opacity: .3 }) : o.specs === 'party' ? mat(0x3a1a2e) : mat(0x15151c);
+    [-.095, .095].forEach(x => {
+      const r = o.specs === 'aviator' ? .068 : .06;
+      const rim = add(new T.TorusGeometry(r, .011, 5, 14), frame, x, .03, .262); if (o.specs === 'aviator') rim.scale.y = 1.05;
+      const lens = add(new T.CircleGeometry(r, 14), glass, x, .03, .26); lens.renderOrder = 1;
+      const arm = add(new T.BoxGeometry(.012, .012, .2), frame, Math.sign(x) * .232, .04, .125); arm.rotation.y = Math.sign(x) * .28;
+    });
+    add(new T.BoxGeometry(.075, .014, .014), frame, 0, .045, .268);
+  }
+  if (o.ears) [-1, 1].forEach(sd => {
+    const x = sd * .262;
+    if (o.ears === 'hoop') { const e = add(new T.TorusGeometry(.04, .008, 5, 12), M.gold, x, -.09, .02); e.rotation.y = Math.PI / 2; }
+    else if (o.ears === 'pearl') add(new T.SphereGeometry(.024, 8, 6), M.white, x, -.06, .02);
+    else if (o.ears === 'gem') add(new T.OctahedronGeometry(.027), M.red, x, -.06, .02);
+    else { add(new T.CylinderGeometry(.005, .005, .07, 4), M.gold, x, -.09, .02); add(new T.OctahedronGeometry(.03), M.gold, x, -.145, .02); }
+  });
+}
 function makePerson(o) {
   const g = new T.Group(), body = new T.Group(); g.add(body);
   const skin = o.skin || M.skin;
@@ -2300,11 +2490,11 @@ function makePerson(o) {
   if (o.badge) { const bd = mesh(new T.CylinderGeometry(.06, .06, .02, 5), M.gold, false); bd.rotation.x = Math.PI / 2; bd.position.set(.11, .74, .245); body.add(bd); }
   const head = new T.Group(); head.position.y = 1.1; body.add(head);
   head.add(mesh(new T.SphereGeometry(.26, 16, 12), skin));
-  [-.09, .09].forEach(x => { const e = mesh(new T.SphereGeometry(.036, 8, 6), M.eye, false); e.position.set(x, .03, .235); head.add(e); const sh = mesh(new T.SphereGeometry(.012, 4, 3), M.white, false); sh.position.set(x + .012, .045, .265); head.add(sh); });
-  [-.15, .15].forEach(x => { const b = mesh(new T.SphereGeometry(.045, 6, 5).scale(1, .6, .4), M.blush, false); b.position.set(x, -.05, .215); head.add(b); });
+  [-.09, .09].forEach(x => { const e = mesh(new T.SphereGeometry(.036, 8, 6), o.eyeColor ? mat(o.eyeColor) : M.eye, false); e.position.set(x, .03, .235); if (o.eyes === 'big') e.scale.setScalar(1.3); else if (o.eyes === 'almond') e.scale.set(1.2, .62, 1); head.add(e); const sh = mesh(new T.SphereGeometry(.012, 4, 3), M.white, false); sh.position.set(x + .012, .045, .265); head.add(sh); });
+  if (o.blush !== false) [-.15, .15].forEach(x => { const b = mesh(new T.SphereGeometry(.045, 6, 5).scale(1, .6, .4), M.blush, false); b.position.set(x, -.05, .215); head.add(b); });
   const nose = mesh(new T.SphereGeometry(.035, 6, 5), skin); nose.position.set(0, -.03, .26); head.add(nose);
-  const mouth = mesh(new T.TorusGeometry(.045, .012, 4, 8, Math.PI), M.eye, false); mouth.position.set(0, -.09, .235); mouth.rotation.z = Math.PI; head.add(mouth);
-  const hairCap = mesh(new T.SphereGeometry(.275, 14, 10, 0, Math.PI * 2, 0, Math.PI * .55), o.hair); hairCap.rotation.x = -.35; hairCap.position.set(0, .02, -.02); head.add(hairCap);
+  const mouth = mesh(new T.TorusGeometry(.045, o.lips ? .017 : .012, 4, 8, Math.PI), o.lips ? M.red : M.eye, false); mouth.position.set(0, -.09, .235); mouth.rotation.z = Math.PI; head.add(mouth);
+  if (!o.bald) { const hairCap = mesh(new T.SphereGeometry(o.buzz ? .263 : .275, 14, 10, 0, Math.PI * 2, 0, Math.PI * .55), o.hair); hairCap.rotation.x = -.35; hairCap.position.set(0, .02, -.02); head.add(hairCap); }
   if (o.curly) {
     // Red curls: rings of little bumpy balls around the head that tumble down past the shoulders, plus a fringe
     const curl = (r, x, y, z, m) => { const c = mesh(new T.IcosahedronGeometry(r, 1), m); c.position.set(x, y, z); c.rotation.set(x * 9, y * 7, z * 5); head.add(c); };
@@ -2339,7 +2529,8 @@ function makePerson(o) {
     const lip = mesh(new T.SphereGeometry(.075, 10, 6).scale(1.25, .4, .5), o.hair); lip.position.set(0, -.055, .258); head.add(lip);
   }
   if (o.freckles) [-1, 1].forEach(sd => [[.12, -.01], [.155, -.03], [.13, -.055]].forEach(([x, y]) => { const f = mesh(new T.SphereGeometry(.011, 4, 3), M.freckle, false); f.position.set(sd * x, y, .238); head.add(f); }));
-  if (o.glasses) {
+  avatarExtras(head, o);
+  if (o.glasses && !o.specs) {
     [-.09, .09].forEach(x => { const l = mesh(new T.CylinderGeometry(.06, .06, .02, 12), M.eye, false); l.rotation.x = Math.PI / 2; l.position.set(x, .03, .255); head.add(l); });
     const br = mesh(new T.BoxGeometry(.08, .015, .015), M.eye, false); br.position.set(0, .04, .262); head.add(br);
   }
@@ -2426,8 +2617,10 @@ function makeSonia(id) {
   // The player may swap the hat for one from another outfit, or take it off
   const hatO = av.hat === 'none' ? null : av.hat ? (OUTFITS.find(x => x.id === av.hat) || OUTFITS[0]).look : o;
   const p = makePerson({ shirt: L(o.shirt), pants: L(o.pants), bib: o.bib && L(o.bib), skirt: o.skirt && L(o.skirt), skirtLong: o.skirtLong, shorts: o.shorts && L(o.shorts), skin,
-    hair, hair2, curly: av.hair === 'curly', long: av.hair === 'long', bun: av.hair === 'bun', afro: av.hair === 'afro', shortBack: av.hair === 'short' || av.hair === 'bun',
-    freckles: av.freckles, beard: av.beard, hat: hatO ? hatO.hat : null, hatColor: hatO && hatO.hatColor, cap: o.cap && L(o.cap), kerchief: o.kerchief, badge: o.badge, glasses: o.glasses, boot: L(o.boot) });
+    hair, hair2, curly: av.hair === 'curly', long: av.hair === 'long', bun: av.hair === 'bun', afro: av.hair === 'afro', shortBack: ['short', 'bun', 'ponytail', 'braid', 'spiky'].includes(av.hair),
+    bald: av.hair === 'bald' || av.hair === 'mohawk', buzz: av.hair === 'buzz', ponytail: av.hair === 'ponytail', braid: av.hair === 'braid', bob: av.hair === 'bob', straight: av.hair === 'straight', spiky: av.hair === 'spiky', mohawk: av.hair === 'mohawk',
+    eyes: av.eyes, eyeColor: AVATAR_EYE_COLORS[av.eyeColor] || 0, blush: av.blush, lips: av.lips, specs: av.glasses, ears: av.ears, beardStyle: av.beard,
+    freckles: av.freckles, beard: av.beard === true || av.beard === 'full' || av.beard === 'long', hat: hatO ? hatO.hat : null, hatColor: hatO && hatO.hatColor, cap: o.cap && L(o.cap), kerchief: o.kerchief, badge: o.badge, glasses: o.glasses, boot: L(o.boot) });
   const sickle = new T.Group(); sickle.position.set(0, -.32, .08); p.arm.add(sickle);
   const handle = mesh(new T.CylinderGeometry(.03, .03, .3, 6), M.woodDark); handle.rotation.x = Math.PI / 2; handle.position.z = .14; sickle.add(handle);
   const blade = mesh(new T.TorusGeometry(.19, .025, 5, 14, Math.PI * 1.1), M.metal); blade.position.set(-.17, 0, .3); blade.rotation.x = Math.PI / 2; sickle.add(blade);
@@ -3691,7 +3884,7 @@ function updateLitter(dt) {
     if ((l.x - P.x) ** 2 + (l.z - P.z) ** 2 < 1.2 && S.sack < sackOf(S.lv.bin)) { removeLitter(l); S.sack++; sfx.sweep(); }
   }
 }
-const skyNight = new T.Color(0x0f1631), skyNow = new T.Color(), nightVeil = $('nightVeil');
+const skyNight = new T.Color(0x0f1631), skyNow = new T.Color(), skyHaze = new T.Color(0xfff1dc), nightVeil = $('nightVeil');
 let nightNow = 0;
 // At night Sonia carries a warm lantern so the farm around her can still be seen
 const lantern = new T.PointLight(0xffc98a, 0, 10, 1.6); lantern.position.y = 2.4; scene.add(lantern);
@@ -3699,9 +3892,13 @@ function updateSky() {
   const day = dayLight();
   const nightF = 1 - day; nightNow = nightF;
   sun.intensity = LIGHT.sun * (.1 + .9 * day); hemi.intensity = LIGHT.hemi * (.3 + .7 * day);
-  hemi.color.setHex(0xdff0ff).lerp(skyNight, nightF * .5);
+  hemi.color.setHex(0xc4dcff).lerp(skyNight, nightF * .5);
   skyNow.setHex(THEME.sky).lerp(skyNight, nightF * .9);
-  scene.background.copy(skyNow); scene.fog.color.copy(skyNow);
+  GFX.uDay.value = day;
+  { const on = !topView && GFX.tier > 0; if (clouds[0].visible !== on) clouds.forEach(c => { c.visible = on; }); }
+  const dome = skyDome.material.uniforms;
+  dome.top.value.copy(skyNow).multiplyScalar(.62); dome.hor.value.copy(skyNow).lerp(skyHaze, .42 * day);
+  scene.background.copy(dome.hor.value); scene.fog.color.copy(dome.hor.value); skyDome.position.copy(camera.position);
   lantern.intensity = Math.max(0, nightF - .3) * 2.2; lantern.position.x = P.x; lantern.position.z = P.z;
   // A dark veil over the screen with a pool of light around Sonia: the night shows even on unlit ground
   const veil = (Math.round(nightF * 20) / 20).toFixed(2); if (nightVeil.style.opacity !== veil) nightVeil.style.opacity = veil;
@@ -4328,7 +4525,7 @@ function update(dt) {
   // Upright phones show Sonia a little below the middle, so the cards at the top cover the land ahead and not her
   const ahead = camRot(0, -off.z - (portrait && !topView ? 2.6 : .4));
   camera.lookAt(camera.position.x + ahead.x, 0, camera.position.z + ahead.z);
-  sun.position.set(P.x + 6, 14, P.z + 6); sun.target.position.set(P.x, 0, P.z);
+  sunFollow(P.x, P.z);
 }
 
 // Labels only show up close to Sonia, and with fewer words the farther away they are, so the screen stays clean
@@ -5007,10 +5204,10 @@ function frame(now) {
   if (!window.gameReady) { last = now; return; } // in development the scripts arrive one by one: wait for the last one
   const dt = Math.min(.1, (now - last) / 1000); last = now;
   if (creatorOn) creatorView(dt);
-  else if (!S.over && $('dayOverlay').hidden && $('tutOverlay').hidden && $('decOverlay').hidden && $('sceneOverlay').hidden) {
+  else if (!S.over && $('dayOverlay').hidden && $('tutOverlay').hidden && $('decOverlay').hidden && $('sceneOverlay').hidden && $('surveyOverlay').hidden) {
     S.meta.playT = (S.meta.playT || 0) + dt; update(dt); updateDay(dt); updateMood(dt); updateExtras(dt); updateTrouble(dt); updateChores(dt); updateIncome(dt); updateTown(dt); updateGrid(); }
-  renderer.render(scene, camera); updateLabels(dt);
-  uiT += dt; if (uiT > .25) { uiT = 0; refreshWorld(); checkMission(); renderMood(); renderDaily(); renderWorks(); renderStalls(); renderZone(); renderTrouble(); renderTown(); renderStory(); renderExtras(); tidyHud(); renderTips(); }
+  gfxTick(now, dt); renderer.render(scene, camera); updateLabels(dt);
+  uiT += dt; if (uiT > .25) { uiT = 0; refreshWorld(); checkMission(); renderMood(); renderDaily(); renderWorks(); renderStalls(); renderZone(); renderTrouble(); renderTown(); renderStory(); renderExtras(); tidyHud(); renderTips(); checkSurvey(); }
   saveT += dt; if (saveT > 4) { saveT = 0; saveCleared(); save(); }
 }
 
@@ -5030,7 +5227,7 @@ $('resetYes').addEventListener('click', () => {
   try { [SAVE_KEY, OLD_SAVE_KEY, 'huerto-tito-3d-v2'].forEach(k => localStorage.removeItem(k)); } catch {}
   location.reload();
 });
-// Feedback: the player writes what they think and sends it by WhatsApp (or copies it), with their progress attached
+// Feedback: the player writes what they think and it reaches the owner by e-mail, with their progress attached
 let fbRate = 0;
 function feedbackText() {
   const m = Math.floor((S.meta.playT || 0) / 60), mobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
@@ -5047,13 +5244,13 @@ $('fbRate').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   fbRate = +b.dataset.rate; $('fbRate').querySelectorAll('button').forEach(x => x.classList.toggle('on', +x.dataset.rate <= fbRate));
 });
-$('fbWhats').addEventListener('click', () => {
-  const a = document.createElement('a'); a.href = 'https://wa.me/?text=' + encodeURIComponent(feedbackText()); a.target = '_blank'; a.rel = 'noopener'; a.click();
+$('fbSend').addEventListener('click', () => {
+  const text = $('fbText').value.trim();
+  if (!fbRate && !text) { toast('Elige una carita o escribe algo'); return; }
+  sendMail(`💬 Opinión${fbRate ? ` ${fbRate}/5` : ''} de ${who()}`, feedbackText());
+  stat('opinion', { nota: fbRate, comentario: text.slice(0, 500) });
   S.meta.feedback = (S.meta.feedback || 0) + 1; save(); toast('¡Gracias por tu opinión! 💛');
-});
-$('fbCopy').addEventListener('click', async () => {
-  try { await navigator.clipboard.writeText(feedbackText()); toast('📋 Texto copiado. Pégalo en un mensaje'); }
-  catch { $('fbText').value = feedbackText(); $('fbText').select(); toast('Selecciona el texto y cópialo'); }
+  $('fbText').value = ''; fbRate = 0; $('fbRate').querySelectorAll('button').forEach(x => x.classList.remove('on')); $('feedbackOverlay').hidden = true;
 });
 const persist = () => { saveCleared(); save(); };
 document.addEventListener('visibilitychange', () => { if (document.hidden) persist(); });
@@ -5073,7 +5270,10 @@ function renderCreator() {
   $('avHair').innerHTML = AVATAR_HAIR.map(h => `<button class="opt${on(draft.hair === h.id)}" data-hair="${h.id}">${h.name}</button>`).join('');
   $('avColor').innerHTML = AVATAR_COLORS.map((c, i) => `<button class="sw${on(draft.color === i)}" data-color="${i}" style="background:${hex(c)}" aria-label="Color de pelo ${i + 1}"></button>`).join('');
   $('avSkin').innerHTML = AVATAR_SKINS.map((c, i) => `<button class="sw${on(draft.skin === i)}" data-skin="${i}" style="background:${hex(c)}" aria-label="Tono de piel ${i + 1}"></button>`).join('');
-  $('avExtra').innerHTML = `<button class="opt${on(draft.freckles)}" data-extra="freckles">Pecas</button><button class="opt${on(draft.beard)}" data-extra="beard">Barba</button>`;
+  const list = (el, items, key) => { $(el).innerHTML = items.map(x => `<button class="opt${on((draft[key] === true ? 'full' : draft[key] || '') === x.id)}" data-pick="${key}" data-val="${x.id}">${x.name}</button>`).join(''); };
+  list('avBeard', AVATAR_BEARD, 'beard'); list('avEyes', AVATAR_EYES, 'eyes'); list('avGlasses', AVATAR_GLASSES, 'glasses'); list('avEars', AVATAR_EARS, 'ears');
+  $('avEyeColor').innerHTML = AVATAR_EYE_COLORS.map((c, i) => `<button class="sw${on(draft.eyeColor === i)}" data-eyecolor="${i}" style="background:${hex(c)}" aria-label="Color de ojos ${i + 1}"></button>`).join('');
+  $('avExtra').innerHTML = `<button class="opt${on(draft.freckles)}" data-extra="freckles">Pecas</button><button class="opt${on(draft.blush)}" data-extra="blush">Colorete</button><button class="opt${on(draft.lips)}" data-extra="lips">Labios rojos</button>`;
   // Hats: the outfit's own, none at all, or any hat from an outfit already won
   const hats = [...new Map(OUTFITS.filter(o => skinGot(o) && o.look.hat).map(o => [o.look.hat === true ? 'straw' : o.look.hat, o])).values()];
   $('avHat').innerHTML = `<button class="opt${on(!draft.hat)}" data-hat="">Del conjunto</button><button class="opt${on(draft.hat === 'none')}" data-hat="none">Sin gorro</button>`
@@ -5093,24 +5293,27 @@ function closeCreator() {
 function creatorView(dt) {
   const t = performance.now() / 1000, wide = innerWidth / innerHeight >= 1.25;
   sonia.g.position.set(P.x, 0, P.z); sonia.g.rotation.y = Math.sin(t * .7) * .5;
-  sonia.body.position.set(0, 0, 0); sonia.legs.forEach(l => { l.rotation.x = 0; }); sonia.armL.rotation.x = 0; tractor.visible = false;
+  sonia.body.position.set(0, 0, 0); sonia.legs.forEach(l => { l.rotation.x = 0; }); sonia.armL.rotation.x = 0; tractor.visible = false; sonia.sack.visible = false;
   // Wide: the character stands in the left half. Tall: in the top part, above the options sheet.
   const side = wide ? 1.05 : 0;
   camera.position.set(P.x + side, wide ? 1.5 : 1.9, P.z + (wide ? 3.3 : 4.2));
   camera.lookAt(P.x + side, wide ? .75 : -.25, P.z);
-  sun.position.set(P.x + 6, 14, P.z + 6); sun.target.position.set(P.x, 0, P.z);
+  sunFollow(P.x, P.z);
   // The floating pad icons and the guide arrow would get in front of the camera this close
   pads.forEach(p => { p.icon.visible = false; }); arrow.visible = false;
   updateParticles(dt);
 }
 $('creator').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
-  if (b.dataset.hair) draft.hair = b.dataset.hair;
+  if (b.dataset.tab) { $('avTabs').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); document.querySelectorAll('.cpage').forEach(p => { p.hidden = p.dataset.page !== b.dataset.tab; }); return; }
+  if (b.dataset.pick) draft[b.dataset.pick] = b.dataset.val;
+  else if (b.dataset.eyecolor) draft.eyeColor = +b.dataset.eyecolor;
+  else if (b.dataset.hair) draft.hair = b.dataset.hair;
   else if (b.dataset.color) draft.color = +b.dataset.color;
   else if (b.dataset.skin) draft.skin = +b.dataset.skin;
   else if (b.dataset.extra) draft[b.dataset.extra] = !draft[b.dataset.extra];
   else if (b.dataset.hat !== undefined) draft.hat = b.dataset.hat || undefined;
-  else if (b.id === 'avRandom') Object.assign(draft, { hair: pick(AVATAR_HAIR).id, color: Math.floor(Math.random() * AVATAR_COLORS.length), skin: Math.floor(Math.random() * AVATAR_SKINS.length), freckles: Math.random() < .5, beard: Math.random() < .25 });
+  else if (b.id === 'avRandom') Object.assign(draft, { hair: pick(AVATAR_HAIR).id, color: Math.floor(Math.random() * AVATAR_COLORS.length), skin: Math.floor(Math.random() * AVATAR_SKINS.length), freckles: Math.random() < .5, beard: Math.random() < .3 ? pick(AVATAR_BEARD).id : '', eyes: pick(AVATAR_EYES).id, eyeColor: Math.floor(Math.random() * AVATAR_EYE_COLORS.length), glasses: Math.random() < .35 ? pick(AVATAR_GLASSES).id : '', ears: Math.random() < .35 ? pick(AVATAR_EARS).id : '', blush: Math.random() < .7, lips: Math.random() < .2 });
   else if (b.id === 'avOk') { closeCreator(); return; }
   else return;
   applyDraft(); renderCreator();
@@ -6275,6 +6478,71 @@ function tidyMission() {
 }
 const tidyHudBase = tidyHud;
 tidyHud = () => { tidyHudBase(); tidyMission(); };
+
+/* ================= Opinions by e-mail and the testers' survey ================= */
+// Web3Forms turns a message from the game into an e-mail to the owner. The key is not secret: it can only send to that one address.
+// Without a key (or offline, or on localhost) messages wait on the device and go out on a later visit. PostHog keeps a copy either way.
+const FEEDBACK_KEY = 'c5fd27ad-e010-462a-bbfa-4f89bd8daae1';
+const MAIL_QUEUE = 'huerto-correo-pendiente';
+const SURVEY_AT = 20 * 60; // seconds of play
+function mailQueue() { try { return JSON.parse(localStorage.getItem(MAIL_QUEUE)) || []; } catch (e) { return []; } }
+function setMailQueue(q) { try { localStorage.setItem(MAIL_QUEUE, JSON.stringify(q.slice(-10))); } catch (e) {} }
+async function flushMail() {
+  if (!FEEDBACK_KEY || !navigator.onLine || /^(localhost|127\.)/.test(location.hostname)) return;
+  const q = mailQueue();
+  while (q.length) {
+    const m = q[0];
+    try {
+      const r = await fetch('https://api.web3forms.com/submit', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ access_key: FEEDBACK_KEY, from_name: 'Huerto de Sonia', subject: m.subject, message: m.text }) });
+      if (!r.ok) return;
+    } catch (e) { return; }
+    q.shift(); setMailQueue(q);
+  }
+}
+function sendMail(subject, text) { setMailQueue([...mailQueue(), { subject, text }]); flushMail(); }
+function progressText() {
+  const m = Math.floor((S.meta.playT || 0) / 60);
+  return `Jugador: ${who()} · capítulo ${(S.farm || 0) + 1} (${THEME.name}) · misión ${S.mission + 1}/${MISSIONS.length} · nivel ${S.meta.level || 1} · día ${S.dayN || 1} · ${Math.floor(m / 60)} h ${m % 60} min jugados\n`
+    + `${matchMedia('(pointer: coarse)').matches ? 'Móvil' : 'Ordenador'} ${innerWidth}×${innerHeight} · calidad ${GFX.tier} · versión ${GAME_VERSION} (${BUILD_DATE})`;
+}
+flushMail();
+addEventListener('online', flushMail);
+
+const SURVEY = [
+  { id: 'nota', q: '¿Cuánto te está gustando?', row: true, a: ['😣', '😕', '😐', '🙂', '😍'] },
+  { id: 'gusta', q: '¿Qué es lo que más te gusta?', a: ['Cultivar y vender', 'Abrir zonas y construir', 'Gestionar y decidir', 'La historia', 'Mi personaje', 'Cómo se ve'] },
+  { id: 'problema', q: '¿Qué es lo que peor llevas?', a: ['Va muy lento', 'Es muy difícil', 'Es repetitivo', 'No sé qué hacer', 'Los anuncios', 'Fallos o tirones', 'Nada'] },
+  { id: 'fluidez', q: '¿Cómo va en tu móvil?', a: ['Fluido', 'Algún tirón', 'Va mal'] },
+  { id: 'volver', q: '¿Seguirías jugando mañana?', a: ['Sí', 'Puede', 'No'] },
+];
+const surveyA = {};
+function renderSurvey() {
+  $('surveyQs').innerHTML = SURVEY.map(s => `<div class="crow"><span>${s.q}</span><div class="opts${s.row ? ' emoji' : ''}">`
+    + s.a.map((a, i) => `<button class="opt${surveyA[s.id] === i ? ' on' : ''}" data-q="${s.id}" data-i="${i}">${a}</button>`).join('') + '</div></div>').join('');
+  const left = SURVEY.filter(s => surveyA[s.id] === undefined).length;
+  $('surveySend').disabled = left > 0; $('surveySend').textContent = left ? `Faltan ${left} ${left === 1 ? 'respuesta' : 'respuestas'}` : '📨 Enviar y seguir jugando';
+}
+function surveyBlocked() { return creatorOn || S.over || !$('dayOverlay').hidden || !$('tutOverlay').hidden || !$('decOverlay').hidden || !$('sceneOverlay').hidden || !$('feedbackOverlay').hidden || $('menu').hidden === false; }
+// Checked a few times per second: as soon as nothing else is open after 20 minutes of play, the survey comes up and cannot be skipped
+function checkSurvey() {
+  if (S.meta.survey || (S.meta.playT || 0) < SURVEY_AT || !$('surveyOverlay').hidden || surveyBlocked()) return;
+  renderSurvey(); $('surveyOverlay').hidden = false; stat('encuesta_ofrecida');
+}
+$('surveyQs').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  surveyA[b.dataset.q] = +b.dataset.i; sfx.drop(); renderSurvey();
+});
+$('surveySend').addEventListener('click', () => {
+  if (SURVEY.some(s => surveyA[s.id] === undefined)) return;
+  const answers = {}; SURVEY.forEach(s => { answers[s.id] = s.id === 'nota' ? surveyA.nota + 1 : s.a[surveyA[s.id]]; });
+  const comment = $('surveyText').value.trim();
+  sendMail(`📋 Encuesta: ${answers.nota}/5 de ${who()}`, SURVEY.map(s => `${s.q} ${answers[s.id]}${s.id === 'nota' ? '/5' : ''}`).join('\n')
+    + `\n\nComentario: ${comment || '(sin comentario)'}\n\n— ${progressText()}`);
+  stat('encuesta', { ...answers, comentario: comment.slice(0, 500) });
+  S.meta.survey = { t: Math.round(S.meta.playT || 0), v: GAME_VERSION }; save();
+  $('surveyOverlay').hidden = true; last = performance.now(); sfx.mission(); toast('¡Gracias por ayudarnos! 💛');
+});
 
 /* ================= Tips: each new system explains itself the first time it shows up ================= */
 // The opening tutorial stays short. Daily missions, morale and decisions, chores, mishaps, timed works and dirty zones
