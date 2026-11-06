@@ -265,7 +265,7 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
 .survey .wages button { width: auto; padding: 6px 2px; font-size: .9rem; background: #fff; }
 .survey .wages button.on { background: var(--leaf); color: #fff; }
 .survey .wages small { display: block; font-size: .7rem; font-weight: 700; }
-.santabar.shipbar { bottom: calc(52px + env(safe-area-inset-bottom, 0px)); background: rgba(31, 79, 143, .94); }
+.santabar.shipbar { bottom: calc(52px + env(safe-area-inset-bottom, 0px)); background: rgba(31, 79, 143, .94); pointer-events: auto; cursor: pointer; }
 .dmrow small.good { color: #2f7d3b; }
 .dmrow small.bad { color: #b5392b; }
 .survey .dmrow button:disabled { opacity: .5; }
@@ -1075,8 +1075,8 @@ const MAPS = [];
 const mapOf = n => MAPS[n % MAPS.length];
 const mapById = id => MAPS.find(m => m.id === id);
 // The version goes up with every release; the build (vite.config.js) stamps the date (while developing it says 'en pruebas')
-const GAME_VERSION = '46';
-const BUILD_DATE = '06/11/2026 15:10';
+const GAME_VERSION = '47';
+const BUILD_DATE = '06/11/2026 16:23';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -1202,7 +1202,7 @@ MAPS.push({
 /* ---------- Map 2: Costa Dorada ---------- */
 // Each map is described here as data: its look, its bonus, the mechanic it adds and what it changes in the zones.
 MAPS.push({
-  id: 'costa', mechanic: 'Construcción libre: tú eliges dónde va cada cosa',
+  id: 'costa', mechanic: 'Navegar y comerciar: tu barco, islas lejanas y precios que cambian',
   name: 'Costa Dorada',       icon: '🏖️', sky: 0x8fd8ff, grass: 0xa8d05a, grassDark: 0x9cc650, pine: 0x3f9a3a, pine2: 0x6fbf4a, hedge: 0x4faa3a, meadow: 0xd8c890, leaves: 0x6fbf4a, path: 0xf3e2b0, water: 0x2fd0d8, trees: 'palm',     weather: 'none',   bonus: { kind: 'fish',    text: 'El pescado y las conservas valen ×3' },
   // The last four zones get their own crops, animals, workshops, shops and rides.
   // Ids stay the same (missions and saves refer to them); names, products and models change.
@@ -1326,7 +1326,7 @@ MAPS.push({
       lot: true,
       shift: { 2: [0, -2.35], 3: [-55.3, 0], 4: [55.3, 0], 6: [21.1, -34.2], 7: [-21.1, -34.2], 8: [0, -94.7], 9: [0, -138.8] },
       areas: { 1: { x0: -18, x1: 18, z0: -14, z1: 30 }, 8: { x0: -37 } },
-      stall1: [-15, 12.4],
+      stall1: [-15, 8],
       doors: {
         gate: { x0: -2.2, x1: 2.2, z0: -17, z1: -14, pad: [0, -12.4] },
         gate3: { x0: -21, x1: -18, z0: -.3, z1: 3.3, pad: [-16.4, 1.5] },
@@ -1505,6 +1505,8 @@ function loadWorld() {
 const WORLD = loadWorld();
 // Test games of the first film studios used products that no longer exist: they start again
 if (WORLD.farms.cine && !(WORLD.farms.cine.film && WORLD.farms.cine.film.v2)) { delete WORLD.farms.cine; if (WORLD.map === 'cine') WORLD.farms.cine = {}; }
+// The Coast was remade around the boat (version 47): whoever had a game there starts it again. The player keeps level, stars and everything else
+if (WORLD.farms.costa && !WORLD.farms.costa.sea) { WORLD.farms.costa = {}; const sc = WORLD.player.meta && WORLD.player.meta.scenes; if (sc) Object.keys(sc).forEach(k => { if (k.startsWith('costa:')) delete sc[k]; }); }
 const mapIndex = id => MAPS.findIndex(m => m.id === id);
 let S = sanitize(window.claude?.hot?.data?.state || { farm: mapIndex(WORLD.map), ...WORLD.farms[WORLD.map], ...WORLD.player });
 let leaving = false; // set while going to another map, so nothing writes this farm into the next map's place
@@ -1857,7 +1859,7 @@ function roundRect(w, d, r) {
 }
 if (ISLANDS) {
   // The archipelago: open sea everywhere and every zone an island with shallow water and a sandy shore
-  flat(new T.PlaneGeometry(420, 420), M.water, 20, -.04, 20).renderOrder = -2;
+  flat(new T.PlaneGeometry(760, 760), M.water, -30, -.04, 20).renderOrder = -2;
   const shallow = new LitMat({ color: 0x8fe6e0, transparent: true, opacity: .55, depthWrite: false });
   Object.values(AREAS).forEach(r => {
     const w = r.x1 - r.x0, d = r.z1 - r.z0, cx = (r.x0 + r.x1) / 2, cz = (r.z0 + r.z1) / 2;
@@ -4581,6 +4583,28 @@ if (THEME.id === 'cine') {
     ['Construye la noria', [set('accion', 'la calle en llamas', 1500000), { text: 'Consigue una película de 5 estrellas', reward: 2000000, goal: 1, prog: () => +(S.film.hist || []).some(h => h.rating === 5), target: () => null }]],
   ].forEach(([after, list]) => { const i = MISSIONS.findIndex(m => m.text === after); if (i >= 0) MISSIONS.splice(i + 1, 0, ...list); });
 }
+// The Coast is about the boat: sailing and trading are woven through its missions
+if (THEME.id === 'costa') {
+  const port = id => () => (SEA.on || SEA.land ? portById(id).dock : shipSpot), found = id => () => +!!S.sea.found[id], profit = () => Math.max(0, S.sea.profit);
+  const yard = (id, l, text, reward) => ({ text, reward, goal: l, prog: () => S.sea.lv[id], target: () => shipSpot });
+  [
+    ['Recoge los billetes del suelo', [
+      { text: 'Lleva 6 productos a tu barco, al final del muelle', reward: 40, goal: 6, prog: () => S.sea.loaded, target: () => shipSpot },
+      { text: 'Zarpa y descubre Isla Coral, al oeste', reward: 80, goal: 1, prog: found('coral'), target: port('coral') },
+      { text: 'Vende tu carga en Isla Coral', reward: 60, goal: 1, prog: () => +(S.sea.sold > 0), target: port('coral') },
+      { text: 'Baja a Isla Coral y recoge 3 conchas', reward: 60, goal: 3, prog: () => S.sea.picked, target: () => (SEA.land ? null : port('coral')()) },
+      { text: 'Planta un huerto de cocos en Isla Coral', reward: 120, goal: 1, prog: () => Object.keys(S.sea.plots.coral || {}).length, target: () => (SEA.land ? { x: SEA.land.plotM[0].x, z: SEA.land.plotM[0].z } : port('coral')()) },
+      { text: 'Compra coral en Isla Coral', reward: 60, goal: 1, prog: () => +((S.sea.hold.coral || 0) > 0 || !!S.sea.found.especias), target: port('coral') },
+      { text: 'Lleva el coral a la Isla de las Especias', reward: 150, goal: 1, prog: found('especias'), target: port('especias') },
+    ]],
+    ['Abre el bosque', [yard('hold', 1, 'Amplía la bodega de tu barco', 300), { text: 'Cumple un encargo en una isla', reward: 400, goal: 1, prog: () => S.sea.done, target: () => null }]],
+    ['Abre el prado abandonado', [yard('speed', 2, 'Pon velas nuevas: nivel 2', 1500), { text: 'Gana 10.000 comerciando', reward: 2000, goal: 10000, prog: profit, target: () => null }]],
+    ['Construye el colmenar', [{ text: 'Construye el faro en tu muelle', reward: 3000, goal: 1, prog: () => +!!S.sea.faro, target: () => shipSpot }, { text: 'Descubre Isla Perla, al suroeste', reward: 5000, goal: 1, prog: found('perla'), target: port('perla') }]],
+    ['Abre la granja de animales', [{ text: 'Cumple 5 encargos', reward: 10000, goal: 5, prog: () => S.sea.done, target: () => null }, { text: 'Gana 100.000 comerciando', reward: 15000, goal: 100000, prog: profit, target: () => null }]],
+    ['Abre el aserradero', [{ text: 'Descubre la Isla del Tesoro, muy al oeste', reward: 60000, goal: 1, prog: found('tesoro'), target: port('tesoro') }, yard('hold', 6, 'Bodega al nivel 6', 80000)]],
+    ['Abre la feria', [{ text: 'Gana 1 millón comerciando', reward: 400000, goal: 1000000, prog: profit, target: () => null }, { text: 'Cumple 20 encargos', reward: 500000, goal: 20, prog: () => S.sea.done, target: () => null }]],
+  ].forEach(([after, list]) => { const i = MISSIONS.findIndex(m => m.text === after); if (i >= 0) MISSIONS.splice(i + 1, 0, ...list); });
+}
 MOVE_AFTER = MISSIONS.findIndex(m => m.text.startsWith('Abre las piscinas')) + 1;
 // Missions about the last zones take the current map's names
 MISSIONS.forEach(m => { if (MAPC.missions && MAPC.missions[m.text]) m.text = MAPC.missions[m.text]; });
@@ -4774,19 +4798,20 @@ function unstick() {
 let hintShown = S.tut < 3, moved = 0, bankT = 30;
 function update(dt) {
   if (TESTER && S.coins < 1e9) S.coins = 1e9; // Testers never run out of money, so they can see everything
-  if (blocked(P.x, P.z)) unstick();
+  if (!SEA.on && !SEA.land && blocked(P.x, P.z)) unstick();
   // Movement
   let ix = input.jx, iz = input.jz;
   if (input.keys.has('l')) ix -= 1; if (input.keys.has('r')) ix += 1;
   if (input.keys.has('u')) iz -= 1; if (input.keys.has('d')) iz += 1;
   ({ x: ix, z: iz } = camRot(ix, iz));
   const veh = vehicleNow(), riding = veh === 'tractor', mowing = veh === 'mower';
-  const mag = Math.min(1, Math.hypot(ix, iz)), sp = speedOf(S.lv.boots) * mag * (riding ? 1.35 : mowing ? 1.2 : 1) * (1 + .08 * (S.perks.speed || 0)) * decSoniaF();
+  const mag = Math.min(1, Math.hypot(ix, iz)), sp = SEA.on ? seaSpeed() * mag : speedOf(S.lv.boots) * mag * (riding ? 1.35 : mowing ? 1.2 : 1) * (1 + .08 * (S.perks.speed || 0)) * decSoniaF();
+  const walkOk = (x, z) => (SEA.land ? landFree(x, z) : SEA.on ? seaFree(x, z) : inArea(x, z) && !blocked(x, z));
   if (mag > .05) {
     const a = Math.atan2(ix, iz);
     // Move one axis at a time so Sonia slides along walls instead of sticking to them
-    const nx = P.x + Math.sin(a) * sp * dt; if (inArea(nx, P.z) && !blocked(nx, P.z)) P.x = nx;
-    const nz = P.z + Math.cos(a) * sp * dt; if (inArea(P.x, nz) && !blocked(P.x, nz)) P.z = nz;
+    const nx = P.x + Math.sin(a) * sp * dt; if (walkOk(nx, P.z)) P.x = nx;
+    const nz = P.z + Math.cos(a) * sp * dt; if (walkOk(P.x, nz)) P.z = nz;
     P.face = a; P.walk += dt * (8 + sp * 2.2);
     moved += sp * dt;
     if (hintShown && moved > 2) { hintShown = false; $('hint').style.opacity = 0; }
@@ -5051,6 +5076,8 @@ function update(dt) {
   const ahead = camRot(0, -off.z * wideK - (portrait && !topView ? 2.6 : .4));
   camera.lookAt(camera.position.x + ahead.x, low * 1.1, camera.position.z + ahead.z);
   sunFollow(P.x, P.z);
+  updateCineCut(dt);
+  updateSea(dt);
 }
 
 // Labels only show up close to Sonia, and with fewer words the farther away they are, so the screen stays clean
@@ -5494,6 +5521,8 @@ function openPanel(kind) {
       + (lost ? `<div class="prow"><span class="pi">💔</span><span class="pt2"><b>Salvar tu racha de ${S.meta.dayStreakLost} días</b>Ayer no viniste. Mira un anuncio y sigues por el día ${S.meta.dayStreakLost + 1}</span><button data-streak="1">📺 Salvar</button></div>` : '')
       + `<div class="prow"><span class="pi">🎁</span><span class="pt2"><b>Abrir</b>+${fmt(v)} monedas</span><button data-chest="1">Abrir</button></div>`
       + `<div class="prow"><span class="pi">📺</span><span class="pt2"><b>Ver anuncio</b>+${fmt(v * 2)} monedas</span><button data-chest="2">×2</button></div>`;
+  } else if (kind === 'sea') {
+    ({ title, sub, rows } = seaPanel());
   } else if (kind === 'stall') {
     title = '🛠️ Mejoras'; sub = 'Las mejoras de esta zona. Cada vez que compras una, aparece otra nueva.';
     rows = stallRows();
@@ -7108,13 +7137,10 @@ showSummary = () => {
   if (d.lawCost) $('dayStats').innerHTML += `<span>⚖️ Coste de las leyes</span><b>−${fmt(d.lawCost)}</b>`;
 };
 
-/* ================= Coast: ships with orders against the clock ================= */
-// On the Coast a ship moors at the pier now and then and asks for goods within a time limit. Leaving with less only pays part and costs some trust: nothing ever blocks.
-const SHIP = { on: false, t: 150, state: 'away', timer: 0, order: [], x: 0, z: 0 };
-const SHIP_WAIT = () => 240 + Math.random() * 180, SHIP_TIME = 150, SHIP_SAIL = 7;
-const shipsHere = () => THEME.id === 'costa' && townOn();
+/* ================= Coast: the pier, Sonia's boat and the sea's decisions ================= */
+// How the boat is used is in 47g-sea.js
 // The pier: on the west shore of the first island, the only stretch with open water wide enough for the ship.
-// Sonia walks to its far end (PIER in 03-state.js), so the ship is on screen while she hands over the goods
+// Sonia walks to its far end (PIER in 03-state.js) and loads the boat there
 const shipSpot = THEME.id === 'costa' ? { x: -16, z: 16.5, pierX: -10.6, dx: -1, dz: 0, boatX: -19.4, boatZ: 16.5 } : null;
 const shipModel = (() => {
   if (!shipSpot) return null;
@@ -7137,52 +7163,6 @@ function shipGoods() {
   BUILDS.forEach(b => { if (isBuilt(b.id) && b.output) out.add(b.output); });
   return [...out].filter(k => ITEMS[k]);
 }
-function shipArrive() {
-  const goods = shipGoods().sort(() => Math.random() - .5).slice(0, 2); if (!goods.length) { SHIP.t = 60; return; }
-  SHIP.order = goods.map(k => ({ k, need: 4 + Math.floor(Math.random() * 5), got: 0 }));
-  SHIP.state = 'in'; SHIP.sail = 0; shipModel.boat.visible = true;
-  sfx.bell(); toast(`⛴️ ¡Un barco viene con un pedido! Llévalo al final del muelle, al oeste, antes de que zarpe`); stat('barco', { accion: 'llega' });
-}
-function shipLeave(done) {
-  const got = SHIP.order.reduce((a, o) => a + o.got, 0), need = SHIP.order.reduce((a, o) => a + o.need, 0), worth = SHIP.order.reduce((a, o) => a + o.got * ITEMS[o.k].value, 0);
-  const pay = Math.max(1, Math.round((incMin(done ? 3 : 1) * got / need) + worth * (done ? 4 : 1) * priceF()));
-  if (got) { addCoins(pay); flyCoins(P.x, 1.5, P.z, done ? 16 : 6); }
-  if (done) { giveStars(1); S.trust = clamp100(S.trust + 3); S.meta.ships = (S.meta.ships || 0) + 1; sfx.mission(); toast(`⛴️ ¡Pedido completo! +${fmt(pay)} monedas y ⭐ 1`); burst(P.x, 2.3, P.z, '⛴️ +' + fmt(pay)); }
-  else { S.trust = clamp100(S.trust - 4); toast(got ? `⛴️ El barco zarpa con el pedido a medias: +${fmt(pay)} monedas` : '⛴️ El barco se va sin nada. ⭐ Confianza −4'); }
-  stat('barco', { accion: done ? 'completo' : 'se_va', llevado: got, pedido: need });
-  SHIP.state = 'out'; SHIP.sail = 0; SHIP.order = []; shipModel.ring.visible = false; save();
-}
-function shipBar() {
-  const b = $('shipBar'), show = SHIP.state === 'in' || SHIP.state === 'moored';
-  if (b.hidden === show) b.hidden = !show;
-  if (!show) return;
-  const items = SHIP.order.map(o => `${ITEMS[o.k].icon} ${o.got}/${o.need}`).join(' · '), s = Math.ceil(SHIP.timer);
-  const t = SHIP.state === 'in' ? `⛴️ Llega un barco: ${items}` : `⛴️ Final del muelle: ${items} · ⏱️ ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-  if (b._t !== t) { b.textContent = t; b._t = t; }
-}
-function updateShip(dt) {
-  if (!shipModel || !shipsHere()) return;
-  const M2 = shipModel, sw = Math.sin(performance.now() / 700) * .04;
-  if (SHIP.state === 'away') { if (S.mission >= 6 && dayOn() && shopOpen() && (SHIP.t -= dt) <= 0) shipArrive(); return; }
-  if (SHIP.state === 'in' || SHIP.state === 'out') {
-    SHIP.sail += dt / SHIP_SAIL; const k = Math.min(1, SHIP.sail), e = k * k * (3 - 2 * k), f = SHIP.state === 'in' ? 1 - e : e;
-    M2.boat.position.set(M2.boatX + (M2.farX - M2.boatX) * f, -.1, M2.boatZ + (M2.farZ - M2.boatZ) * f);
-    if (k >= 1) { if (SHIP.state === 'in') { SHIP.state = 'moored'; SHIP.timer = SHIP_TIME; M2.ring.visible = true; sfx.bell(); } else { SHIP.state = 'away'; SHIP.t = SHIP_WAIT(); M2.boat.visible = false; } }
-    shipBar(); return;
-  }
-  M2.boat.rotation.z = sw; SHIP.timer -= dt; 
-  if (Math.hypot(P.x - shipSpot.x, P.z - shipSpot.z) < 1.7 && (SHIP.give = (SHIP.give || 0) - dt) <= 0) {
-    const o = SHIP.order.find(x => x.got < x.need && P.stack.some(b => b.parent === sonia.stack && b.userData.item === x.k));
-    if (o) {
-      const b = takeFromStack(k => k === o.k);
-      if (b) { o.got++; SHIP.give = .12; sfx.drop(); flyTo(b, new T.Vector3(M2.boatX, 1.4, M2.boatZ), .4, () => scene.remove(b)); }
-    }
-  }
-  shipBar();
-  if (SHIP.order.every(o => o.got >= o.need)) shipLeave(true); else if (SHIP.timer <= 0) shipLeave(false);
-}
-const updateTownShip = updateTown;
-updateTown = dt => { updateTownShip(dt); updateShip(dt); };
 // Decisions of the sea: they only turn up on the Coast
 const onCoast = () => THEME.id === 'costa';
 CARDS.push(
@@ -7434,7 +7414,7 @@ function dressSets() {
     o.dress.forEach((m, i) => { m.visible = i < n; });
   });
 }
-let cineSign = null, cineCarpet = null, cineRing = null;
+let cineSign = null, cineCarpet = null, cineRing = null, cineBody = null, cineCutNow = 1;
 function drawCine() {
   const g = new T.Group(), RED = 0xa8283a, GOLD = 0xf6c445;
   addDetails(g, [
@@ -7446,7 +7426,7 @@ function drawCine() {
     pBox(1.5, 2.2, 1.3, -6.9, 1.1, 2, RED), pBox(1.7, .2, 1.5, -6.9, 2.3, 2, GOLD), pBox(1.1, .7, .06, -6.9, 1.35, 2.68, 0x7fc8e8),
     ...[-4, -3, -2, -1, 0, 1, 2, 3, 4].map(x => pGem(.07, x, 3.08, 4.34, 0xfff2b0)),
   ]);
-  g.position.set(CINE.x, 0, CINE.z - 1.5); scene.add(g);
+  g.position.set(CINE.x, 0, CINE.z - 1.5); scene.add(g); cineBody = g;
   cineSign = signPlane(8, .85, (c, w, h, text = 'CINE LUNA') => signText(c, w, h, text, '#fff8e0', '#2a1a30', .62));
   cineSign.position.set(CINE.x, 3.6, CINE.z + 2.82); scene.add(cineSign);
   cineCarpet = flat(new T.PlaneGeometry(2.4, 6.2), new T.MeshBasicMaterial({ color: 0xc8202f }), CINE.x, .012, CINE.ring.z - 3); cineCarpet.visible = false;
@@ -7469,6 +7449,18 @@ function drawLot() {
   });
 }
 if (THEME.id === 'cine') { drawCine(); drawLot(); GENRES.forEach(drawSet); dressSets(); }
+// The cinema is big: when it stands between the camera and Sonia, it sinks like a cut-away wall so she and the ground around her can be seen
+function updateCineCut(dt) {
+  if (!cineBody) return;
+  let hides = false;
+  for (let t = .04; t < 1 && !hides; t += .04) {
+    const x = P.x + (camera.position.x - P.x) * t, y = .8 + (camera.position.y - .8) * t, z = P.z + (camera.position.z - P.z) * t;
+    hides = y < 6.3 && Math.abs(x - CINE.x) < 8 && z > CINE.z - 4.2 && z < CINE.z + 3;
+  }
+  const aim = hides ? .16 : 1; if (cineCutNow === aim) return;
+  cineCutNow += (aim - cineCutNow) * Math.min(1, dt * 7); if (Math.abs(aim - cineCutNow) < .005) cineCutNow = aim;
+  cineBody.scale.y = cineCutNow; cineSign.visible = cineCutNow > .8;
+}
 const filmBlocked = (x, z) => {
   if (Math.abs(x - CINE.x) < 6.1 && z > CINE.z - 4 && z < CINE.z + 1.2) return true;
   if (Math.abs(x - (CINE.x - 6.9)) < .9 && z > CINE.z - .3 && z < CINE.z + 1.3) return true;
@@ -7763,6 +7755,293 @@ CARDS.push(
     opts: [{ label: 'Aceptar', coins: 1.2, note: '🎬 Peor crítica', act: filmQ(-.5) }, { label: 'Ni hablar', trust: 3, note: '🎬 Mejor crítica', act: filmQ(.25) }] },
 );
 
+/* ================= Coast: your own boat, far islands and trade ================= */
+// The Coast's own way of earning money. Goods go from Sonia's stack into the boat's hold at the pier; she steers the boat with the joystick
+// to islands only reachable by sea. Each pays differently for each thing and prices move every day, so the money is in the routes.
+const SEA = { on: false, land: null, inPort: null, shown: false, give: 0, t: 0, aim: null, stormT: 90, storm: null, face: 0, hurtT: 0, plotAt: null, boardT: 0 };
+const seaHere = () => THEME.id === 'costa';
+if (seaHere() && (!S.sea || typeof S.sea !== 'object')) S.sea = { hold: {}, lv: { hold: 0, speed: 0, hull: 0 }, found: {}, orders: {}, loaded: 0, sold: 0, profit: 0, done: 0, faro: false, wild: {}, plots: {}, picked: 0, grown: 0 };
+if (seaHere()) { const d = { wild: {}, plots: {}, picked: 0, grown: 0 }; Object.keys(d).forEach(k => { if (S.sea[k] === undefined) S.sea[k] = d[k]; }); }
+const seaOpen = () => seaHere() && S.mission >= 3;
+// Goods that only exist at sea: bought in one island to sell in another
+const COMM = {
+  coral: { name: 'Coral', icon: '🪸', v: 30 }, spice: { name: 'Especias', icon: '🌶️', v: 110 }, coffee: { name: 'Café', icon: '☕', v: 380 },
+  shell: { name: 'Conchas', icon: '🐚', v: 12, col: 0xffc8b0 }, coconut: { name: 'Cocos', icon: '🥥', v: 35, col: 0x8a5a30 }, herbs: { name: 'Hierbas', icon: '🌿', v: 45, col: 0x4fae4a }, pepper: { name: 'Pimienta', icon: '🫑', v: 120, col: 0x3f8f3a },
+  mussel: { name: 'Ostras de perla', icon: '🦪', v: 150, col: 0xd8d0e8 }, orchid: { name: 'Orquídeas', icon: '🌺', v: 400, col: 0xe85a9a }, oldcoin: { name: 'Monedas viejas', icon: '🪙', v: 800, col: 0xf6c445 }, grape: { name: 'Uvas raras', icon: '🍇', v: 1500, col: 0x7a4ac0 },
+  silk: { name: 'Seda', icon: '🧵', v: 1300 }, pearl: { name: 'Perlas', icon: '🫧', v: 4500 }, amphora: { name: 'Ánforas antiguas', icon: '🏺', v: 15000 },
+};
+const PORTS = [
+  { id: 'coral', name: 'Isla Coral', icon: '🪸', x: -88, z: 18, r: 9, col: 0xff7f6a, sells: ['coral'], buys: ['spice', 'herbs', 'pepper'], wild: 'shell', crop: 'coconut', text: 'La más cercana. En la playa hay conchas y aquí crecen los cocos.' },
+  { id: 'especias', name: 'Isla de las Especias', icon: '🌶️', x: -112, z: -62, r: 10, col: 0xd8402f, sells: ['spice', 'coffee'], buys: ['coral', 'silk', 'shell', 'coconut', 'mussel'], wild: 'herbs', crop: 'pepper', text: 'Huele a canela desde lejos. Aquí pagan bien el coral.' },
+  { id: 'perla', name: 'Isla Perla', icon: '🫧', x: -122, z: 96, r: 10, col: 0xc8a8f0, sells: ['silk', 'pearl'], buys: ['coffee', 'spice', 'pepper', 'coconut', 'oldcoin'], wild: 'mussel', crop: 'orchid', text: 'Buscadoras de perlas y mercaderes de seda.' },
+  { id: 'tesoro', name: 'Isla del Tesoro', icon: '🏺', x: -205, z: 14, r: 11, col: 0xf6c445, sells: ['amphora'], buys: ['pearl', 'silk', 'orchid', 'mussel'], wild: 'oldcoin', crop: 'grape', text: 'La más lejana y la que mejor paga. El viaje es largo.' },
+];
+const portById = id => PORTS.find(p => p.id === id);
+const WILD_SPOTS = [[-7, -2], [-6, 6.5], [0, 7.5], [7, 6.5], [6.8, -6.5], [-7, -7]], PLOT_SPOTS = [[-1.5, 4.8], [3.9, -6.2]];
+const WILD_BACK = 240000, PLOT_YIELD = 6;
+const plotGrow = p => 150000 + PORTS.indexOf(p) * 60000, plotCost = (p, i) => COMM[p.crop].v * 20 * (i + 1);
+const seaCap = () => 12 + S.sea.lv.hold * 8, seaUsed = () => Object.values(S.sea.hold).reduce((a, n) => a + n, 0);
+const seaSpeed = () => (6.5 + S.sea.lv.speed * 1.2) * (SEA.storm && SEA.storm.over ? .6 : 1);
+const hullMax = () => 100 + S.sea.lv.hull * 50;
+if (seaHere() && S.sea.hull === undefined) S.sea.hull = hullMax();
+const YARD = [
+  { id: 'hold', icon: '📦', name: 'Bodega', text: 'Cabe 8 más', base: 250, max: 12 },
+  { id: 'speed', icon: '⛵', name: 'Velas', text: 'El barco va más rápido', base: 400, max: 8 },
+  { id: 'hull', icon: '🛡️', name: 'Casco', text: 'Aguanta más en las tormentas', base: 500, max: 6 },
+];
+const yardCost = u => Math.round(u.base * Math.pow(2.3, S.sea.lv[u.id]));
+const FARO_COST = 6000;
+// Prices: every thing in every island goes up and down from one day to the next
+const seaHash = s => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 9973; return h; };
+const seaWave = (p, k) => 1 + .3 * Math.sin(seaHash(p.id + k) + (S.dayN || 0) * 1.7);
+const seaThing = k => COMM[k] || ITEMS[k];
+function seaSell(p, k) { // what an island pays; 0 if it doesn't want it
+  if (COMM[k]) return p.buys.includes(k) ? Math.round(COMM[k].v * 1.7 * seaWave(p, k)) : 0;
+  return ITEMS[k] ? Math.max(1, Math.round(ITEMS[k].value * 2.5 * priceF() * seaWave(p, k))) : 0;
+}
+const seaBuy = (p, k) => Math.max(1, Math.round(COMM[k].v * .75 * seaWave(p, k)));
+const priceTag = (p, k) => { const w = seaWave(p, k); return w > 1.15 ? ' 📈' : w < .85 ? ' 📉' : ''; };
+// World: the sea islands, their rings, the storm and the lighthouse
+const seaWorld = (() => {
+  if (!seaHere()) return null;
+  const shallow = new LitMat({ color: 0x8fe6e0, transparent: true, opacity: .55, depthWrite: false }), rings = {};
+  PORTS.forEach(p => {
+    const d = p.r * 2;
+    flat(roundRect(d + 9, d + 9, 9), shallow, p.x, -.02, p.z).renderOrder = -1;
+    flat(roundRect(d, d, 7), M.sand, p.x, .0012, p.z);
+    flat(roundRect(d - 4, d - 4, 5), M.grass, p.x, .0017, p.z);
+    const g = new T.Group(), parts = [pBox(4.4, 2.2, 3.4, -1, 1.1, -2, 0xfff3d9), pBox(4.8, .25, 3.8, -1, 2.3, -2, p.col), pBox(3.2, .3, 2.4, -1, 2.55, -2, p.col), pBox(1, 1.5, .08, -1, .75, -.27, 0x6b4426),
+      pCyl(.12, 8, 3, 4, -3, 0x9a6a38, 8), pBox(1.8, 1.1, .06, 3.95, 7.3, -3, p.col), ...crate(1.6, 1, .6), ...crate(-3.6, .4, .55)];
+    [[-5, 3], [5, 3.6], [-4, -5.4]].forEach(([x, z]) => { parts.push(pCyl(.17, 3.4, x, 1.7, z, 0x9a7a4a, 7), pGem(1.1, x, 3.7, z, 0x3f9a3a), pGem(.8, x + .5, 3.3, z + .4, 0x6fbf4a)); });
+    for (let i = 0; i < 11; i++) parts.push(pBox(.42, .1, 1.7, p.r + 3.6 - i * .46, .34, 0, i % 2 ? 0x9a6a38 : 0x7f5a30));
+    addDetails(g, parts); g.position.set(p.x, 0, p.z); scene.add(g);
+    const sign = signPlane(p.r * .95, 1.1, c => signText(c, c.canvas.width, c.canvas.height, `${p.icon} ${p.name}`, '#fff8e0', '#1f4f8f', .55)); sign.position.set(p.x, 3.6, p.z + 2); scene.add(sign);
+    p.dock = { x: p.x + p.r + 6.2, z: p.z }; p.board = { x: p.x + p.r + 2.4, z: p.z };
+    rings[p.id] = flat(new T.RingGeometry(3.1, 3.7, 32), mat(0xffd65a), p.dock.x, .03, p.dock.z);
+    p.boardRing = flat(new T.RingGeometry(1.1, 1.45, 28), mat(0x3f7fd0), p.board.x, .4, p.board.z); p.boardRing.visible = false;
+    const wc = COMM[p.wild].col, cc = COMM[p.crop].col;
+    p.wildM = WILD_SPOTS.map(([x, z]) => { const m = mesh(new T.IcosahedronGeometry(.34, 0), mat(wc)); m.position.set(p.x + x, .42, p.z + z); scene.add(m); return m; });
+    p.plotM = PLOT_SPOTS.map(([x, z]) => {
+      const base = flat(new T.PlaneGeometry(2.8, 2.8), mat(0x7a5230), p.x + x, .02, p.z + z), ring = flat(new T.RingGeometry(1.6, 1.9, 4, 1).rotateZ(Math.PI / 4), mat(0x3fa34d), p.x + x, .03, p.z + z);
+      const gr = new T.Group(), kids = []; for (let i = 0; i < 9; i++) { const sp = mesh(new T.ConeGeometry(.22, .8, 6), mat(0x4fae4a)); sp.position.set((i % 3 - 1) * .85, .4, (Math.floor(i / 3) - 1) * .85); const fr = mesh(new T.IcosahedronGeometry(.17, 0), mat(cc)); fr.position.set(0, .5, 0); sp.add(fr); gr.add(sp); kids.push(sp); }
+      gr.position.set(p.x + x, 0, p.z + z); gr.visible = false; scene.add(gr);
+      return { base, ring, gr, kids, x: p.x + x, z: p.z + z };
+    });
+  });
+  const storm = flat(new T.CircleGeometry(16, 36), new T.MeshBasicMaterial({ color: 0x1c2438, transparent: true, opacity: .42, depthWrite: false }), 0, .05, 0); storm.visible = false;
+  const lh = new T.Group(), stripes = []; for (let i = 0; i < 5; i++) stripes.push(pCyl(.95 - i * .1, 1.3, 0, .65 + i * 1.3, 0, i % 2 ? 0xd8402f : 0xfff8e7, 12));
+  addDetails(lh, [...stripes, pCyl(.55, .8, 0, 6.9, 0, 0xffe27a, 10), pCyl(.72, .14, 0, 7.4, 0, 0xd8402f, 10)]); lh.position.set(-14.6, 0, 20.4); scene.add(lh);
+  const sign = signPlane(4.4, .95, c => signText(c, c.canvas.width, c.canvas.height, '⛵ TU BARCO', '#fff8e0', '#1f4f8f', .6)); sign.position.set(shipSpot.x - 1, 2.6, shipSpot.z - 1); scene.add(sign);
+  const home = flat(new T.RingGeometry(3.6, 4.3, 32), mat(0xffd65a), shipModel.boatX - .4, .03, shipModel.boatZ); home.visible = false;
+  return { rings, storm, lh, sign, home };
+})();
+function seaFree(x, z) {
+  if (x < -250 || x > 170 || z < -160 || z > 190) return false;
+  if (Object.values(AREAS).some(r => x > r.x0 - 3 && x < r.x1 + 3 && z > r.z0 - 3 && z < r.z1 + 3)) return false;
+  if (Object.values(DOORS).some(r => x > r.x0 - 1.2 && x < r.x1 + 1.2 && z > r.z0 - 1.2 && z < r.z1 + 1.2)) return false;
+  if (x > PIER.x0 - .9 && x < PIER.x1 && z > PIER.z0 - .9 && z < PIER.z1 + .9) return false;
+  return !PORTS.some(p => Math.abs(x - p.x) < p.r + 1.5 && Math.abs(z - p.z) < p.r + 1.5);
+}
+// On foot on a far island: the sand and the little pier, around the hut
+function landFree(x, z) {
+  const p = SEA.land; if (!p) return false; const rx = x - p.x, rz = z - p.z;
+  if (rx > p.r - 1 && rx < p.r + 3.4 && Math.abs(rz) < .95) return true;
+  if (Math.abs(rx) > p.r + .4 || Math.abs(rz) > p.r + .4) return false;
+  return !(rx > -3.5 && rx < 1.5 && rz > -3.9 && rz < -.1);
+}
+function goAshore(p) {
+  SEA.on = false; SEA.land = p; SEA.boardT = 1; P.x = p.board.x - 1.6; P.z = p.z; P.face = -Math.PI / 2;
+  sonia.g.position.y = 0; $('panelOverlay').hidden = true; shipBarOff(); sfx.drop(); stat('barco', { accion: 'baja', isla: p.id }); S.sea.ashore = 1;
+  seaTip('seaLand', [{ icon: '🏝️', title: `Estás en ${p.name}`, text: `Anda por la isla y pisa lo que brilla: ${COMM[p.wild].name.toLowerCase()} ${COMM[p.wild].icon} que van a tu bodega. Vuelven a salir a los pocos minutos.` },
+    { icon: '🌱', title: 'Planta un huerto', text: `Los cuadros de tierra son huertos. Pisa uno para comprarlo: aquí se dan ${COMM[p.crop].name.toLowerCase()} ${COMM[p.crop].icon}, y crecen aunque te vayas. Cuando vuelvas, pasa por encima para cosecharlos.` },
+    { icon: '⛵', title: 'Volver al barco', text: 'Pisa el círculo azul del muelle para vender, comprar o subir al barco.' }]);
+}
+function backAboard(p) { SEA.land = null; SEA.on = true; SEA.away = true; SEA.inPort = p.id; P.x = p.dock.x; P.z = p.z; P.face = Math.PI / 2; SEA.face = P.face; p.boardRing.visible = false; $('panelOverlay').hidden = true; sfx.bell(); }
+// A tip right at the moment it matters, once per player
+function seaTip(id, cards) { if (S.meta.tips[id]) return; S.meta.tips[id] = true; stat('consejo', { cual: id }); tutI = 0; tutList = cards; showTutCard(); $('tutOverlay').hidden = false; }
+function setSail() {
+  if (SEA.on) return;
+  SEA.on = true; S.tractorOn = false; SEA.t = 0; SEA.away = false; SEA.inPort = null; P.x = shipModel.boatX - 1.2; P.z = shipModel.boatZ; P.face = -Math.PI / 2; SEA.face = P.face;
+  $('panelOverlay').hidden = true; sfx.bell(); stat('barco', { accion: 'zarpa', carga: seaUsed() });
+  seaTip('seaGo', [{ icon: '🧭', title: 'A navegar', text: 'Mueve el barco con el dedo y sigue la flecha de la barra azul. Tócala para abrir el mapa y cambiar de rumbo.' },
+    { icon: '⚓', title: 'Para llegar', text: 'Entra en el círculo amarillo de una isla para atracar. Para volver, entra en el círculo amarillo de tu muelle o usa «Volver a casa» en el mapa.' }]);
+}
+function landHome() {
+  SEA.on = false; SEA.land = null; SEA.shown = true; P.x = shipSpot.x; P.z = shipSpot.z; S.sea.hull = hullMax(); shipBarOff(); sfx.drop(); save();
+  sonia.g.position.y = 0; const b = shipModel.boat; b.position.set(shipModel.boatX, -.1, shipModel.boatZ); b.rotation.set(0, Math.PI / 2, 0);
+  openSeaPanel(null);
+}
+const shipBarOff = () => { $('shipBar').hidden = true; };
+// The panel: the pier (shipyard and setting sail) or an island (trade)
+function openSeaPanel(port) { SEA.panelPort = port; SEA.mapOpen = false; SEA.plotAt = null; $('panelList')._h = ''; openPanel('sea'); }
+function openSeaMap() { SEA.mapOpen = true; SEA.plotAt = null; $('panelList')._h = ''; openPanel('sea'); }
+const holdRows = () => { const keys = Object.keys(S.sea.hold).filter(k => S.sea.hold[k] > 0); return keys.length ? keys.map(k => `${seaThing(k).icon} ${S.sea.hold[k]}`).join(' · ') : 'vacía'; };
+// The chart: home, the islands found so far and a question mark on the next one. Tapping an island sets course
+function seaChart() {
+  const X0 = -240, X1 = 95, Z0 = -95, Z1 = 125, W = 340, H = Math.round(W * (Z1 - Z0) / (X1 - X0)), sx = x => (x - X0) / (X1 - X0) * W, sz = z => (z - Z0) / (Z1 - Z0) * H;
+  const next = PORTS.find(q => !S.sea.found[q.id]), aim = SEA.aim;
+  const land = Object.values(AREAS).map(r => `<rect x="${sx(r.x0)}" y="${sz(r.z0)}" width="${(r.x1 - r.x0) / (X1 - X0) * W}" height="${(r.z1 - r.z0) / (Z1 - Z0) * H}" rx="3" fill="#e8d9a8"/>`).join('');
+  const hx = sx(shipModel.boatX), hz = sz(shipModel.boatZ);
+  const isl = PORTS.filter(p => S.sea.found[p.id] || p === next).map(p => { const known = S.sea.found[p.id], x = sx(p.x), z = sz(p.z), sel = aim === p.id; return `<g data-aim="${p.id}" style="cursor:pointer">${sel ? `<line x1="${hx}" y1="${hz}" x2="${x}" y2="${z}" stroke="#fff" stroke-width="2" stroke-dasharray="5 5"/>` : ''}<circle cx="${x}" cy="${z}" r="17" fill="transparent"/><circle cx="${x}" cy="${z}" r="11" fill="${known ? '#e8d9a8' : '#5f93bd'}" stroke="${sel ? '#fff' : '#1f4f8f'}" stroke-width="2"/><text x="${x}" y="${z + 5}" text-anchor="middle" font-size="14">${known ? p.icon : '❓'}</text><text x="${x}" y="${z + 25}" text-anchor="middle" font-size="10" font-weight="800" fill="#fff">${known ? p.name : '¿Qué habrá aquí?'}</text></g>`; }).join('');
+  const boat = SEA.on ? `<text x="${sx(P.x)}" y="${sz(P.z) + 5}" text-anchor="middle" font-size="15">⛵</text>` : '';
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block;background:#3f93c8;border-radius:12px;touch-action:manipulation">${land}<circle cx="${hx}" cy="${hz}" r="5" fill="#ffd65a" stroke="#1f4f8f"/><text x="${hx + 8}" y="${hz + 16}" font-size="10" font-weight="800" fill="#fff">⚓ Tu muelle</text>${isl}${boat}</svg>`;
+}
+function seaMapPanel() {
+  const next = PORTS.find(q => !S.sea.found[q.id]);
+  const rows = PORTS.filter(p => S.sea.found[p.id]).map(p => `<div class="prow"><span class="pi">${p.icon}</span><span class="pt2"><b>${p.name}</b>Compran: ${p.buys.map(k => COMM[k].icon).join(' ')} · Venden: ${p.sells.map(k => COMM[k].icon).join(' ')}</span><button data-aim="${p.id}">Rumbo</button></div>`).join('');
+  const nx = next ? `<div class="prow"><span class="pi">❓</span><span class="pt2"><b>Isla sin descubrir</b>Descubrirla da monedas y ⭐ 1</span><button data-aim="${next.id}">Rumbo</button></div>` : '';
+  const home = SEA.on ? '<div class="prow"><span class="pi">⚓</span><span class="pt2"><b>Volver a casa</b>Marino te remolca hasta tu muelle ahora mismo</span><button data-home="1">Volver</button></div>' : '';
+  return { title: '🗺️ Mapa del mar', sub: SEA.on ? 'Toca una isla para poner rumbo.' : 'Elige adónde vas y zarpas. Tu carga: ' + holdRows() + '.', rows: seaChart() + home + nx + rows };
+}
+function seaPanel() {
+  if (SEA.mapOpen) return seaMapPanel();
+  if (SEA.plotAt) { const { p, i } = SEA.plotAt, c = plotCost(p, i), k = COMM[p.crop]; return { title: `🌱 Huerto de ${k.name.toLowerCase()}`, sub: `Da ${PLOT_YIELD} ${k.icon} cada ${Math.round(plotGrow(p) / 60000 * 10) / 10} minutos, también con el juego cerrado. Valen más en otras islas.`, rows: `<div class="prow"><span class="pi">${k.icon}</span><span class="pt2"><b>Plantar aquí</b>Cuando crezca, pasa por encima para cosecharlo</span><button data-plot="1" ${S.coins < c ? 'disabled' : ''}><span class="coin"></span>${fmt(c)}</button></div>` }; }
+  const p = SEA.panelPort;
+  if (!p) {
+    const yard = YARD.map(u => { const l = S.sea.lv[u.id], c = yardCost(u), max = l >= u.max; return `<div class="prow ${max ? 'done' : ''}"><span class="pi">${u.icon}</span><span class="pt2"><b>${u.name} · Nv ${l}</b>${u.text}</span>${max ? '<button disabled>Máx</button>' : `<button data-yard="${u.id}" ${S.coins < c ? 'disabled' : ''}><span class="coin"></span>${fmt(c)}</button>`}</div>`; }).join('');
+    const faro = S.sea.faro ? '' : `<div class="prow"><span class="pi">🗼</span><span class="pt2"><b>Faro</b>Avisa de las tormentas y hacen la mitad de daño</span><button data-faro="1" ${S.coins < FARO_COST ? 'disabled' : ''}><span class="coin"></span>${fmt(FARO_COST)}</button></div>`;
+    return { title: '⚓ Tu muelle', sub: `Bodega ${seaUsed()}/${seaCap()}: ${holdRows()}. Lo que llevas encima se carga solo al pisar el círculo.`,
+      rows: `<div class="prow"><span class="pi">⛵</span><span class="pt2"><b>Salir a navegar</b>Abre el mapa y elige adónde vas</span><button data-chart="1">🗺️ Mapa</button></div>` + yard + faro };
+  }
+  const own = Object.keys(S.sea.hold).filter(k => S.sea.hold[k] > 0 && seaSell(p, k) > 0);
+  const sell = own.map(k => { const v = seaSell(p, k), n = S.sea.hold[k]; return `<div class="prow"><span class="pi">${seaThing(k).icon}</span><span class="pt2"><b>${seaThing(k).name} × ${n}</b>Pagan ${fmt(v)} cada uno${priceTag(p, k)}</span><button data-sell="${k}"><span class="coin"></span>+${fmt(v * n)}</button></div>`; }).join('');
+  const free = seaCap() - seaUsed();
+  const buy = p.sells.map(k => { const v = seaBuy(p, k), n = Math.min(free, Math.floor(S.coins / v)); return `<div class="prow"><span class="pi">${COMM[k].icon}</span><span class="pt2"><b>Comprar ${COMM[k].name.toLowerCase()}</b>A ${fmt(v)} cada uno${priceTag(p, k)}</span><button data-buy="${k}" ${n < 1 ? 'disabled' : ''}>${n < 1 ? (free < 1 ? 'Bodega llena' : 'Sin dinero') : `${n} · ${fmt(n * v)}`}</button></div>`; }).join('');
+  const wants = p.buys.map(k => COMM[k].icon + ' ' + COMM[k].name).join(', ');
+  const o = seaOrder(p); let order = '';
+  if (o) { const have = S.sea.hold[o.k] || 0, it = ITEMS[o.k]; order = o.done ? '<div class="prow done"><span class="pi">📜</span><span class="pt2"><b>Encargo cumplido</b>Mañana habrá otro</span></div>' : `<div class="prow"><span class="pi">📜</span><span class="pt2"><b>Encargo: ${o.need} ${it.icon} ${it.name}</b>Tienes ${have}. Paga muy bien y da ⭐ 1</span><button data-order="1" ${have < o.need ? 'disabled' : ''}>Entregar</button></div>`; }
+  const foot = SEA.land ? '<div class="prow"><span class="pi">⛵</span><span class="pt2"><b>Subir al barco</b>Seguir navegando</span><button data-aboard="1">Subir</button></div>' : `<div class="prow"><span class="pi">🚶</span><span class="pt2"><b>Bajar a la isla</b>Recoge ${COMM[p.wild].name.toLowerCase()} ${COMM[p.wild].icon} y planta huertos de ${COMM[p.crop].name.toLowerCase()} ${COMM[p.crop].icon}</span><button data-ashore="1">Bajar</button></div>`;
+  return { title: `${p.icon} ${p.name}`, sub: `${p.text} Bodega ${seaUsed()}/${seaCap()}. También compran: ${wants}.`, rows: foot + order + sell + buy };
+}
+function seaOrder(p) {
+  const day = S.dayN || 0; let o = S.sea.orders[p.id];
+  if (!o || o.day !== day) { const goods = shipGoods(); if (!goods.length) return null; o = S.sea.orders[p.id] = { k: goods[Math.floor(Math.random() * goods.length)], need: Math.min(seaCap(), 4 + Math.floor(Math.random() * 5)), day, done: false }; }
+  return o;
+}
+$('panelList').addEventListener('click', e => {
+  if (panelKind !== 'sea') return;
+  const b = e.target.closest('button, [data-aim]'); if (!b || b.disabled) return;
+  const d = b.dataset, p = SEA.panelPort, h = S.sea.hold;
+  if (d.chart) { sfx.drop(); openSeaMap(); return; }
+  if (d.aim) { SEA.aim = d.aim; SEA.mapOpen = false; sfx.drop(); if (SEA.on) $('panelOverlay').hidden = true; else setSail(); return; }
+  if (d.home) { SEA.mapOpen = false; $('panelOverlay').hidden = true; toast('⚓ Marino te lleva de vuelta a tu muelle'); landHome(); return; }
+  if (d.ashore) { goAshore(p); return; }
+  if (d.aboard) { backAboard(p); return; }
+  if (d.plot) { const { p: q, i } = SEA.plotAt, c = plotCost(q, i); if (S.coins < c) return; S.coins -= c; (S.sea.plots[q.id] = S.sea.plots[q.id] || {})[i] = Date.now() + plotGrow(q); sfx.mission(); toast(`🌱 ¡Plantado! Vuelve en ${Math.round(plotGrow(q) / 60000 * 10) / 10} minutos`); stat('barco', { accion: 'huerto', isla: q.id }); $('coinsTxt').textContent = fmt(S.coins); SEA.plotAt = null; $('panelOverlay').hidden = true; save(); return; }
+  if (d.yard) { const u = YARD.find(y => y.id === d.yard), c = yardCost(u); if (S.coins < c) return; S.coins -= c; S.sea.lv[u.id]++; if (u.id === 'hull') S.sea.hull = hullMax(); sfx.mission(); stat('barco', { accion: 'astillero', mejora: u.id, nivel: S.sea.lv[u.id] }); }
+  else if (d.faro) { if (S.coins < FARO_COST) return; S.coins -= FARO_COST; S.sea.faro = true; seaWorld.lh.visible = true; sfx.mission(); toast('🗼 ¡Faro encendido! Te avisará de las tormentas'); }
+  else if (d.sell) { const n = h[d.sell] || 0, v = seaSell(p, d.sell) * n; if (!n) return; delete h[d.sell]; addCoins(v); S.sea.sold += n; S.sea.profit += v; flyCoins(P.x, 1.5, P.z, 8); sfx.mission(); stat('barco', { accion: 'vende', isla: p.id, que: d.sell, cuanto: n }); }
+  else if (d.buy) { const v = seaBuy(p, d.buy), n = Math.min(seaCap() - seaUsed(), Math.floor(S.coins / v)); if (n < 1) return; S.coins -= n * v; S.sea.profit -= n * v; h[d.buy] = (h[d.buy] || 0) + n; sfx.drop(); }
+  else if (d.order) {
+    const o = seaOrder(p); if (!o || o.done || (h[o.k] || 0) < o.need) return;
+    h[o.k] -= o.need; if (!h[o.k]) delete h[o.k]; o.done = true; S.sea.done++;
+    const pay = Math.round(ITEMS[o.k].value * o.need * 5 * priceF()) + incMin(1.5); addCoins(pay); S.sea.profit += pay; giveStars(1); S.trust = clamp100((S.trust ?? 55) + 3); flyCoins(P.x, 1.5, P.z, 14); sfx.mission(); toast(`📜 ¡Encargo cumplido! +${fmt(pay)} monedas y ⭐ 1`); stat('barco', { accion: 'encargo', isla: p.id });
+  } else return;
+  $('coinsTxt').textContent = fmt(S.coins); openSeaPanel(p); save();
+});
+function arrive(p) {
+  SEA.inPort = p.id;
+  if (!S.sea.found[p.id]) { S.sea.found[p.id] = 1; const v = incMin(3); addCoins(v); giveStars(1); sfx.mission(); burst(P.x, 2.4, P.z, `${p.icon} ¡Isla descubierta!`); toast(`🗺️ ¡Has descubierto ${p.name}! +${fmt(v)} monedas y ⭐ 1`); stat('barco', { accion: 'descubre', isla: p.id }); }
+  openSeaPanel(p);
+}
+// Where the bar's compass points: what was chosen on the chart, or else the next island to find. Tapping the bar opens the chart
+const seaAimAt = () => { const a = SEA.aim && portById(SEA.aim), t = a || PORTS.find(q => !S.sea.found[q.id]); return t ? { name: t.name, icon: S.sea.found[t.id] ? t.icon : '❓', x: t.dock.x, z: t.dock.z } : { name: 'Tu muelle', icon: '⚓', x: shipModel.boatX, z: shipModel.boatZ }; };
+$('shipBar').addEventListener('click', () => { if (SEA.on) { sfx.drop(); openSeaMap(); } });
+const ARROWS = ['⬇️', '↘️', '➡️', '↗️', '⬆️', '↖️', '⬅️', '↙️'];
+function seaBar() {
+  const a = seaAimAt(), dx = a.x - P.x, dz = a.z - P.z, ang = Math.atan2(dx, dz) - camYawNow;
+  const i = ((Math.round(ang / (Math.PI / 4)) % 8) + 8) % 8, b = $('shipBar'), hp = Math.round(S.sea.hull / hullMax() * 100);
+  const t = `📦 ${seaUsed()}/${seaCap()} · 🛡️ ${hp}% · ${ARROWS[i]} ${a.icon} ${a.name} ${Math.round(Math.hypot(dx, dz))} m · 🗺️`;
+  if (b.hidden) b.hidden = false; if (b._t !== t) { b.textContent = t; b._t = t; }
+}
+function seaUpdateStorm(dt) {
+  const st = SEA.storm, m = seaWorld.storm;
+  if (!st) {
+    if (Object.keys(S.sea.found).length && P.x < -30 && (SEA.stormT -= dt) <= 0) {
+      const a = Math.random() * 6.28, d = 34;
+      SEA.storm = { x: P.x + Math.cos(a) * d, z: P.z + Math.sin(a) * d, vx: -Math.cos(a) * 2.4, vz: -Math.sin(a) * 2.4, t: 32, over: false }; m.visible = true;
+      if (S.sea.faro) toast('🗼 El faro avisa: ¡tormenta cerca! Busca el círculo oscuro y rodéalo');
+    }
+    return;
+  }
+  st.t -= dt; st.x += st.vx * dt; st.z += st.vz * dt; m.position.set(st.x, .05, st.z); m.material.opacity = (.34 + Math.sin(performance.now() / 90) * .05) * Math.min(1, st.t / 3);
+  st.over = Math.hypot(P.x - st.x, P.z - st.z) < 15;
+  if (st.t <= 0) { SEA.storm = null; SEA.stormT = 70 + Math.random() * 60; m.visible = false; return; }
+  if (!st.over) return;
+  S.sea.hull -= dt * (S.sea.faro ? 6 : 12);
+  if ((SEA.hurtT -= dt) <= 0) { SEA.hurtT = 1.4; sfx.drop(); burst(P.x, 2.4, P.z, '🌊 ¡Olas!'); }
+  if (S.sea.hull <= 0) {
+    const h = S.sea.hold; let lost = 0; Object.keys(h).forEach(k => { const n = Math.ceil(h[k] * .25); h[k] -= n; lost += n; if (h[k] <= 0) delete h[k]; });
+    SEA.storm = null; m.visible = false; SEA.stormT = 80; SEA.on = true; toast(`🌊 ¡La tormenta casi hunde el barco! Marino te remolca a casa. Pierdes ${lost} de carga`); stat('barco', { accion: 'naufragio', perdido: lost });
+    landHome();
+  }
+}
+// Wild things and gardens on the islands, drawn only when Sonia is near enough to see them
+function updateIsland(p, dt) {
+  const near = Math.hypot(P.x - p.x, P.z - p.z) < 70, now = Date.now(), wild = S.sea.wild[p.id] || {}, plots = S.sea.plots[p.id] || {};
+  p.wildM.forEach((m, i) => { const on = near && !(wild[i] > now); m.visible = on; if (on) { m.rotation.y += dt * 1.5; m.position.y = .42 + Math.sin(now / 400 + i) * .08; } });
+  p.plotM.forEach((m, i) => {
+    const bought = plots[i] !== undefined; m.gr.visible = near && bought; m.ring.visible = near && !bought; m.base.visible = near;
+    if (!near || !bought) return;
+    const k = Math.min(1, Math.max(.12, 1 - (plots[i] - now) / plotGrow(p))), s = .3 + k * .9; m.kids.forEach(c => { c.scale.setScalar(s); c.children[0].visible = k >= 1; });
+  });
+}
+function seaPick(k, n, x, z) {
+  const room = Math.min(n, seaCap() - seaUsed()); if (room < 1) { if ((SEA.fullT || 0) < performance.now()) { SEA.fullT = performance.now() + 4000; toast('📦 La bodega está llena. Vende algo o amplíala en el astillero'); } return 0; }
+  S.sea.hold[k] = (S.sea.hold[k] || 0) + room; burst(x, 1.6, z, `${COMM[k].icon} +${room}`); sfx.drop(); return room;
+}
+function updateAshore(dt) {
+  const p = SEA.land, now = Date.now(), wild = S.sea.wild[p.id] = S.sea.wild[p.id] || {}, plots = S.sea.plots[p.id] = S.sea.plots[p.id] || {};
+  WILD_SPOTS.forEach(([x, z], i) => { if (!(wild[i] > now) && Math.hypot(P.x - p.x - x, P.z - p.z - z) < 1.25 && seaPick(p.wild, 1, p.x + x, p.z + z)) { wild[i] = now + WILD_BACK; S.sea.picked++; save(); } });
+  p.plotM.forEach((m, i) => {
+    const on = Math.abs(P.x - m.x) < 1.5 && Math.abs(P.z - m.z) < 1.5;
+    if (!on) { if (SEA.plotOn === i) SEA.plotOn = null; if (SEA.plotNear === i) SEA.plotNear = null; return; }
+    // Buying asks for standing on it a moment, so walking across never pops a window up
+    if (plots[i] === undefined) { if (SEA.plotNear !== i) { SEA.plotNear = i; SEA.plotHold = 0; } SEA.plotHold += dt; if (SEA.plotHold > .5 && SEA.plotOn !== i && $('panelOverlay').hidden) { SEA.plotOn = i; SEA.plotAt = { p, i }; SEA.mapOpen = false; $('panelList')._h = ''; openPanel('sea'); } return; }
+    if (plots[i] <= now) { const got = seaPick(p.crop, PLOT_YIELD, m.x, m.z); if (got) { plots[i] = now + plotGrow(p); S.sea.grown += got; sfx.mission(); save(); } }
+  });
+  p.boardRing.visible = true;
+  const onRing = Math.hypot(P.x - p.board.x, P.z - p.board.z) < 1.3;
+  if (!onRing) SEA.boardT = 0;
+  else if (!SEA.boardT && $('panelOverlay').hidden) { SEA.boardT = 1; openSeaPanel(p); }
+}
+function updateSea(dt) {
+  if (!seaHere() || !shipModel) return;
+  const open = seaOpen(), b = shipModel.boat;
+  // The boat is at the pier from the very first moment: it is what this chapter is about
+  shipModel.ring.visible = open && !SEA.on; b.visible = true; seaWorld.lh.visible = !!S.sea.faro;
+  if (!SEA.on) { b.position.set(shipModel.boatX, -.1, shipModel.boatZ); seaWorld.sign.visible = true; } else seaWorld.sign.visible = false;
+  PORTS.forEach(p => { seaWorld.rings[p.id].visible = SEA.on; seaWorld.storm.visible = !!SEA.storm && SEA.on; updateIsland(p, dt); });
+  seaWorld.home.visible = SEA.on;
+  if (SEA.land) { DEC.camWide = (DEC.camWide || 0) * Math.max(0, 1 - dt * 2); b.position.set(SEA.land.dock.x, -.1, SEA.land.dock.z); b.rotation.set(0, 0, 0); updateAshore(dt); return; }
+  if (!open) return;
+  if (!SEA.on) {
+    b.rotation.z = Math.sin(performance.now() / 700) * .03; b.position.set(shipModel.boatX, -.1, shipModel.boatZ);
+    const on = Math.hypot(P.x - shipSpot.x, P.z - shipSpot.z) < 1.7;
+    if (!on) { SEA.shown = false; DEC.camWide = (DEC.camWide || 0) * Math.max(0, 1 - dt * 2); return; }
+    if ((SEA.give -= dt) <= 0 && seaUsed() < seaCap()) {
+      const g = takeFromStack(() => true);
+      if (g) { const k = g.userData.item; S.sea.hold[k] = (S.sea.hold[k] || 0) + 1; S.sea.loaded++; SEA.give = .1; SEA.shown = false; sfx.drop(); flyTo(g, new T.Vector3(shipModel.boatX, 1.4, shipModel.boatZ), .4, () => scene.remove(g)); return; }
+    }
+    if (!SEA.shown && (SEA.give <= 0 || seaUsed() >= seaCap())) { SEA.shown = true; openSeaPanel(null); }
+    return;
+  }
+  SEA.t += dt;
+  let da = P.face - SEA.face; while (da > Math.PI) da -= 6.2832; while (da < -Math.PI) da += 6.2832; SEA.face += da * Math.min(1, dt * 4);
+  const bob = Math.sin(performance.now() / 500) * .06;
+  b.position.set(P.x, -.1 + bob, P.z); b.rotation.set(0, SEA.face - Math.PI / 2, Math.sin(performance.now() / 800) * .04);
+  sonia.g.position.y = 1.06 + bob;
+  DEC.camWide = (DEC.camWide || 0) + (.55 - (DEC.camWide || 0)) * Math.min(1, dt * 2);
+  seaUpdateStorm(dt); if (!SEA.on) return;
+  seaBar();
+  // The boat only docks once it has been away, so setting off and waiting a moment doesn't bring it straight back
+  const homeD = Math.hypot(P.x - shipModel.boatX, P.z - shipModel.boatZ); if (homeD > 9) SEA.away = true;
+  if (SEA.away && homeD < 4.8 && $('panelOverlay').hidden) { landHome(); return; }
+  const near = PORTS.find(p => Math.hypot(P.x - p.dock.x, P.z - p.dock.z) < 4.6);
+  if (near && SEA.inPort !== near.id && $('panelOverlay').hidden) arrive(near);
+  if (!near) SEA.inPort = null;
+}
+
 /* ================= Story: chapters and short scenes ================= */
 // Each map is a chapter. A chapter opens and closes with a few lines from Sonia or a neighbour, and some big steps
 // (like the town hall) get their own little scene. Scenes are shown once per player (S.meta.scenes).
@@ -7793,8 +8072,8 @@ const STORY = {
     title: 'El puerto de la Costa',
     intro: { icon: '⚓', lines: [
       [['🧔', 'Marino, el pescador'], '¿Tú eres la granjera del Valle? Bienvenida. Hace años este era el puerto más alegre del mar.'],
-      [SONIA, 'Pues lo volveremos a llenar de vida. Aquí cada cosa la colocaré yo donde quiera.'],
-      [['🧔', 'Marino, el pescador'], 'Las islas están separadas: habrá que tender puentes para llegar a todas.'],
+      [SONIA, 'Pues lo volveremos a llenar de vida. ¿Y ese barco del muelle?'],
+      [['🧔', 'Marino, el pescador'], 'Tuyo, si lo quieres. Aquí el dinero está en el mar: en cada isla pagan distinto por cada cosa. Carga la bodega y descubre las rutas.'],
     ] },
     steps: [],
   },
@@ -8372,6 +8651,11 @@ function updateLamps(glow) {
 // each get one or two cards the first time they appear (once per player, S.meta.tips), in the tutorial's own window.
 if (!S.meta.tips || typeof S.meta.tips !== 'object') S.meta.tips = {};
 const TIPS = [
+  { id: 'sea', when: () => seaOpen(), cards: [
+    { icon: '⛵', title: 'Tienes barco', text: 'Está en el muelle de esta isla. Lleva lo que produces hasta el círculo del final del muelle: se carga solo en la bodega.' },
+    { icon: '🗺️', title: 'Abre el mapa y zarpa', text: 'Al pisar el círculo sale el muelle. Abre el mapa, toca una isla y el barco sale. Lo manejas con el dedo.' },
+    { icon: '📈', title: 'Compra barato, vende caro', text: 'Cada isla paga distinto y los precios cambian cada día. Baja a las islas: hay cosas que recoger y sitio para tus huertos.' },
+  ] },
   { id: 'cam', when: () => S.mission >= 3, cards: [
     { icon: '🎥', title: 'Mueve la cámara', text: 'Arrastra el botón 🔄 para girar y subir o bajar la vista, o usa un segundo dedo mientras andas. Un toque en 🔄 la deja recta otra vez.' },
   ] },
