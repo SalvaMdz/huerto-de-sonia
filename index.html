@@ -935,8 +935,8 @@ const MAPS = [];
 const mapOf = n => MAPS[n % MAPS.length];
 const mapById = id => MAPS.find(m => m.id === id);
 // The version goes up with every release; the build (vite.config.js) stamps the date (while developing it says 'en pruebas')
-const GAME_VERSION = '37';
-const BUILD_DATE = '06/11/2026 03:27';
+const GAME_VERSION = '38';
+const BUILD_DATE = '06/11/2026 03:34';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -1902,6 +1902,98 @@ for (let i = 0; i < 9; i++) {
   scene.add(g); clouds.push(g);
 }
 
+/* ================= Details on buildings ================= */
+// All the small pieces of one building are merged into a single mesh colored per vertex: many pieces, one draw call
+M.vcol = new LitMat({ vertexColors: true });
+const shade = (hex, k) => (Math.min(255, ((hex >> 16) & 255) * k) << 16) | (Math.min(255, ((hex >> 8) & 255) * k) << 8) | Math.min(255, (hex & 255) * k);
+const pBox = (w, h, d, x, y, z, color, rz = 0) => ({ geo: new T.BoxGeometry(w, h, d).rotateZ(rz).translate(x, y, z), color });
+const pCyl = (r, h, x, y, z, color, sides = 8) => ({ geo: new T.CylinderGeometry(r, r, h, sides).translate(x, y, z), color });
+const pGem = (r, x, y, z, color) => ({ geo: new T.OctahedronGeometry(r).translate(x, y, z), color });
+function addDetails(g, parts) { const m = mesh(mergeParts(parts), M.vcol); g.add(m); return m; }
+const BEAM = 0x6b4426, STONE = 0x8d8a82, PETALS = [0xe8384a, 0xf5c518, 0xf06aa8, 0xffffff];
+
+function barrel(x, z) { return [pCyl(.22, .56, x, .28, z, 0x9a6a38, 9), pCyl(.235, .05, x, .14, z, 0x55504a, 9), pCyl(.235, .05, x, .42, z, 0x55504a, 9)]; }
+function crate(x, z, s = .5) { return [pBox(s, s, s, x, s / 2, z, 0xb98a50), pBox(s + .02, .05, s + .02, x, s - .03, z, BEAM), pBox(s + .02, .05, s + .02, x, .03, z, BEAM)]; }
+
+function buildingDetails(g, p) {
+  const prism = (sx, sy, len, baseY) => new T.CylinderGeometry(1, 1, len, 3).rotateX(-Math.PI / 2).scale(sx, sy, 1).translate(0, baseY + .5 * sy, 0);
+  const parts = [
+    { geo: prism(1.79, .833, 2.62, 1.65), color: p.roof },
+    { geo: prism(1.45, .72, 2.68, 1.68), color: p.body },
+    pBox(2.84, .22, 2.64, 0, .11, 0, STONE),
+    pBox(.16, .1, 2.7, 0, 2.9, 0, shade(p.roof, .7)),
+  ];
+  // Shingle rows on both slopes
+  [.22, .46, .7].forEach(t => [-1, 1].forEach(sd => parts.push(pBox(.05, .035, 2.66, sd * 1.55 * (1 - t), 1.66 + 1.25 * t, 0, shade(p.roof, .76), -sd * .678))));
+  // Timber frame
+  [[-1.3, 1.2], [1.3, 1.2], [-1.3, -1.2], [1.3, -1.2]].forEach(([x, z]) => parts.push(pBox(.13, 1.6, .13, x, .9, z, BEAM)));
+  parts.push(pBox(2.72, .1, .08, 0, 1.66, 1.22, BEAM), pBox(2.72, .1, .08, 0, 1.66, -1.22, BEAM));
+  // Door, step and windows on the front
+  parts.push(pBox(.86, 1.12, .03, 0, .56, 1.2, BEAM), pBox(1, .1, .4, 0, .05, 1.4, STONE), pGem(.04, .22, .52, 1.26, 0xf6c445));
+  [-.85, .85].forEach(x => {
+    parts.push(pBox(.57, .52, .03, x, 1.1, 1.2, BEAM), pBox(.03, .4, .015, x, 1.1, 1.247, BEAM), pBox(.45, .03, .015, x, 1.1, 1.247, BEAM), pBox(.56, .1, .15, x, .8, 1.29, BEAM));
+    [-.17, 0, .17].forEach((dx, i) => parts.push(pGem(.055, x + dx, .9, 1.29, 0x4caf50), pGem(.05, x + dx * .8, .96, 1.31, PETALS[(i + (x > 0 ? 1 : 0)) % 4])));
+  });
+  // Windows on the sides and the back, so no wall is left bare from any camera angle
+  const GLASS = 0xa8d8f0;
+  [-1, 1].forEach(sd => [-.55, .55].forEach(z => parts.push(pBox(.03, .52, .6, sd * 1.3, 1.05, z, BEAM), pBox(.02, .4, .46, sd * 1.315, 1.05, z, GLASS), pBox(.015, .03, .46, sd * 1.325, 1.05, z, BEAM), pBox(.015, .4, .03, sd * 1.325, 1.05, z, BEAM))));
+  parts.push(pBox(.6, .52, .03, 0, 1.05, -1.2, BEAM), pBox(.46, .4, .02, 0, 1.05, -1.215, GLASS), pBox(.46, .03, .015, 0, 1.05, -1.225, BEAM), pBox(.03, .4, .015, 0, 1.05, -1.225, BEAM));
+  parts.push(...barrel(1.62, .75), ...crate(-1.62, .85));
+  addDetails(g, parts);
+}
+
+function penDetails(g) {
+  const hay = 0xe3c05a, parts = [
+    pBox(.42, .62, .03, -1.4, .31, -.49, BEAM),
+    pBox(1, .22, .36, 1.35, .17, -1.15, 0x9a6a38), pBox(.86, .03, .24, 1.35, .28, -1.15, 0x4fb4d8),
+    { geo: new T.CylinderGeometry(.27, .27, .55, 9).rotateZ(Math.PI / 2).translate(-1.95, .27, 1.05), color: hay },
+    { geo: new T.CylinderGeometry(.27, .27, .55, 9).rotateZ(Math.PI / 2).translate(-1.45, .27, 1.2), color: shade(hay, .9) },
+  ];
+  addDetails(g, parts);
+}
+
+function shopDetails(g, awning) {
+  const parts = [
+    pBox(2.44, .1, 1.14, 0, .05, 0, BEAM),
+    pBox(2.3, 1.15, .04, 0, 1.58, -.5, 0xb98a50), pBox(2.25, .05, .2, 0, 1.45, -.42, BEAM), pBox(2.25, .05, .2, 0, 1.85, -.42, BEAM),
+  ];
+  for (let x = -1; x <= 1.01; x += .4) parts.push(pBox(.025, .46, .012, x, .34, .556, BEAM));
+  [-.9, -.55, -.2, .15, .5, .85].forEach((x, i) => { parts.push(pCyl(.06, .2, x, 1.58, -.42, [0xe8384a, 0xf5c518, 0x4caf50, 0xf06aa8, 0x3f7fd0, 0xf08a24][i], 6)); parts.push(pCyl(.05, .15, -x, 1.95, -.42, [awning, 0xfdf6ea, 0xc98a4b][i % 3], 6)); });
+  parts.push(...crate(1.72, -.35, .55));
+  [[-.13, -.12], [.13, -.12], [0, .03], [-.13, .13], [.13, .13]].forEach(([dx, dz], i) => parts.push(pGem(.1, 1.72 + dx, .6, -.35 + dz, i % 2 ? 0xf08a24 : 0xd8262f)));
+  parts.push({ geo: new T.SphereGeometry(.26, 7, 5).scale(1, 1.15, .9).translate(-1.72, .3, -.35), color: 0xd8c49a }, pCyl(.09, .07, -1.72, .62, -.35, 0xb09a70, 6));
+  parts.push(pBox(.5, .62, .04, -1.8, .34, .66, 0x34403a, -.05), pBox(.56, .05, .06, -1.8, .66, .66, BEAM));
+  addDetails(g, parts);
+  // Lit at night together with the houses
+  const lamp = mesh(new T.OctahedronGeometry(.1), M.lamp, false); lamp.position.set(0, 2, .45); g.add(lamp);
+}
+
+function truckDetails(g) {
+  addDetails(g, [
+    pBox(.04, .32, 1, 1.77, .68, 0, 0x3a3a40), pBox(.05, .14, .22, 1.78, .72, .54, 0xfff2b0), pBox(.05, .14, .22, 1.78, .72, -.54, 0xfff2b0),
+    pBox(.12, .12, 1.56, 1.78, .46, 0, 0xa8acb2), pBox(.6, .38, .03, 1.35, 1.2, .76, 0xbfe6ff), pBox(.6, .38, .03, 1.35, 1.2, -.76, 0xbfe6ff),
+    pBox(.06, 1.12, 1.53, -1.2, .95, 0, BEAM), pBox(.06, 1.12, 1.53, -.4, .95, 0, BEAM), pBox(.06, 1.12, 1.53, .4, .95, 0, BEAM), pBox(2.02, .06, 1.53, -.4, 1.5, 0, BEAM),
+  ]);
+}
+
+// Small stones scattered on the ground so the big open areas are not empty
+{
+  const list = [], want = GFX.tier ? 300 : 130, areas = Object.values(AREAS);
+  for (let i = 0; i < want * 3 && list.length < want; i++) {
+    const r = pick(areas), x = r.x0 + Math.random() * (r.x1 - r.x0), z = r.z0 + Math.random() * (r.z1 - r.z0);
+    if (PATCHES.some(p => Math.abs(x - p.x) < p.cols * (p.spacing || SPACING) / 2 + .4 && Math.abs(z - p.z) < p.rows * (p.spacing || SPACING) / 2 + .4)) continue;
+    if (((x - LAKE.x) / (LAKE.rx + 1.2)) ** 2 + ((z - LAKE.z) / (LAKE.rz + 1.2)) ** 2 < 1) continue;
+    list.push([x, z]);
+  }
+  const im = new T.InstancedMesh(new T.OctahedronGeometry(.07), new LitMat({ color: 0xffffff }), list.length), d = new T.Object3D(), c = new T.Color();
+  list.forEach(([x, z], i) => {
+    const s = .5 + Math.random() * 1.1;
+    d.position.set(x, .055, z); d.rotation.set(Math.random(), Math.random() * 6, 0); d.scale.set(s * 1.2, s * .6, s); d.updateMatrix(); im.setMatrixAt(i, d.matrix);
+    im.setColorAt(i, c.setHex(pick([0x9a948a, 0xb0a898, 0x857f76, 0xc4b8a0])));
+  });
+  im.receiveShadow = true; scene.add(im);
+}
+
 /* ---------- Floating icon bubbles (drawn once per emoji) ---------- */
 const iconTexCache = {};
 function iconTex(emoji, ring = '#3b2a1e') {
@@ -1941,6 +2033,7 @@ SHOPS.forEach(s => {
   for (let i = 0; i < 6; i++) { const a = mesh(new T.BoxGeometry(2.7 / 6, .08, 1.6), i % 2 ? M.white : aw); a.position.set(-1.35 + 2.7 / 12 + i * 2.7 / 6, 2.25, 0); a.rotation.x = .18; g.add(a); }
   for (let i = 0; i < 6; i++) { const f = mesh(new T.ConeGeometry(.1, .2, 3), i % 2 ? M.white : aw, false); f.rotation.x = Math.PI; f.position.set(-1.35 + 2.7 / 12 + i * 2.7 / 6, 2.02, .82); g.add(f); }
   const sign = iconSprite(s.icon, .85); sign.position.set(0, 2.55, 0); g.add(sign);
+  shopDetails(g, s.awning);
   g.position.set(s.x, 0, s.z); g.rotation.y = Math.PI / 2;
   s.g = new T.Group(); s.g.add(g); scene.add(s.g);
   flowerPot(s.g, s.x + 1.05, s.z - 1.9, pick([0xe8384a, 0xf06aa8, 0xf5c518]));
@@ -1963,6 +2056,7 @@ const sellVehicles = SELLS.map(s => {
   const cab = mesh(new T.BoxGeometry(1.1, 1.1, 1.5), s.id === 'van' ? M.van : M.truck); cab.position.set(1.2, .95, 0); g.add(cab);
   const win = mesh(new T.BoxGeometry(.05, .45, 1.2), M.window); win.position.set(1.76, 1.2, 0); g.add(win);
   [[-1, .78], [-1, -.78], [1.2, .78], [1.2, -.78]].forEach(([x, z]) => { const w = mesh(new T.CylinderGeometry(.32, .32, .22, 12), M.tire); w.rotation.x = Math.PI / 2; w.position.set(x, .32, z); g.add(w); });
+  truckDetails(g);
   g.position.set(s.tx, 0, s.tz); g.rotation.y = Math.PI / 2; scene.add(g);
   return { g, ...zoneDisc(s, 0x3fa34d) };
 });
@@ -2787,12 +2881,12 @@ function windowRow(g, y, z, xs, w = .4, h = .4) { xs.forEach(x => { const win = 
 function makeBuilding(p) {
   const g = new T.Group();
   const body = mesh(new T.BoxGeometry(2.6, 1.7, 2.4), mat(p.body)); body.position.y = .85; g.add(body);
-  const roof = mesh(new T.ConeGeometry(2.15, 1.2, 4), mat(p.roof)); roof.rotation.y = Math.PI / 4; roof.position.y = 2.3; g.add(roof);
+  buildingDetails(g, p);
   const door = mesh(new T.BoxGeometry(.7, 1, .06), M.woodDark); door.position.set(0, .5, 1.21); g.add(door);
   windowRow(g, 1.1, 1.21, [-.85, .85], .45);
   let spin = null;
   if (p.id === 'mill') {
-    spin = new T.Group(); spin.position.set(0, 2.1, 1.35);
+    spin = new T.Group(); spin.position.set(0, 2.1, 1.42);
     for (let i = 0; i < 4; i++) { const b = mesh(new T.BoxGeometry(.28, 1.6, .05), M.white); b.position.y = .8; const arm = new T.Group(); arm.rotation.z = i * Math.PI / 2; arm.add(b); spin.add(arm); }
     g.add(spin);
   } else if (p.id === 'sawmill') {
@@ -2845,6 +2939,7 @@ function makePen(a) {
       m.position.set(st.x, 0, st.z); g.add(m); animals.push(st);
     }
   }
+  if (!a.dock && a.id !== 'hive' && !a.look) penDetails(g);
   g.position.set(a.x, 0, a.z); if (a.rot !== undefined && !a.dock) g.rotation.y = a.rot * Math.PI / 2; scene.add(g);
   return { g, animals };
 }
