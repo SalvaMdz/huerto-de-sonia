@@ -253,6 +253,18 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
 .crow input { font: inherit; font-weight: 900; font-size: 1rem; border: 2px solid var(--ink); border-radius: 10px; padding: 7px 10px; background: #fff; color: var(--ink); user-select: text; -webkit-user-select: text; }
 .opts { display: flex; flex-wrap: wrap; gap: 6px; }
 .cbox .cbtns { position: sticky; bottom: -14px; z-index: 1; margin: 0 -14px -14px; padding: 8px 14px 12px; background: var(--cream); border-top: 2px solid rgba(59, 42, 30, .15); }
+.santabar { position: fixed; z-index: 4; left: 50%; transform: translateX(-50%); bottom: calc(14px + env(safe-area-inset-bottom, 0px)); max-width: 92vw; white-space: nowrap; pointer-events: none; background: rgba(59, 42, 30, .9); color: #fff8e7; border-radius: 999px; padding: 6px 14px; font-weight: 900; font-size: .85rem; }
+.album { text-align: left; margin-bottom: 10px; }
+.album h4 { margin: 0 0 4px; font-size: .95rem; }
+.album small { display: block; margin-bottom: 4px; color: var(--ink-soft); }
+.agrid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
+.agrid span { aspect-ratio: 1; display: grid; place-items: center; font-size: 1.4rem; background: #fff; border: 2px solid var(--ink); border-radius: 10px; }
+.agrid span.no { background: #e6d9bf; color: var(--ink-soft); font-size: 1rem; font-weight: 900; }
+.cal { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; }
+.adbox .cal button { aspect-ratio: 1; min-width: 0; padding: 0; font-size: 1rem; font-weight: 900; border-width: 2px; border-radius: 10px; background: #e6d9bf; color: var(--ink-soft); box-shadow: none; }
+.adbox .cal button.got { background: #2f8f4a; color: #fff; font-size: 1.15rem; }
+.adbox .cal button.next { background: var(--gold); color: var(--ink); box-shadow: 0 0 0 3px #e8384a; animation: calPulse 1s ease-in-out infinite; }
+@keyframes calPulse { 50% { transform: scale(1.1); } }
 .cpage { display: flex; flex-direction: column; gap: 10px; }
 .cpage[hidden] { display: none; }
 .ctabs { display: flex; gap: 6px; }
@@ -508,6 +520,8 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
   <button id="farmsBtn">🗺️ Capítulos</button>
   <button id="testBtn" hidden>🧪 Pruebas</button>
   <button id="starsBtn">⭐ Estrellas</button>
+  <button id="xmasBtn" hidden>🎄 Calendario</button>
+  <button id="albumBtn">📖 Colección</button>
   <button id="achvBtn">🏆 Logros</button>
   <button id="feedbackBtn">💬 Opinión</button>
   <button id="soundBtn">🔊 Sonido: sí</button>
@@ -635,6 +649,24 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
     <button id="surveySend" disabled>Faltan 5 respuestas</button>
   </div>
 </div>
+<div class="overlay" id="albumOverlay" hidden>
+  <div class="adbox panel survey">
+    <h3>📖 Colección</h3>
+    <p id="albumTop"></p>
+    <div id="albumList"></div>
+    <button class="ghost" id="albumClose">Cerrar</button>
+  </div>
+</div>
+<div class="overlay" id="xmasOverlay" hidden>
+  <div class="adbox panel survey">
+    <h3>🎄 Calendario de Navidad</h3>
+    <p id="xmasInfo"></p>
+    <div class="cal" id="xmasCal"></div>
+    <button id="xmasAd" hidden>📺 Doblar este regalo</button>
+    <button class="ghost" id="xmasClose">Cerrar</button>
+  </div>
+</div>
+<div class="santabar" id="santaBar" hidden></div>
 <div class="creator" id="creator" hidden>
   <div class="cbox">
     <h3>Crea tu personaje</h3>
@@ -687,18 +719,19 @@ const GFX = (() => {
   const forced = { baja: 0, media: 1, alta: 2 }[new URLSearchParams(location.search).get('calidad')];
   let saved = null; try { saved = localStorage.getItem('huerto-gfx'); } catch (e) {}
   const phone = /Android|iPhone|iPad|Mobi/i.test(navigator.userAgent) || navigator.maxTouchPoints > 1;
-  const auto = !phone ? 2 : ((navigator.deviceMemory || 4) <= 2 || (navigator.hardwareConcurrency || 4) <= 4) ? 0 : 1;
+  const ios = /iPhone|iPad/.test(navigator.userAgent);
+  const auto = !phone ? 2 : ios ? 1 : ((navigator.deviceMemory || 4) <= 2 || (navigator.hardwareConcurrency || 4) <= 4) ? 0 : 1;
   const tier = forced !== undefined ? forced : saved !== null ? Math.min(+saved, auto) : auto;
-  return { tier, forced: forced !== undefined, pr: [1.25, 1.5, 2][tier], shadow: [1024, 1536, 2048][tier], shadowEvery: [3, 2, 1][tier], uT: { value: 0 }, uDay: { value: 1 } };
+  return { tier, forced: forced !== undefined, pr: [1.25, 1.5, 2][tier], shadow: [1024, 1536, 2048][tier], shadowEvery: [3, 2, 1][tier], uT: { value: 0 }, uDay: { value: 1 }, uSnow: { value: 0 } };
 })();
 // The look of the game lives here, in a few shader lines shared by every solid thing, so it weighs nothing to download:
 // soft shade where things meet the ground, patchy ground color, drifting cloud shadows, rim light, water, wind and color curve.
-const GFX_HEAD = `varying vec3 vGW; uniform float gT; uniform float gDay;
+const GFX_HEAD = `varying vec3 vGW; uniform float gT; uniform float gDay; uniform float gSnow;
 float gN(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.-2.*f);
   float a=fract(sin(dot(i,vec2(127.1,311.7)))*43758.5453), b=fract(sin(dot(i+vec2(1.,0.),vec2(127.1,311.7)))*43758.5453),
         c=fract(sin(dot(i+vec2(0.,1.),vec2(127.1,311.7)))*43758.5453), d=fract(sin(dot(i+vec2(1.,1.),vec2(127.1,311.7)))*43758.5453);
   return mix(mix(a,b,f.x),mix(c,d,f.x),f.y); }
-vec3 gGrade(vec3 c){ c*=.63; c=clamp((c*(2.51*c+.03))/(c*(2.43*c+.59)+.14),0.,1.); return mix(vec3(dot(c,vec3(.2126,.7152,.0722))),c,1.12); }
+vec3 gGrade(vec3 c){ c*=.63; c=clamp((c*(2.51*c+.03))/(c*(2.43*c+.59)+.14),0.,1.); float gx=max(0.,c.g-max(c.r,c.b)); c.g-=gx*.2; c.r+=gx*.09; return mix(vec3(dot(c,vec3(.2126,.7152,.0722))),c,1.02); }
 `;
 const GFX_SURFACE = `
 #ifdef WATER
@@ -715,7 +748,7 @@ const GFX_SURFACE = `
 #endif
 `;
 function gfxHook(shader) {
-  shader.uniforms.gT = GFX.uT; shader.uniforms.gDay = GFX.uDay;
+  shader.uniforms.gT = GFX.uT; shader.uniforms.gDay = GFX.uDay; shader.uniforms.gSnow = GFX.uSnow;
   const std = shader.fragmentShader.includes('<lights_physical_fragment>');
   shader.vertexShader = shader.vertexShader
     .replace('#include <common>', '#include <common>\nvarying vec3 vGW; uniform float gT;')
@@ -735,7 +768,12 @@ function gfxHook(shader) {
     gl_FragColor.rgb+=diffuseColor.rgb*pow(1.-saturate(dot(normal,normalize(vViewPosition))),3.)*.24*gDay;` : '';
   shader.fragmentShader = shader.fragmentShader
     .replace('#include <common>', '#include <common>\n' + GFX_HEAD)
-    .replace(anchor, GFX_SURFACE + anchor)
+    .replace(anchor, GFX_SURFACE + `
+      #ifndef WATER
+      if(gSnow>0.){ ${std ? 'float up=dot(normal,(viewMatrix*vec4(0.,1.,0.,0.)).xyz); float sn=smoothstep(.45,.8,up)*(.78+.22*gN(vGW.xz*.7));' : 'float sn=vGW.y<.14?.78+.22*gN(vGW.xz*.7):0.;'}
+        diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.93,.96,1.),sn*gSnow*(vGW.y<.14?.66:1.)); }
+      #endif
+      ` + anchor)
     .replace('#include <fog_fragment>', '')
     .replace('#include <tonemapping_fragment>', extras + `
       #include <fog_fragment>
@@ -935,8 +973,8 @@ const MAPS = [];
 const mapOf = n => MAPS[n % MAPS.length];
 const mapById = id => MAPS.find(m => m.id === id);
 // The version goes up with every release; the build (vite.config.js) stamps the date (while developing it says 'en pruebas')
-const GAME_VERSION = '38';
-const BUILD_DATE = '06/11/2026 03:34';
+const GAME_VERSION = '39';
+const BUILD_DATE = '06/11/2026 03:49';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -1004,6 +1042,8 @@ const OUTFITS = [
     look: { shirt: 0xf4f4f4, pants: 0xf4f4f4, hat: 'helmet', badge: true, boot: 0xd9dde3 } },
   { id: 'flower',  name: 'Florista',         icon: '🌸', text: 'Vestido rosa y corona de flores', need: 'Mira un anuncio', goal: 1, prog: () => 0, ad: true,
     look: { shirt: 0xf7c6dc, skirt: 0xf06aa8, pants: 'skin', hat: 'flowers', boot: 0xf06aa8 } },
+  { id: 'santa',   name: 'Papá Noel',         icon: '🎅', text: 'Traje rojo y gorro para el frío', need: 'Abre todo el calendario de Navidad', goal: 1, prog: () => (S.meta.santa ? 1 : 0),
+    look: { shirt: 0xd8262f, pants: 0xd8262f, hat: 'beanie', hatColor: 0xd8262f, boot: 0x2a2a2a } },
 ];
 const capOf = l => 10 + 5 * l;
 const speedOf = l => 3.4 + 0.45 * l;
@@ -1495,7 +1535,7 @@ const skyDome = new T.Mesh(new T.SphereGeometry(125, 16, 10), new T.ShaderMateri
   uniforms: { top: { value: new T.Color() }, hor: { value: new T.Color() }, gDay: GFX.uDay },
   vertexShader: 'varying vec3 vD; void main(){ vD=normalize(position); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }',
   fragmentShader: `varying vec3 vD; uniform vec3 top, hor; uniform float gDay;
-    vec3 gGrade(vec3 c){ c*=.63; c=clamp((c*(2.51*c+.03))/(c*(2.43*c+.59)+.14),0.,1.); return mix(vec3(dot(c,vec3(.2126,.7152,.0722))),c,1.12); }
+    vec3 gGrade(vec3 c){ c*=.63; c=clamp((c*(2.51*c+.03))/(c*(2.43*c+.59)+.14),0.,1.); return mix(vec3(dot(c,vec3(.2126,.7152,.0722))),c,1.02); }
     void main(){ vec3 d=normalize(vD); float s=max(dot(d,normalize(vec3(.55,.62,.35))),0.);
       vec3 c=mix(hor,top,smoothstep(0.,.55,d.y))+vec3(1.,.8,.55)*(pow(s,18.)*.35+pow(s,300.)*2.)*gDay;
       gl_FragColor=vec4(gGrade(c),1.);
@@ -1643,7 +1683,6 @@ const tileTex = canvasTex(64, 64, (g, w, h) => { g.fillStyle = '#f4f1ea'; g.fill
 flatA(9, new T.PlaneGeometry(49, 19.6), new LitMat({ map: tileTex }), 0, .005, 55);
 if (LAYOUT && LAYOUT.beachStart) {
   // The Costa's landing: sand instead of lawn, a plaza at the market and a wooden boardwalk from the beach, no road
-  for (let i = -9; i < -3; i++) flatA(2, new T.PlaneGeometry(23, 2.2), M.grassDark, 0, .002, i * 4.4);
   flatA(3, new T.PlaneGeometry(22, 21.6), M.meadow, 23.6, .003, -3);
   flatA(2, new T.PlaneGeometry(3, 20), M.path, 0, .006, -23); flatA(3, new T.PlaneGeometry(4, 21.6), M.path, 14.6, .006, -3);
   const A = AREAS[1]; flat(new T.PlaneGeometry(A.x1 - A.x0 + 1.6, A.z1 - A.z0 + 1.6), M.sand, (A.x0 + A.x1) / 2, .004, (A.z0 + A.z1) / 2);
@@ -1654,7 +1693,6 @@ if (LAYOUT && LAYOUT.beachStart) {
   for (let z = walkZ0 + .25; z < walkZ1; z += .5) flat(new T.PlaneGeometry(2.02, .05), M.woodDark, FARM.spawn.x, .008, z);
   if (!ISLANDS) Object.values(DOORS).forEach(d => flat(new T.PlaneGeometry(d.x1 - d.x0 + 1.4, d.z1 - d.z0 + 1.4), M.path, (d.x0 + d.x1) / 2, .006, (d.z0 + d.z1) / 2));
 } else {
-for (let i = -9; i < 4; i++) flat(new T.PlaneGeometry(23, 2.2), M.grassDark, 0, .002, i * 4.4);
 flat(new T.PlaneGeometry(22, 21.6), M.meadow, 23.6, .003, -3);
 flat(new T.PlaneGeometry(24, 8), M.path, 0, .005, 4.3);
 flat(new T.PlaneGeometry(3, 20), M.path, 0, .006, -23);
@@ -1856,7 +1894,11 @@ const gateMeshes = ISLANDS ? Object.fromEntries(Object.entries(DOORS).map(([id, 
     if (SHOPS.some(s => Math.abs(x - s.x) < 5 && z > s.z - 2.2 && z < s.z + 6)) return false;
     return !boxes.some(([x0, z0, x1, z1]) => x > x0 && x < x1 && z > z0 && z < z1);
   };
-  const tuftGeo = new T.ConeGeometry(.07, .3, 3, 1, true); tuftGeo.translate(0, .15, 0);
+  // Three thin blades lit as if they were part of the ground, so they read as soft grass rather than dark spikes
+  const tuftGeo = new T.BufferGeometry();
+  { const pts = [], nor = [];
+    [[.09, .02, .26], [-.08, .05, .2], [.01, -.09, .23]].forEach(([lx, lz, h]) => { pts.push(-.035, 0, 0, .035, 0, 0, lx, h, lz, .035, 0, 0, -.035, 0, 0, lx, h, lz); for (let k = 0; k < 6; k++) nor.push(0, 1, 0); });
+    tuftGeo.setAttribute('position', new T.Float32BufferAttribute(pts, 3)); tuftGeo.setAttribute('normal', new T.Float32BufferAttribute(nor, 3)); }
   const flowerGeo = new T.OctahedronGeometry(.07); flowerGeo.translate(0, .2, 0);
   const spots = [];
   for (let i = 0; i < 1800 && spots.length < 640; i++) {
@@ -1868,13 +1910,13 @@ const gateMeshes = ISLANDS ? Object.fromEntries(Object.entries(DOORS).map(([id, 
     && !PROCS.some(b => Math.abs(x - b.x) < 3.2 && Math.abs(z - b.z) < 2.4) && !ANIMALS.some(a => Math.abs(x - a.x) < 3 && Math.abs(z - a.z) < 4.5)
     && !SHOPS.some(s => Math.abs(x - s.x) < 6 && z > s.z - 2.5 && z < s.z + 8) && !ATTRS.some(a => Math.abs(x - a.x) < a.w / 2 + 2.6 && Math.abs(z - a.z) < a.d / 2 + 2.6)
     && Math.abs(z - 32.5) > 1.6 && Math.abs(x - 2.25) > 1.8;
-  for (let i = 0; i < 2600 && spots.length < 1300; i++) {
+  for (let i = 0; i < 2600 && spots.length < 700; i++) {
     const r = Math.random(), x = r < .4 ? -36.5 - Math.random() * 24 : r < .8 ? 36.5 + Math.random() * 24 : (Math.random() - .5) * 47;
     const z = r < .8 ? -12.5 + Math.random() * 29 : 23.5 + Math.random() * 20.5;
     if (clear(x, z)) spots.push([x, z]);
   }
   if (ISLANDS) { const land = spots.filter(([x, z]) => Object.values(AREAS).some(r => x > r.x0 && x < r.x1 && z > r.z0 && z < r.z1)); spots.length = 0; spots.push(...land); }
-  const tufts = new T.InstancedMesh(tuftGeo, gfxWind(M.stem, .09), spots.length), flowers = new T.InstancedMesh(flowerGeo, gfxWind(new LitMat({ color: 0xffffff }), .09), Math.ceil(spots.length / 3));
+  const tufts = new T.InstancedMesh(tuftGeo, gfxWind(new LitMat({ color: new T.Color(THEME.grass).multiplyScalar(.7) }), .09), spots.length), flowers = new T.InstancedMesh(flowerGeo, gfxWind(new LitMat({ color: 0xffffff }), .09), Math.ceil(spots.length / 3));
   const d = new T.Object3D(), cols = [0xffffff, 0xf5c518, 0xf06aa8, 0xb98ae8, 0xe8384a];
   spots.forEach(([x, z], i) => {
     d.position.set(x, 0, z); d.rotation.set((Math.random() - .5) * .4, Math.random() * 6, 0); d.scale.setScalar(.7 + Math.random() * .7); d.updateMatrix(); tufts.setMatrixAt(i, d.matrix);
@@ -1942,6 +1984,11 @@ function buildingDetails(g, p) {
   addDetails(g, parts);
 }
 
+function penRoof(g) {
+  const parts = [{ geo: new T.CylinderGeometry(1, 1, 1.2, 3).rotateX(-Math.PI / 2).scale(.92, .78, 1).translate(-1.4, 1 + .39, -1), color: 0x8f5a2b }, pBox(.08, .06, 1.22, -1.4, 1.78, -1, BEAM)];
+  [.3, .62].forEach(t => [-1, 1].forEach(sd => parts.push(pBox(.04, .03, 1.22, -1.4 + sd * .8 * (1 - t), 1 + .58 * t + .03, -1, BEAM, -sd * .62))));
+  addDetails(g, parts);
+}
 function penDetails(g) {
   const hay = 0xe3c05a, parts = [
     pBox(.42, .62, .03, -1.4, .31, -.49, BEAM),
@@ -1972,7 +2019,12 @@ function truckDetails(g) {
   addDetails(g, [
     pBox(.04, .32, 1, 1.77, .68, 0, 0x3a3a40), pBox(.05, .14, .22, 1.78, .72, .54, 0xfff2b0), pBox(.05, .14, .22, 1.78, .72, -.54, 0xfff2b0),
     pBox(.12, .12, 1.56, 1.78, .46, 0, 0xa8acb2), pBox(.6, .38, .03, 1.35, 1.2, .76, 0xbfe6ff), pBox(.6, .38, .03, 1.35, 1.2, -.76, 0xbfe6ff),
-    pBox(.06, 1.12, 1.53, -1.2, .95, 0, BEAM), pBox(.06, 1.12, 1.53, -.4, .95, 0, BEAM), pBox(.06, 1.12, 1.53, .4, .95, 0, BEAM), pBox(2.02, .06, 1.53, -.4, 1.5, 0, BEAM),
+    pBox(.06, 1.12, 1.53, -1.2, .95, 0, BEAM), pBox(.06, 1.12, 1.53, -.4, .95, 0, BEAM), pBox(.06, 1.12, 1.53, .4, .95, 0, BEAM), 
+    // The camera looks from above, so the load on top is what shows most
+    pBox(2.02, .03, 1.5, -.4, 1.51, 0, 0xc9a266), pBox(.05, .05, 1.54, -1.2, 1.53, 0, BEAM), pBox(.05, .05, 1.54, -.4, 1.53, 0, BEAM), pBox(.05, .05, 1.54, .4, 1.53, 0, BEAM),
+    ...[[-1, .35], [-.35, -.3]].flatMap(([x, z]) => [pBox(.52, .42, .52, x, 1.74, z, 0xb98a50), pBox(.54, .05, .54, x, 1.94, z, BEAM)]),
+    { geo: new T.SphereGeometry(.26, 7, 5).scale(1.2, .75, .9).translate(.2, 1.68, .3), color: 0xd8c49a }, { geo: new T.SphereGeometry(.24, 7, 5).scale(1.15, .75, .9).translate(-.95, 1.68, -.35), color: 0xcbb68a },
+    pBox(.85, .04, .1, 1.2, 1.53, .45, 0x3a3a40), pBox(.85, .04, .1, 1.2, 1.53, -.45, 0x3a3a40),
   ]);
 }
 
@@ -2928,7 +2980,7 @@ function makePen(a) {
       for (let i = 0; i < 2; i++) { const r = mesh(new T.BoxGeometry(rw, .08, rd), M.wood); r.position.set(x, .3 + i * .3, z); g.add(r); }
     });
     const house = mesh(new T.BoxGeometry(1.4, 1, 1), mat({ coop: 0xd8402f, sheep: 0xf3e3c3, pigs: 0xc98a4b, goats: 0x8f5a2b }[a.id] || 0x9a5a35)); house.position.set(-1.4, .5, -1); g.add(house);
-    const roof = mesh(new T.ConeGeometry(1.1, .6, 4), M.woodDark); roof.rotation.y = Math.PI / 4; roof.position.set(-1.4, 1.3, -1); g.add(roof);
+    penRoof(g);
     // Fish farms on the coast: a pool of sea water inside the fence
     if (a.look) { const pool = mesh(new T.PlaneGeometry(4.4, 3.2), M.water, false); pool.rotation.x = -Math.PI / 2; pool.position.y = .05; g.add(pool); }
     const kind = a.look || a.id, count = { coop: 5, sheep: 4, mussel: 6, shrimp: 5, lobster: 4, squid: 4 }[kind] || 3;
@@ -3987,13 +4039,45 @@ const skyNight = new T.Color(0x0f1631), skyNow = new T.Color(), skyHaze = new T.
 let nightNow = 0;
 // At night Sonia carries a warm lantern so the farm around her can still be seen
 const lantern = new T.PointLight(0xffc98a, 0, 10, 1.6); lantern.position.y = 2.4; scene.add(lantern);
+/* ---------- Storm ---------- */
+// A real storm when the storm card comes up: dark sky, rain, lightning and thunder. The rain is only built the first time it is needed.
+const STORM_TIME = 45, stormGrey = new T.Color(0x4a5560);
+let stormT = 0, stormK = 0, stormFlash = 0, stormBolt = 3, stormRain = null;
+function startStorm() {
+  stormT = STORM_TIME; stormBolt = 2;
+  if (stormRain) return;
+  const n = GFX.tier ? 320 : 150, pos = new Float32Array(n * 6);
+  for (let i = 0; i < n; i++) { const x = (Math.random() - .5) * 34, y = Math.random() * 13, z = (Math.random() - .5) * 34; pos.set([x, y, z, x + .05, y + .55, z], i * 6); }
+  const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.BufferAttribute(pos, 3));
+  const lines = new T.LineSegments(geo, new T.LineBasicMaterial({ color: 0xcfe0f0, transparent: true, opacity: .85, depthWrite: false }));
+  lines.frustumCulled = false; lines.visible = false; scene.add(lines); stormRain = { lines, pos, n };
+}
+function updateStorm(dt) {
+  if (stormT > 0) stormT -= dt;
+  stormK += ((stormT > 0 ? 1 : 0) - stormK) * Math.min(1, dt * .9);
+  stormFlash = Math.max(0, stormFlash - dt * 5);
+  if (!stormRain) return;
+  const on = stormK > .03; stormRain.lines.visible = on; if (!on) return;
+  stormRain.lines.material.opacity = .85 * stormK; stormRain.lines.position.set(P.x, 0, P.z);
+  const { pos, n } = stormRain;
+  for (let i = 0; i < n; i++) {
+    const k = i * 6, drop = 17 * dt; let y = pos[k + 1] - drop;
+    if (y < 0) { y = 13; const x = (Math.random() - .5) * 34, z = (Math.random() - .5) * 34; pos[k] = x; pos[k + 2] = z; pos[k + 3] = x + .05; pos[k + 5] = z; }
+    pos[k + 1] = y; pos[k + 4] = y + .55;
+  }
+  stormRain.lines.geometry.attributes.position.needsUpdate = true;
+  if (stormT > 0 && (stormBolt -= dt) <= 0) {
+    stormBolt = 5 + Math.random() * 7; stormFlash = 1;
+    setTimeout(() => { beep(70, .7, 'sawtooth', .05, .5); beep(46, 1, 'square', .03, .6); }, 250 + Math.random() * 500);
+  }
+}
 function updateSky() {
   const day = dayLight();
   const nightF = 1 - day; nightNow = nightF;
-  sun.intensity = LIGHT.sun * (.1 + .9 * day); hemi.intensity = LIGHT.hemi * (.3 + .7 * day);
+  sun.intensity = LIGHT.sun * (.1 + .9 * day) * (1 - .72 * stormK); hemi.intensity = LIGHT.hemi * (.3 + .7 * day) * (1 - .55 * stormK) + stormFlash * 1.6;
   hemi.color.setHex(0xc4dcff).lerp(skyNight, nightF * .5);
-  skyNow.setHex(THEME.sky).lerp(skyNight, nightF * .9);
-  GFX.uDay.value = day;
+  skyNow.setHex(THEME.sky).lerp(skyNight, nightF * .9).lerp(stormGrey, stormK * .85);
+  GFX.uDay.value = day * (1 - .5 * stormK);
   { const on = !topView && GFX.tier > 0; if (clouds[0].visible !== on) clouds.forEach(c => { c.visible = on; }); }
   const dome = skyDome.material.uniforms;
   dome.top.value.copy(skyNow).multiplyScalar(.62); dome.hor.value.copy(skyNow).lerp(skyHaze, .42 * day);
@@ -4071,6 +4155,7 @@ BUILDS.forEach(b => { blabels[b.id] = mk('blabel'); blabels[b.id].hidden = true;
 let toastT;
 function toast(msg) { if (!msg) return; const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 2800); }
 function addCoins(n) {
+  n = Math.round(n * (1 + (S.meta.albumBonus || 0))); // finished albums pay a bonus for good
   S.coins += n; S.earned += n; S.life = (S.life || 0) + n; $('coinsTxt').textContent = fmt(S.coins);
   const p = $('coinsPill'); p.classList.remove('bump'); void p.offsetWidth; p.classList.add('bump');
 }
@@ -4279,7 +4364,7 @@ const flying = [];
 function cutPlant(pl) { pl.grow = 0; pl.dirty = true; sfx.cut(); if (Math.random() < .4) puff(pl.x, .5, pl.z, pl.patch.parts[0].material.color.getHex(), 3, .7, 2); }
 const stackLocal = n => new T.Vector3(0, n * .21, 0);
 function toStack(b) { P.stack.push(b); flying.push({ b, t: 0, dur: .28, from: b.position.clone(), kind: 'pick', index: P.stack.length - 1 }); }
-function pickUp(pl) { addXP(1); cutPlant(pl); const b = makeItem(pl.crop); b.position.set(pl.x, .4, pl.z); scene.add(b); toStack(b); if (S.tut === 0) S.tut = 1; }
+function pickUp(pl) { addXP(1); collectRoll(); cutPlant(pl); const b = makeItem(pl.crop); b.position.set(pl.x, .4, pl.z); scene.add(b); toStack(b); if (S.tut === 0) S.tut = 1; }
 function takeFromStack(pred) {
   for (let i = P.stack.length - 1; i >= 0; i--) {
     const b = P.stack[i];
@@ -5303,10 +5388,10 @@ function frame(now) {
   if (!window.gameReady) { last = now; return; } // in development the scripts arrive one by one: wait for the last one
   const dt = Math.min(.1, (now - last) / 1000); last = now;
   if (creatorOn) creatorView(dt);
-  else if (!S.over && $('dayOverlay').hidden && $('tutOverlay').hidden && $('decOverlay').hidden && $('sceneOverlay').hidden && $('surveyOverlay').hidden) {
-    S.meta.playT = (S.meta.playT || 0) + dt; update(dt); updateDay(dt); updateMood(dt); updateExtras(dt); updateTrouble(dt); updateChores(dt); updateIncome(dt); updateTown(dt); updateGrid(); }
-  gfxTick(now, dt); renderer.render(scene, camera); updateLabels(dt);
-  uiT += dt; if (uiT > .25) { uiT = 0; refreshWorld(); checkMission(); renderMood(); renderDaily(); renderWorks(); renderStalls(); renderZone(); renderTrouble(); renderTown(); renderStory(); renderExtras(); tidyHud(); renderTips(); checkSurvey(); }
+  else if (!S.over && $('dayOverlay').hidden && $('tutOverlay').hidden && $('decOverlay').hidden && $('sceneOverlay').hidden && $('surveyOverlay').hidden && $('albumOverlay').hidden && $('xmasOverlay').hidden) {
+    S.meta.playT = (S.meta.playT || 0) + dt; update(dt); updateDay(dt); updateMood(dt); updateExtras(dt); updateTrouble(dt); updateChores(dt); updateIncome(dt); updateTown(dt); updateGrid(); updateStorm(dt); xmasPlay(dt); }
+  gfxTick(now, dt); updateXmas(dt); renderer.render(scene, camera); updateLabels(dt);
+  uiT += dt; if (uiT > .25) { uiT = 0; refreshWorld(); checkMission(); renderMood(); renderDaily(); renderWorks(); renderStalls(); renderZone(); renderTrouble(); renderTown(); renderStory(); renderExtras(); tidyHud(); renderTips(); checkSurvey(); checkXmas(); }
   saveT += dt; if (saveT > 4) { saveT = 0; saveCleared(); save(); }
 }
 
@@ -5840,6 +5925,7 @@ function openDaily(times) {
   S.stars++; S.meta.starsTotal = (S.meta.starsTotal || 0) + 1; S.meta.dailyChests = (S.meta.dailyChests || 0) + 1;
   dailySeen.earned += v; addCoins(v); flyCoins(P.x, 1.5, P.z, 12); burst(P.x, 2.2, P.z, '📅 +' + fmt(v)); sfx.mission(); puff(P.x, 1, P.z, 0xf6c445, 16, 1.5, 3.5);
   toast(`📅 ¡Cofre del día! +${fmt(v)} monedas y ⭐ 1 estrella`); save(); renderDaily();
+  setTimeout(() => collectFind(), 2600); // the daily chest always brings something for the collection
 }
 function saveStreak() {
   const m = S.meta; if (!m.dayStreakLost || m.dayStreakLostDay !== todayKey()) return;
@@ -6326,6 +6412,7 @@ $('decOpts').addEventListener('click', e => {
   if (o.morale) S.morale = clamp100(S.morale + o.morale);
   if (o.trust) S.trust = clamp100(S.trust + o.trust);
   Object.entries(o.fx || {}).forEach(([k, s]) => { DEC.fx[k] = s; });
+  if (c.id === 'tormenta') startStorm(); // whatever is decided, the storm does come
   S.decToday = [...(S.decToday || []).slice(-1), { icon: c.icon, title: c.title, choice: o.label }];
   stat('decision', { carta: c.id, opcion: +b.dataset.i });
   decCard = null; $('decOverlay').hidden = true; last = performance.now();
@@ -6607,6 +6694,11 @@ function progressText() {
 }
 flushMail();
 addEventListener('online', flushMail);
+// iPhones can leave the page shifted up after the keyboard closes, hiding the top row behind the browser bar: put it back
+function fixViewport() { if (scrollX || scrollY) scrollTo(0, 0); if (document.body.scrollTop) document.body.scrollTop = 0; }
+addEventListener('scroll', fixViewport, { passive: true });
+document.addEventListener('focusout', () => setTimeout(fixViewport, 60));
+if (window.visualViewport) { visualViewport.addEventListener('resize', fixViewport); visualViewport.addEventListener('scroll', fixViewport); }
 
 const SURVEY = [
   { id: 'nota', q: '¿Cuánto te está gustando?', row: true, a: ['😣', '😕', '😐', '🙂', '😍'] },
@@ -6622,7 +6714,7 @@ function renderSurvey() {
   const left = SURVEY.filter(s => surveyA[s.id] === undefined).length;
   $('surveySend').disabled = left > 0; $('surveySend').textContent = left ? `Faltan ${left} ${left === 1 ? 'respuesta' : 'respuestas'}` : '📨 Enviar y seguir jugando';
 }
-function surveyBlocked() { return creatorOn || S.over || !$('dayOverlay').hidden || !$('tutOverlay').hidden || !$('decOverlay').hidden || !$('sceneOverlay').hidden || !$('feedbackOverlay').hidden || $('menu').hidden === false; }
+function surveyBlocked() { return creatorOn || S.over || !$('dayOverlay').hidden || !$('tutOverlay').hidden || !$('decOverlay').hidden || !$('sceneOverlay').hidden || !$('feedbackOverlay').hidden || !$('albumOverlay').hidden || !$('xmasOverlay').hidden || $('menu').hidden === false; }
 // Checked a few times per second: as soon as nothing else is open after 20 minutes of play, the survey comes up and cannot be skipped
 function checkSurvey() {
   if (S.meta.survey || (S.meta.playT || 0) < SURVEY_AT || !$('surveyOverlay').hidden || surveyBlocked()) return;
@@ -6642,6 +6734,210 @@ $('surveySend').addEventListener('click', () => {
   S.meta.survey = { t: Math.round(S.meta.playT || 0), v: GAME_VERSION }; save();
   $('surveyOverlay').hidden = true; last = performance.now(); sfx.mission(); toast('¡Gracias por ayudarnos! 💛');
 });
+
+/* ================= Collections ================= */
+// Rare finds that come up while harvesting and in the daily chest. Filling an album gives a bonus for good. Everything lives in S.meta, so it travels with the player.
+const ALBUMS = [
+  { id: 'huerto', icon: '🌻', name: 'Tesoros del huerto', items: [['🐞', 'Mariquita'], ['🐌', 'Caracol'], ['🍄', 'Seta'], ['🌰', 'Castaña'], ['🦋', 'Mariposa'], ['🍀', 'Trébol']] },
+  { id: 'pueblo', icon: '🏘️', name: 'Recuerdos del pueblo', items: [['🗝️', 'Llave antigua'], ['🧸', 'Osito'], ['⏰', 'Despertador'], ['🎺', 'Trompeta'], ['📷', 'Cámara'], ['📻', 'Radio']] },
+  { id: 'mar', icon: '🐚', name: 'Regalos del mar', when: () => THEME.id === 'costa', whenText: 'Se encuentra en la Costa', items: [['🐚', 'Concha'], ['🦪', 'Perla'], ['⚓', 'Ancla'], ['🧭', 'Brújula'], ['🐠', 'Pez tropical'], ['🦀', 'Cangrejo']] },
+  { id: 'navidad', icon: '🎄', name: 'Navidad', when: () => xmasOn(), whenText: 'Se encuentra en Navidad', items: [['🎅', 'Papá Noel'], ['🦌', 'Reno'], ['⛄', 'Muñeco de nieve'], ['🔔', 'Campana'], ['🕯️', 'Vela'], ['🎁', 'Regalo']] },
+];
+const ALBUM_BONUS = .03, ALBUM_STARS = 3, DROP_CHANCE = .005;
+const albumGot = () => (S.meta.album = S.meta.album || {});
+const albumCount = a => a.items.filter(([e]) => albumGot()[e]).length;
+function giveStars(n) { S.stars += n; S.meta.starsTotal = (S.meta.starsTotal || 0) + n; }
+// Gives one find. Most of the time a missing piece, sometimes a repeat that turns into coins. Optionally from one album only.
+function collectFind(onlyId) {
+  const open = ALBUMS.filter(a => (onlyId ? a.id === onlyId : !a.when || a.when()));
+  if (!open.length) return;
+  const a = pick(open), missing = a.items.filter(([e]) => !albumGot()[e]);
+  const useMissing = missing.length && Math.random() < .75, it = pick(useMissing ? missing : a.items), repeat = !!albumGot()[it[0]];
+  if (repeat) { const v = Math.max(1, Math.round(incMin(.2))); addCoins(v); toast(`${it[0]} ${it[1]} repetido: +${fmt(v)} monedas`); return; }
+  albumGot()[it[0]] = 1; sfx.mission(); burst(P.x, 2.2, P.z, it[0]); stat('coleccion', { album: a.id, pieza: it[1] });
+  toast(`✨ ¡Encontraste ${it[0]} ${it[1]}! (${albumCount(a)}/${a.items.length} en ${a.name})`);
+  if (albumCount(a) === a.items.length && !(S.meta.albumDone = S.meta.albumDone || {})[a.id]) {
+    S.meta.albumDone[a.id] = 1; S.meta.albumBonus = (S.meta.albumBonus || 0) + ALBUM_BONUS; giveStars(ALBUM_STARS);
+    setTimeout(() => { sfx.mission(); toast(`📖 ¡Álbum completo: ${a.name}! +3 % de monedas para siempre y ⭐ ${ALBUM_STARS}`); }, 2600);
+    stat('album_completo', { album: a.id });
+  }
+  save();
+}
+function collectRoll() { if (S.mission >= 3 && Math.random() < DROP_CHANCE) collectFind(); }
+function renderAlbums() {
+  const bonus = Math.round((S.meta.albumBonus || 0) * 100);
+  $('albumTop').textContent = bonus ? `Tus álbumes completos te dan +${bonus} % de monedas para siempre.` : `Salen al cosechar y en el cofre del día. Cada álbum completo da +3 % de monedas para siempre y ⭐ ${ALBUM_STARS}.`;
+  $('albumList').innerHTML = ALBUMS.map(a => {
+    const off = a.when && !a.when() ? `<small>${a.whenText}</small>` : '';
+    return `<div class="album"><h4>${a.icon} ${a.name} <b>${albumCount(a)}/${a.items.length}</b>${(S.meta.albumDone || {})[a.id] ? ' ✅' : ''}</h4>${off}<div class="agrid">`
+      + a.items.map(([e, n]) => (albumGot()[e] ? `<span title="${n}">${e}</span>` : `<span class="no" aria-label="Sin encontrar">?</span>`)).join('') + '</div></div>';
+  }).join('');
+}
+$('albumBtn').addEventListener('click', () => { $('menu').hidden = true; renderAlbums(); $('albumOverlay').hidden = false; });
+$('albumClose').addEventListener('click', () => { $('albumOverlay').hidden = true; last = performance.now(); });
+
+/* ================= Christmas ================= */
+// From 1 December to 6 January, and any day for testers. Outside the event nothing here is built, so it costs nothing to draw.
+function xmasSeason() { const d = new Date(), m = d.getMonth() + 1; return m === 12 || (m === 1 && d.getDate() <= 6); }
+function xmasOn() { return xmasSeason() || TESTER; }
+const XMAS_DAYS = 24;
+// One gift per day the player comes in: no date to miss, the next door is simply the next one. A new event starts a new calendar; test runs keep apart.
+function adventState() {
+  const d = new Date(), key = xmasSeason() ? String(d.getMonth() === 0 ? d.getFullYear() - 1 : d.getFullYear()) : 'pruebas';
+  if (!S.meta.advent || S.meta.advent.key !== key) S.meta.advent = { key, n: 0, day: '' };
+  return S.meta.advent;
+}
+const adventReady = () => { const a = adventState(); return a.n < XMAS_DAYS && a.day !== todayKey(); };
+function adventGift(k) {
+  if (k === XMAS_DAYS) return { icon: '🎅', big: true };
+  if (k % 6 === 0) return { icon: '⭐', stars: 2 };
+  if (k % 6 === 3) return { icon: '🎄', find: true };
+  return { icon: '🪙', mins: 2 + k * .15 };
+}
+let adventLast = 0, xmasAsked = false;
+function renderAdvent() {
+  const a = adventState(), ready = adventReady();
+  $('xmasCal').innerHTML = Array.from({ length: XMAS_DAYS }, (_, i) => {
+    const k = i + 1, got = k <= a.n, next = k === a.n + 1 && ready;
+    return `<button class="${got ? 'got' : next ? 'next' : ''}" ${next ? 'data-open="1"' : 'disabled'} aria-label="Día ${k}">${got ? adventGift(k).icon : k}</button>`;
+  }).join('');
+  $('xmasInfo').textContent = a.n >= XMAS_DAYS ? '¡Has abierto todo el calendario! Feliz Navidad 🎅' : ready ? '¡Toca la casilla dorada para abrir el regalo de hoy!' : `Hoy ya has abierto tu regalo. Vuelve mañana: ${a.n}/${XMAS_DAYS} abiertos.`;
+  $('xmasAd').hidden = !adventLast;
+}
+function openAdvent() {
+  if (!adventReady()) return;
+  const a = adventState(), k = ++a.n, g = adventGift(k); a.day = todayKey(); adventLast = 0;
+  if (g.big) { S.meta.santa = 1; giveStars(5); adventLast = Math.max(1, Math.round(incMin(15))); addCoins(adventLast); toast(`🎅 ¡Último regalo! Traje de Papá Noel en 👗 Aspecto, ⭐ 5 y +${fmt(adventLast)} monedas`); }
+  else if (g.stars) { giveStars(g.stars); toast(`🎁 Día ${k}: ⭐ ${g.stars} estrellas`); }
+  else if (g.find) { toast(`🎁 Día ${k}: ¡una pieza de la colección!`); setTimeout(() => collectFind('navidad'), 1400); }
+  else { adventLast = Math.max(1, Math.round(incMin(g.mins))); addCoins(adventLast); toast(`🎁 Día ${k}: +${fmt(adventLast)} monedas`); }
+  sfx.mission(); flyCoins(P.x, 1.5, P.z, 10); puff(P.x, 1, P.z, 0xe8384a, 14, 1.5, 3.5); stat('adviento', { dia: k }); save(); renderAdvent();
+}
+function showAdvent() { $('menu').hidden = true; adventLast = 0; renderAdvent(); $('xmasOverlay').hidden = false; }
+$('xmasBtn').hidden = !xmasOn();
+$('xmasBtn').addEventListener('click', showAdvent);
+$('xmasClose').addEventListener('click', () => { $('xmasOverlay').hidden = true; last = performance.now(); });
+$('xmasCal').addEventListener('click', e => { if (e.target.closest('[data-open]')) openAdvent(); });
+$('xmasAd').addEventListener('click', () => {
+  const v = adventLast; if (!v) return;
+  showAd(() => { addCoins(v); adventLast = 0; toast(`📺 ¡Regalo doble! +${fmt(v)} monedas`); save(); renderAdvent(); }, 'adviento');
+});
+// Opens by itself once per session when today's gift is waiting and nothing else is on screen
+function checkXmas() {
+  if (xmasAsked || !xmasOn() || S.mission < 2 || !adventReady() || surveyBlocked() || !$('surveyOverlay').hidden || !$('xmasOverlay').hidden || !$('albumOverlay').hidden) return;
+  xmasAsked = true; showAdvent();
+}
+
+/* ---------- Snow and decorations ---------- */
+const xmasScene = (() => {
+  if (!xmasOn()) return null;
+  GFX.uSnow.value = .9;
+  // A decorated tree and presents beside every shop
+  const COLORS = [0xe8384a, 0xf5c518, 0x3f7fd0, 0xfdf6ea, 0xf06aa8];
+  SHOPS.forEach(s => {
+    const x = s.x - 3.4, z = s.z - 1.6, parts = [pCyl(.14, .5, x, .25, z, 0x6b4426, 7)];
+    [[1, 1.1, .95, 0x1f6b3a], [.78, 1, 1.6, 0x247a42], [.52, .85, 2.2, 0x2c8a4c]].forEach(([r, h, y, c]) => parts.push({ geo: new T.ConeGeometry(r, h, 9).translate(x, y, z), color: c }));
+    for (let i = 0; i < 16; i++) { const a = i * 2.4, y = .7 + i * .11, r = .95 - i * .052; parts.push(pGem(.065, x + Math.cos(a) * r, y, z + Math.sin(a) * r, COLORS[i % 5])); }
+    parts.push(pGem(.17, x, 2.72, z, 0xf6c445));
+    [[.85, .5, 0xe8384a], [-.8, .7, 0x3f7fd0], [.25, 1.05, 0xf5c518]].forEach(([dx, dz, c]) => parts.push(pBox(.38, .3, .38, x + dx, .15, z + dz, c), pBox(.4, .06, .1, x + dx, .29, z + dz, 0xfdf6ea), pBox(.1, .06, .4, x + dx, .3, z + dz, 0xfdf6ea)));
+    addDetails(s.g, parts);
+  });
+  // A sweets stall beside every shop, in the free corner of its plaza
+  SHOPS.forEach(s => {
+    const x = s.x - 3.4, z = s.z + 3.1;
+    addDetails(s.g, [
+      pBox(1.7, .75, .8, x, .38, z, 0xb5482f), pBox(1.85, .08, .95, x, .79, z, 0xfdf6ea), pCyl(.05, 1.5, x - .8, 1, z - .35, 0x6b4426, 6), pCyl(.05, 1.5, x + .8, 1, z - .35, 0x6b4426, 6),
+      pBox(1.9, .08, 1, x, 1.72, z - .05, 0xd8262f, 0), pBox(1.9, .03, .3, x, 1.76, z - .05, 0xfdf6ea),
+      pCyl(.16, .05, x - .5, .86, z, 0xc9a266), pGem(.075, x - .55, .92, z, 0x9a6233), pGem(.075, x - .42, .92, z + .05, 0x9a6233),
+      pBox(.3, .1, .2, x + .05, .88, z, 0xf0e0b0), pCyl(.1, .16, x + .55, .91, z, 0xf5f0e0, 8), pCyl(.08, .02, x + .55, .99, z, 0x5a3220, 8),
+    ]);
+    const ring = fixRing(x, z + 1.5, 'red'); s.g.add(ring); s.xmasRing = ring;
+  });
+  // Falling snow: a box of flakes that follows the player
+  const n = GFX.tier ? 260 : 120, pos = new Float32Array(n * 3), speed = new Float32Array(n);
+  for (let i = 0; i < n; i++) { pos[i * 3] = (Math.random() - .5) * 30; pos[i * 3 + 1] = Math.random() * 13; pos[i * 3 + 2] = (Math.random() - .5) * 30; speed[i] = .9 + Math.random() * .9; }
+  const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.BufferAttribute(pos, 3));
+  const dot = document.createElement('canvas'); dot.width = dot.height = 32; { const g = dot.getContext('2d'), gr = g.createRadialGradient(16, 16, 1, 16, 16, 15); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 32, 32); }
+  const flakes = new T.Points(geo, new T.PointsMaterial({ map: new T.CanvasTexture(dot), size: .28, transparent: true, depthWrite: false, fog: false, color: 0xffffff }));
+  flakes.frustumCulled = false; scene.add(flakes);
+  return { flakes, pos, speed, n };
+})();
+function updateXmas(dt) {
+  if (!xmasScene) return;
+  const { flakes, pos, speed, n } = xmasScene, t = GFX.uT.value;
+  flakes.position.set(P.x, 0, P.z);
+  for (let i = 0; i < n; i++) {
+    pos[i * 3 + 1] -= speed[i] * dt; pos[i * 3] += Math.sin(t * .8 + i) * .25 * dt;
+    if (pos[i * 3 + 1] < 0) { pos[i * 3 + 1] = 13; pos[i * 3] = (Math.random() - .5) * 30; pos[i * 3 + 2] = (Math.random() - .5) * 30; }
+  }
+  flakes.geometry.attributes.position.needsUpdate = true;
+}
+
+/* ---------- Sweets and Santa's visits ---------- */
+// Three things from Sonia's stack become one sweet at the stall. What she brings decides which: the more valuable, the better the sweet.
+const TREATS = { cookie: { icon: '🍪', name: 'Galleta', worth: 1 }, nougat: { icon: '🍬', name: 'Turrón', worth: 2 }, choco: { icon: '🍫', name: 'Chocolate', worth: 4 } };
+const treatStock = () => (S.meta.treats = S.meta.treats || { cookie: 0, nougat: 0, choco: 0 });
+const treatFor = v => (v < 15 ? 'cookie' : v < 45 ? 'nougat' : 'choco');
+const xmasP = { cook: 0, warned: 0, santa: null, wait: 40, order: null, t: 0, helped: false };
+const SANTA_TIME = 150;
+function santaBody() {
+  if (xmasP.santa) return xmasP.santa;
+  const p = makePerson({ shirt: mat(0xd8262f), pants: mat(0xd8262f), hair: mat(0xf5f5f5), hair2: mat(0xe6e6e6), skin: M.skin, beard: true, hat: 'beanie', hatColor: 0xd8262f, boot: mat(0x2a2a2a), shortBack: true, blush: true });
+  const belt = mesh(new T.CylinderGeometry(.275, .285, .07, 14), mat(0x2a2a2a)); belt.position.y = .47; p.body.add(belt);
+  const sack = mesh(new T.SphereGeometry(.34, 9, 7).scale(1, 1.15, .9), mat(0xb5482f)); sack.position.set(-.34, .62, -.28); p.body.add(sack);
+  const icon = iconSprite('🎅', .8); icon.position.y = 1.85; p.g.add(icon);
+  p.g.visible = false; scene.add(p.g); return (xmasP.santa = p);
+}
+function santaArrive() {
+  const open = SHOPS.filter(s => s.g.visible); if (!open.length) { xmasP.wait = 30; return; }
+  const shop = open.reduce((a, b) => (Math.hypot(a.x - P.x, a.z - P.z) < Math.hypot(b.x - P.x, b.z - P.z) ? a : b));
+  const stock = treatStock(), order = { cookie: 2 + Math.floor(Math.random() * 3), nougat: 0, choco: 0 };
+  if (stock.nougat > 0 || Math.random() < .3) order.nougat = 1 + Math.floor(Math.random() * 2);
+  if (stock.choco > 0 && Math.random() < .5) order.choco = 1;
+  const w = new T.Vector3(); shop.xmasRing.getWorldPosition(w);
+  const p = santaBody(); p.g.position.set(w.x + 1.9, 0, w.z); p.g.rotation.y = -Math.PI / 2; p.g.visible = true;
+  xmasP.order = order; xmasP.t = SANTA_TIME; xmasP.worth = Object.keys(order).reduce((n, k) => n + order[k] * TREATS[k].worth, 0);
+  puff(p.g.position.x, 1, p.g.position.z, 0xffffff, 16, 1.5, 3); sfx.bell();
+  toast(xmasP.helped ? `🎅 ¡Papá Noel ha llegado a ${shop.name || 'la tienda'} con un pedido!` : '🎅 ¡Papá Noel quiere dulces! Lleva 3 cosas al círculo rojo del puesto para hacerlos');
+  xmasP.helped = true; stat('papa_noel', { accion: 'llega' });
+}
+function santaLeave(done) {
+  const p = xmasP.santa; p.g.visible = false; puff(p.g.position.x, 1, p.g.position.z, 0xffffff, 16, 1.5, 3); xmasP.order = null; xmasP.wait = 170 + Math.random() * 80;
+  if (!done) { toast('🎅 Papá Noel se ha ido. ¡Volverá con otro pedido!'); stat('papa_noel', { accion: 'se_va' }); return; }
+  const v = Math.max(1, incMin(2 + xmasP.worth * .5)); addCoins(v); giveStars(1); flyCoins(P.x, 1.5, P.z, 14); sfx.mission(); burst(P.x, 2.3, P.z, '🎅 +' + fmt(v));
+  toast(`🎅 ¡Jo, jo, jo! +${fmt(v)} monedas y ⭐ 1`); if (Math.random() < .4) setTimeout(() => collectFind('navidad'), 2400);
+  stat('papa_noel', { accion: 'cumplido' }); save();
+}
+function xmasPlay(dt) {
+  if (!xmasScene || S.mission < 2) { $('santaBar').hidden = true; return; }
+  const stock = treatStock(), w = new T.Vector3();
+  // The stall: stand on the ring to turn what you carry into sweets
+  let onRing = false;
+  SHOPS.forEach(s => { if (!s.g.visible) return; s.xmasRing.getWorldPosition(w); if (onSpot(w)) onRing = true; });
+  if (onRing) {
+    xmasP.warned -= dt;
+    const carried = P.stack.filter(b => b.parent === sonia.stack);
+    if (carried.length < 3) { if (xmasP.warned <= 0) { xmasP.warned = 3; burst(P.x, 2.2, P.z, 'Trae 3 cosas', 'white'); } }
+    else if ((xmasP.cook += dt) >= .7) {
+      xmasP.cook = 0; let best = 0;
+      for (let i = 0; i < 3; i++) { const b = takeFromStack(() => true); if (!b) break; best = Math.max(best, (ITEMS[b.userData.item] || {}).value || 0); scene.remove(b); }
+      const k = treatFor(best); stock[k]++; sfx.drop(); burst(P.x, 2.2, P.z, TREATS[k].icon + ' +1'); puff(P.x, 1, P.z, 0xf6c445, 8, 1, 2.5);
+    }
+  } else xmasP.cook = 0;
+  // Santa: comes now and then, takes sweets when Sonia is close, leaves when time is up
+  if (!xmasP.order && (xmasP.wait -= dt) <= 0) santaArrive();
+  if (xmasP.order) {
+    const p = xmasP.santa, o = xmasP.order; xmasP.t -= dt;
+    p.g.position.y = Math.abs(Math.sin(GFX.uT.value * 3)) * .04;
+    if (Math.hypot(p.g.position.x - P.x, p.g.position.z - P.z) < 1.8) Object.keys(o).forEach(k => { const n = Math.min(o[k], stock[k]); if (n > 0) { o[k] -= n; stock[k] -= n; sfx.drop(); burst(p.g.position.x, 2, p.g.position.z, `${TREATS[k].icon} −${n}`, 'white'); } });
+    if (!Object.values(o).some(n => n > 0)) santaLeave(true); else if (xmasP.t <= 0) santaLeave(false);
+  }
+  // Small pill with the sweets and the order
+  const have = Object.keys(TREATS).filter(k => stock[k] > 0).map(k => `${TREATS[k].icon} ${stock[k]}`).join(' · ');
+  const want = xmasP.order ? Object.keys(xmasP.order).filter(k => xmasP.order[k] > 0).map(k => `${TREATS[k].icon}${xmasP.order[k]}`).join(' ') : '';
+  const txt = want ? `🎅 Pide ${want} · ${Math.ceil(xmasP.t)} s${have ? ' | Tienes ' + have : ''}` : have;
+  const bar = $('santaBar'); bar.hidden = !txt; if (bar.textContent !== txt) bar.textContent = txt;
+}
 
 /* ================= Tips: each new system explains itself the first time it shows up ================= */
 // The opening tutorial stays short. Daily missions, morale and decisions, chores, mishaps, timed works and dirty zones
