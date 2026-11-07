@@ -540,6 +540,16 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
 .titlever { color: #fff8e7; font-weight: 800; opacity: .8; text-shadow: 0 1px 2px rgba(0,0,0,.5); }
 body.titleon .hud, body.titleon #hint, body.titleon #banner, body.titleon #labels { visibility: hidden; }
 body.titleon .overlay:not(#titleOverlay), body.titleon .creator { visibility: hidden; }
+/* Laws: the ⚖️ chip and a clearer window (47c-laws.js) */
+.townbar .lawchip { cursor: pointer; }
+.townbar .lawchip.lawroom { background: var(--gold); color: var(--ink); animation: lawpulse 1.2s ease-in-out infinite; }
+@keyframes lawpulse { 50% { transform: scale(1.12); } }
+#lawTop { text-align: left; }
+#lawTop .lgood { color: #2f7d3b; } #lawTop .lbad { color: #b5392b; }
+#lawTop .lawcount { display: block; margin-top: 6px; padding: 6px 8px; background: #fff3d9; border: 2px dashed var(--ink); border-radius: 10px; color: var(--ink); font-weight: 800; }
+.dmrow.lawnew { border-width: 3px; box-shadow: 0 0 0 3px var(--gold); }
+.dmrow .newtag, .dmrow .ontag { font-style: normal; font-size: .72rem; padding: 1px 6px; border-radius: 8px; background: var(--gold); border: 1px solid var(--ink); vertical-align: 2px; }
+.dmrow .ontag { background: #c8ecb4; }
 </style>
 
 <div id="game"></div>
@@ -1207,8 +1217,8 @@ const MAPS = [];
 const mapOf = n => MAPS[n % MAPS.length];
 const mapById = id => MAPS.find(m => m.id === id);
 // The version goes up with every release; the build (vite.config.js) stamps the date (while developing it says 'en pruebas')
-const GAME_VERSION = '54';
-const BUILD_DATE = '07/11/2026 13:51';
+const GAME_VERSION = '55';
+const BUILD_DATE = '07/11/2026 14:03';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -1397,6 +1407,8 @@ MAPS.push({
         },
         pos: {
           loom: [57, 3.5, 3],
+          // The lorry does not travel with the tropical island by itself: without this it stood on the watermelon field
+          truck: [-12.5, -40],
           'shop:farm': [-1.4, 4.2], 'spawn:farm': [-3, 21.2],
           A: [-8, 16.6], B: [1.8, 16.6], C: [8.3, 16.6],
           florist: [9.6, 0, 3], mill: [9.6, 5.2, 3], kitchen: [9.6, 10.4, 3],
@@ -7169,7 +7181,7 @@ function renderTown() {
   const b = $('townBar'); b.hidden = !townOn(); if (b.hidden) return;
   const m = Math.round(S.morale), t = Math.round(S.trust);
   const fx = Object.entries(DEC.fx).map(([k, s]) => `<span class="tfx" title="${FX_NAMES[k]}">${[...FX_NAMES[k]][0]} ${Math.ceil(s)}s</span>`).join('');
-  const h = `<span class="${m < 30 ? 'low' : ''}" title="Ánimo de los trabajadores">${m < 30 ? '😟' : m >= 70 ? '😄' : '😊'} ${m}</span><span class="${t < 30 ? 'low' : ''}" title="Confianza de los vecinos">⭐ ${t}</span>${fx}${debtChip()}${staffChip()}`;
+  const h = `<span class="${m < 30 ? 'low' : ''}" title="Ánimo de los trabajadores">${m < 30 ? '😟' : m >= 70 ? '😄' : '😊'} ${m}</span><span class="${t < 30 ? 'low' : ''}" title="Confianza de los vecinos">⭐ ${t}</span>${fx}${lawChip()}${debtChip()}${staffChip()}`;
   if (h !== townShown) { b.innerHTML = h; townShown = h; }
 }
 // Day summary: the medal also moves trust and morale, and the summary shows how the town is doing
@@ -7267,21 +7279,40 @@ function applyLaws() {
   }));
 }
 applyLaws();
+let lawNew = ''; // the law that has just appeared, shown first and marked «¡Nueva!»
 function renderLaws() {
-  const on = lawsActive().length, spent = lawChanged();
-  $('lawTop').textContent = `Activas ${on} de ${lawMax()}. ${spent ? 'Hoy ya has cambiado una ley: vuelve mañana.' : 'Puedes cambiar una ley al día.'}`;
-  $('lawList').innerHTML = LAWS.map(l => {
+  const on = lawsActive().length, spent = lawChanged(), free = lawMax() - on;
+  $('lawTop').innerHTML = `Las leyes son normas para tu pueblo. Cada una tiene <b class="lgood">algo bueno</b> y <b class="lbad">algo malo</b>, y duran hasta que las quites.`
+    + `<span class="lawcount">Tienes <b>${on} de ${lawMax()}</b> aprobadas · ${spent ? 'hoy ya has cambiado una: mañana podrás otra' : free ? 'puedes aprobar o quitar una hoy' : 'para aprobar otra, quita una antes'}</span>`;
+  const order = [...LAWS].sort((a, b) => (b.id === lawNew) - (a.id === lawNew));
+  $('lawList').innerHTML = order.map(l => {
     if (S.mission < l.from) return `<div class="dmrow off law"><span>🔒</span><b>Ley sin descubrir<small>Se abre en la misión ${l.from}</small></b></div>`;
-    const act = !!S.laws[l.id], full = !act && on >= lawMax();
-    return `<div class="dmrow law${act ? ' done' : ''}"><span>${l.icon}</span><b>${l.name}<small class="good">+ ${l.good}</small><small class="bad">− ${l.bad}</small></b><button data-law="${l.id}" ${spent || full ? 'disabled' : ''}>${act ? 'Quitar' : full ? 'Llena' : 'Aprobar'}</button></div>`;
+    const act = !!S.laws[l.id], full = !act && on >= lawMax(), fresh = l.id === lawNew && !act;
+    return `<div class="dmrow law${act ? ' done' : ''}${fresh ? ' lawnew' : ''}"><span>${l.icon}</span><b>${fresh ? '<i class="newtag">¡Nueva!</i> ' : ''}${l.name}${act ? ' <i class="ontag">✅ Aprobada</i>' : ''}<small class="good">+ ${l.good}</small><small class="bad">− ${l.bad}</small></b><button data-law="${l.id}" ${spent || full ? 'disabled' : ''}>${act ? 'Quitar' : full ? 'Llena' : 'Aprobar'}</button></div>`;
   }).join('');
+  $('lawClose').textContent = lawNew && !lawsActive().length ? 'Ahora no' : 'Cerrar';
 }
+function openLaws(fresh) {
+  lawNew = fresh || ''; $('menu').hidden = true; renderLaws(); $('lawOverlay').hidden = false; $('lawOverlay').querySelector('.adbox').scrollTop = 0;
+}
+// The ⚖️ chip next to Ánimo and Confianza: always in sight once there are laws, and it pulses while there is room for one more
+function lawChip() {
+  if (!townOn() || !lawsOpen().length) return '';
+  const on = lawsActive().length, room = on < lawMax() && !lawChanged();
+  return `<span class="tfx lawchip${room ? ' lawroom' : ''}" data-lawchip title="Leyes del pueblo">⚖️ ${on}/${lawMax()}</span>`;
+}
+$('townBar').addEventListener('click', e => { if (e.target.closest('[data-lawchip]')) { sfx.drop(); openLaws(); } });
 function lawTick() {
   $('lawBtn').hidden = !townOn() || !lawsOpen().length;
   const n = lawsOpen().length;
-  if ((S.lawSeen || 0) < n && townOn()) { S.lawSeen = n; const l = lawsOpen()[n - 1]; sfx.mission(); toast(`⚖️ Ley nueva: ${l.icon} ${l.name}. Apruébala en el menú ☰`); stat('ley_nueva', { ley: l.id }); }
+  if ((S.lawSeen || 0) < n && townOn()) { S.lawSeen = n; stat('ley_nueva', { ley: lawsOpen()[n - 1].id }); }
+  // A new law opens the laws window by itself (also once for games that only got the old toast), as soon as nothing else is on screen
+  if ((S.lawAsk || 0) < n && townOn() && !creatorOn && !SEA_BUSY() && !document.querySelector('.overlay:not([hidden])')) {
+    S.lawAsk = n; const l = lawsOpen()[n - 1]; sfx.mission(); openLaws(l.id); save();
+  }
 }
-$('lawBtn').addEventListener('click', () => { $('menu').hidden = true; renderLaws(); $('lawOverlay').hidden = false; });
+const SEA_BUSY = () => typeof SEA !== 'undefined' && (SEA.on || SEA.land);
+$('lawBtn').addEventListener('click', () => openLaws());
 $('lawClose').addEventListener('click', () => { $('lawOverlay').hidden = true; last = performance.now(); });
 $('lawList').addEventListener('click', e => {
   const b = e.target.closest('[data-law]'); if (!b || b.disabled || lawChanged()) return;
@@ -7289,6 +7320,7 @@ $('lawList').addEventListener('click', e => {
   if (on && lawsActive().length >= lawMax()) return;
   if (on) S.laws[l.id] = 1; else delete S.laws[l.id];
   S.lawDay = S.dayN; applyLaws(); sfx.mission(); stat('ley', { ley: l.id, activa: on }); toast(`⚖️ ${l.name}: ${on ? 'aprobada' : 'quitada'}`); save(); renderLaws();
+  if (on && lawNew) setTimeout(() => { $('lawOverlay').hidden = true; last = performance.now(); }, 900); // chosen from the new-law window: back to the game
 });
 // Laws with a running cost are charged at the end of the day, only as far as the money goes, and shown in the summary
 const endDayLaw = endDay;
@@ -8886,6 +8918,7 @@ const HELP = [
   ['🚪', 'Zonas nuevas', 'Las verjas también tienen su círculo con precio. Algunas zonas nuevas están llenas de basura: bárrela andando por encima y vacía el saco en el contenedor 🗑️. Limpia, ya se puede construir.'],
   ['🧭', 'Si no sabes qué hacer', 'Sigue la flecha: te lleva a tu misión (la pastilla de arriba). Si queda fuera de la pantalla, sale una flecha en el borde. El botón 🛒 de la derecha te enseña todo lo que puedes comprar: toca «📍 Ir».'],
   ['😠', 'El enfado', 'Sube cuando los clientes esperan: porque no hay lo que quieren en el mostrador o porque nadie les cobra. Debajo de la barra pone qué lo está subiendo; tócala para verlo entero. Al 100 % pierdes el dinero del día.'],
+  ['⚖️', 'Las leyes', 'Más adelante salen leyes para tu pueblo: cada una tiene algo bueno y algo malo. Cuando sale una nueva se abre su ventana para que la apruebes. Las ves y las cambias tocando ⚖️ junto a 😊 y ⭐ (brilla si te cabe otra). Puedes cambiar una al día.'],
   ['🗺️', 'La cámara', '🗺️ enseña la granja desde arriba. 🔄 gira la vista; si lo arrastras, la inclinas.'],
   ['⏸️', 'Pausa', 'El botón ⏸️ para el juego. Si sales de la app, se pausa solo.'],
   ['🎁', 'Volver cada día', 'Cada día hay 3 misiones nuevas con cofre, y el cofre 🎁 de arriba vale más cuantos más días seguidos juegues.'],
