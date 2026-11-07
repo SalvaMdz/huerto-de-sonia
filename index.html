@@ -479,6 +479,18 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
 .mpill b { animation: bump 1s infinite; }
 .mpill i { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--leaf); }
 .mission { cursor: pointer; }
+/* Help (49g-help.js): the 🛒 button, green prices you can already pay, and the arrow at the screen edge */
+.buybtn { position: relative; background: #fff8e7; border-color: #2f8a3c !important; border-width: 3px; font-size: 1.25rem; }
+.buybtn .badge { position: absolute; top: -6px; right: -6px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: #d8483a; color: #fff; border: 2px solid var(--ink); font-family: var(--font-display); font-size: .78rem; line-height: 16px; text-align: center; }
+.buybtn.pop { animation: buypop .6s ease-out 2; }
+@keyframes buypop { 0%, 100% { transform: scale(1); } 40% { transform: scale(1.25); } }
+.padlabel.can .pr { color: #fff; background: #3fa34d; border: 2px solid #1f5e2a; border-radius: 12px; padding: 1px 9px; text-shadow: none; animation: canbob 1.2s ease-in-out infinite; }
+.padlabel.can .nm { background: rgba(31, 94, 42, .9); }
+@keyframes canbob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+.edgearrow { position: fixed; z-index: 4; width: 36px; height: 36px; margin: -18px 0 0 -18px; border-radius: 50%; background: var(--gold); border: 3px solid var(--ink); display: grid; place-items: center; pointer-events: none; box-shadow: 0 3px 0 rgba(0,0,0,.3); animation: edgepulse 1s ease-in-out infinite; }
+.edgearrow span { font-size: 1.05rem; line-height: 1; color: var(--ink); display: block; }
+@keyframes edgepulse { 0%, 100% { scale: 1; } 50% { scale: 1.12; } }
+.prow small .coin { display: inline-block; width: 12px; height: 12px; border-width: 1px; vertical-align: -1px; }
 </style>
 
 <div id="game"></div>
@@ -492,6 +504,7 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
     <div class="spacer"></div>
     <button class="iconbtn chest" id="chestBtn" hidden aria-label="Cofre diario">🎁</button>
     <button class="iconbtn boost" id="boostBtn" aria-label="Ver anuncio para ganar el doble">📺 ×2</button>
+    <button class="iconbtn" id="pauseBtn" aria-label="Pausa">⏸️</button>
     <button class="iconbtn" id="menuBtn" aria-label="Menú">☰</button>
   </div>
   <div class="statrow">
@@ -511,6 +524,7 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
   </div>
   <!-- Round buttons down the right edge, so the top row fits on narrow phones -->
   <div class="sidebtns">
+    <button class="iconbtn buybtn" id="buyBtn" hidden aria-label="Qué puedo comprar">🛒<span class="badge" id="buyBadge" hidden></span></button>
     <button class="iconbtn" id="viewBtn" aria-label="Cambiar a vista desde arriba">🗺️</button>
     <button class="iconbtn" id="turnBtn" aria-label="Girar la cámara">🔄</button>
     <button class="iconbtn" id="panBtn" hidden aria-label="Arrastrar el mapa sin mover al personaje">✋</button>
@@ -547,6 +561,7 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
   <button id="albumBtn">📖 Colección</button>
   <button id="decorBtn" hidden>⛄ Decoraciones</button>
   <button id="achvBtn">🏆 Logros</button>
+  <button id="helpBtn">📖 Cómo se juega</button>
   <button id="feedbackBtn">💬 Opinión</button>
   <button id="soundBtn">🔊 Sonido: sí</button>
   <button id="resetBtn">Empezar de cero</button>
@@ -632,6 +647,17 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
     <button class="ghost" id="tutSkip">Ya he jugado: saltar tutorial</button>
   </div>
 </div>
+<div class="overlay" id="pauseOverlay" hidden>
+  <div class="adbox">
+    <div class="bigface">⏸️</div>
+    <h3>En pausa</h3>
+    <p>El juego está parado. Nada crece ni llegan clientes hasta que sigas.</p>
+    <button id="pauseGo">▶️ Seguir jugando</button>
+    <button class="ghost" id="pauseBuy">🛒 ¿Qué puedo comprar?</button>
+    <button class="ghost" id="pauseHelp">📖 Cómo se juega</button>
+  </div>
+</div>
+<div class="edgearrow" id="edgeArrow" hidden><span>➤</span></div>
 <div id="confetti" aria-hidden="true"></div>
 <div class="overlay" id="panelOverlay" hidden>
   <div class="adbox panel">
@@ -1075,8 +1101,8 @@ const MAPS = [];
 const mapOf = n => MAPS[n % MAPS.length];
 const mapById = id => MAPS.find(m => m.id === id);
 // The version goes up with every release; the build (vite.config.js) stamps the date (while developing it says 'en pruebas')
-const GAME_VERSION = '47';
-const BUILD_DATE = '06/11/2026 16:23';
+const GAME_VERSION = '48';
+const BUILD_DATE = '07/11/2026 12:05';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -4795,6 +4821,7 @@ function unstick() {
   }
   return false;
 }
+let guidePad = null, guideTarget = null; // guidePad: what the player picked in the 🛒 list
 let hintShown = S.tut < 3, moved = 0, bankT = 30;
 function update(dt) {
   if (TESTER && S.coins < 1e9) S.coins = 1e9; // Testers never run out of money, so they can see everything
@@ -5053,6 +5080,8 @@ function update(dt) {
   else if (S.tut === 0) target = { x: PATCHES[0].x, z: PATCHES[0].z };
   else if (S.tut === 1 && P.stack.length >= 4) target = COUNTER_ZONE;
   else if (S.tut >= 2) { const m = MISSIONS[S.mission], t0 = m && m.target(), t = t0 && t0.stall ? t0.stall : t0; if (t && (!t.g || t.g.visible)) target = t; else if (t && t.ref && areaOpen(t.ref.area || 1) && !zoneClean(t.ref.area || 1)) target = rubbleTarget(t.ref.area); }
+  if (guidePad) { if (!guidePad.g.visible || ((P.x - guidePad.x) ** 2 + (P.z - guidePad.z) ** 2 < 1.2)) guidePad = null; else if (!full) target = guidePad; }
+  guideTarget = target;
   arrow.visible = !!target;
   if (target) { arrow.position.set(target.x, 1.6 + Math.sin(performance.now() / 220) * .2, target.z); arrow.rotation.y += dt * 2; }
 
@@ -5091,8 +5120,10 @@ function updateLabels(dt) {
     if (!pad.g.visible) { show(pad.label, false); return; }
     pad.icon.position.y = 1.3 + Math.sin(now * 2.4 + pad.x * .7 + pad.z) * .08;
     const d = dist(pad.x, pad.z);
-    if (!show(pad.label, d < 5.5)) return;
-    pad.label.classList.toggle('near', d < 2.8);
+    const can = pad.info && pad.info.cost > 0 && S.coins >= pad.info.cost - (S.paid[pad.id] || 0);
+    if (!show(pad.label, d < (can || pad === guidePad ? 11 : 5.5))) return;
+    pad.label.classList.toggle('near', d < 2.8 || can || pad === guidePad);
+    pad.label.classList.toggle('can', !!can);
     place(pad.label, toScreen(pad.x, .1, pad.z));
   });
   RUBBLE.forEach((Z, i) => {
@@ -5760,10 +5791,10 @@ function frame(now) {
   if (!window.gameReady) { last = now; return; } // in development the scripts arrive one by one: wait for the last one
   const dt = Math.min(.1, (now - last) / 1000); last = now;
   if (creatorOn) creatorView(dt);
-  else if (!S.over && $('dayOverlay').hidden && $('tutOverlay').hidden && $('decOverlay').hidden && $('sceneOverlay').hidden && $('surveyOverlay').hidden && $('albumOverlay').hidden && $('decorOverlay').hidden && $('weekOverlay').hidden && $('lawOverlay').hidden && $('staffOverlay').hidden && $('filmOverlay').hidden && $('xmasOverlay').hidden) {
+  else if (!S.over && $('dayOverlay').hidden && $('tutOverlay').hidden && $('decOverlay').hidden && $('sceneOverlay').hidden && $('surveyOverlay').hidden && $('albumOverlay').hidden && $('decorOverlay').hidden && $('weekOverlay').hidden && $('lawOverlay').hidden && $('staffOverlay').hidden && $('filmOverlay').hidden && $('xmasOverlay').hidden && !helpOpen()) {
     S.meta.playT = (S.meta.playT || 0) + dt; update(dt); updateDay(dt); updateMood(dt); updateExtras(dt); updateTrouble(dt); updateChores(dt); updateIncome(dt); updateTown(dt); updateGrid(); updateStorm(dt); xmasPlay(dt); }
   gfxTick(now, dt); updateXmas(dt); renderer.render(scene, camera); updateLabels(dt);
-  uiT += dt; if (uiT > .25) { uiT = 0; refreshWorld(); checkMission(); renderMood(); renderDaily(); renderWorks(); renderStalls(); renderZone(); renderTrouble(); renderTown(); renderStory(); renderExtras(); tidyHud(); renderTips(); checkSurvey(); checkXmas(); }
+  uiT += dt; if (uiT > .25) { uiT = 0; refreshWorld(); checkMission(); renderMood(); renderDaily(); renderWorks(); renderStalls(); renderZone(); renderTrouble(); renderTown(); renderStory(); renderExtras(); tidyHud(); renderTips(); renderHelp(); checkSurvey(); checkXmas(); }
   saveT += dt; if (saveT > 4) { saveT = 0; saveCleared(); save(); }
 }
 
@@ -5880,12 +5911,15 @@ $('avatarBtn').addEventListener('click', openCreator);
 /* ================= First-time tutorial ================= */
 // A few cards right after creating the character. Players who already know the game can skip it.
 const TUTORIAL = [
-  { icon: '👆', title: 'Muévete', text: 'Arrastra el dedo por la pantalla para caminar por la granja.' },
-  { icon: '🌷', title: 'Cosecha', text: 'Pasa por encima de un campo con flores maduras para recogerlas.' },
-  { icon: '🧺', title: 'Vende', text: 'Lleva la cosecha al mostrador. Los clientes pagan en la caja: ponte en ella para cobrar.' },
-  { icon: '🛠️', title: 'Crece', text: 'Pisa los círculos con precio para comprar campos, talleres y ayudantes. Las mejoras de cada zona están en su puesto 🛠️.' },
+  { icon: '👆', title: 'Muévete', text: 'Arrastra el dedo por cualquier parte de la pantalla para caminar por la granja.' },
+  { icon: '🌷', title: 'Cosecha', text: 'Pasa por encima de un campo con flores maduras. Lo que recoges se apila en tu cesta.' },
+  { icon: '🧺', title: 'Vende', text: 'Lleva la cosecha al mostrador de la tienda. Los clientes la cogen y esperan en la caja.' },
+  { icon: '💵', title: 'Cobra', text: 'Ponte en el círculo de la caja para cobrar. Después pasa por encima de los billetes del suelo para cogerlos.' },
+  { icon: '🛒', title: 'Compra cosas nuevas', text: 'Los círculos del suelo con un precio son cosas que puedes comprar: campos, tiendas, talleres, puertas a zonas nuevas… Ve hasta uno y quédate de pie encima: el dinero se paga solo. Cuando te llega, el precio se pone verde.' },
+  { icon: '🛠️', title: 'Mejoras y ayudantes', text: 'Las cajeras, la cesta más grande o las ardillas que cosechan por ti están en el puesto «🛠️ Mejoras» de cada zona, con toldo de rayas rojas. Písalo y toca el precio.' },
+  { icon: '🧭', title: '¿Te pierdes?', text: 'Sigue la flecha: te lleva a tu misión. El botón 🛒 de la derecha te dice todo lo que puedes comprar y te lleva hasta allí.' },
   { icon: '😠', title: 'Cuidado con el enfado', text: 'Si los clientes esperan demasiado se enfadan. Si llega al 100 % y cierras, pierdes el dinero del día.' },
-  { icon: '📋', title: 'Tu pantalla', text: 'Arriba a la izquierda: el enfado y la hora del día, un aviso cada vez (toca +N para ver los demás) y tu misión. 🗺️ enseña la granja desde arriba y 🔄 gira la cámara.' },
+  { icon: '⏸️', title: 'Pausa y ayuda', text: 'El botón ⏸️ para el juego. En ☰ → «📖 Cómo se juega» tienes todo esto explicado otra vez.' },
 ];
 let tutI = 0, tutList = TUTORIAL;
 function openTutorial() { tutI = 0; tutList = TUTORIAL; showTutCard(); $('tutOverlay').hidden = false; }
@@ -8314,7 +8348,7 @@ function renderSurvey() {
   const left = SURVEY.filter(s => surveyA[s.id] === undefined).length;
   $('surveySend').disabled = left > 0; $('surveySend').textContent = left ? `Faltan ${left} ${left === 1 ? 'respuesta' : 'respuestas'}` : '📨 Enviar y seguir jugando';
 }
-function surveyBlocked() { return creatorOn || S.over || !$('dayOverlay').hidden || !$('tutOverlay').hidden || !$('decOverlay').hidden || !$('sceneOverlay').hidden || !$('feedbackOverlay').hidden || !$('albumOverlay').hidden || !$('xmasOverlay').hidden || $('menu').hidden === false; }
+function surveyBlocked() { return creatorOn || S.over || !$('pauseOverlay').hidden || !$('dayOverlay').hidden || !$('tutOverlay').hidden || !$('decOverlay').hidden || !$('sceneOverlay').hidden || !$('feedbackOverlay').hidden || !$('albumOverlay').hidden || !$('xmasOverlay').hidden || $('menu').hidden === false; }
 // Checked a few times per second: as soon as nothing else is open after 20 minutes of play, the survey comes up and cannot be skipped
 function checkSurvey() {
   if (S.meta.survey || (S.meta.playT || 0) < SURVEY_AT || !$('surveyOverlay').hidden || surveyBlocked()) return;
@@ -8646,11 +8680,149 @@ function updateLamps(glow) {
   lampPool.material.opacity = Math.min(1, glow);
 }
 
+/* ================= Help: pause, the 🛒 list of what can be bought, the arrow at the screen edge and the how-to-play guide ================= */
+// The friends said they felt lost and, above all, did not know how to buy things.
+
+/* ---------- Pause ---------- */
+function pauseOn() {
+  if (creatorOn || S.over || document.querySelector('.overlay:not([hidden])')) return;
+  $('menu').hidden = true; $('pauseOverlay').hidden = false;
+}
+function pauseOff() { $('pauseOverlay').hidden = true; last = performance.now(); }
+$('pauseBtn').addEventListener('click', () => { sfx.drop(); if ($('pauseOverlay').hidden) pauseOn(); else pauseOff(); });
+$('pauseGo').addEventListener('click', () => { sfx.drop(); pauseOff(); });
+$('pauseBuy').addEventListener('click', () => { sfx.drop(); pauseOff(); openPanel('buy'); });
+$('pauseHelp').addEventListener('click', () => { sfx.drop(); pauseOff(); openPanel('help'); });
+$('helpBtn').addEventListener('click', () => { sfx.drop(); openPanel('help'); });
+// Leaving the app (another app, locking the phone) pauses by itself
+document.addEventListener('visibilitychange', () => { if (document.hidden && S.tut >= 1) pauseOn(); });
+addEventListener('keydown', e => {
+  if (e.target.closest && e.target.closest('input, textarea')) return;
+  if (e.key === 'p' || e.key === 'P') { if ($('pauseOverlay').hidden) pauseOn(); else pauseOff(); }
+  else if (e.key === 'Escape' && !$('pauseOverlay').hidden) pauseOff();
+});
+// The guide and the shopping list stop the game too, so it can be read calmly (34-loop.js)
+function helpOpen() { return !$('pauseOverlay').hidden || (!$('panelOverlay').hidden && (panelKind === 'help' || panelKind === 'buy')); }
+
+/* ---------- 🛒 What can be bought now ---------- */
+function buyWhat(p) {
+  const r = p.ref;
+  if (p.kind === 'patch') return 'Campo nuevo: más cosecha para vender';
+  if (p.kind === 'build') return r.dock ? `Muelle: pesca ${ITEMS[r.output].name.toLowerCase()}` : r.input ? `Taller: con ${ITEMS[r.input].name.toLowerCase()} hace ${ITEMS[r.output].name.toLowerCase()}` : `Te da ${ITEMS[r.output].name.toLowerCase()}`;
+  if (p.kind === 'gate') return 'Abre una zona nueva de la granja';
+  if (p.kind === 'sell') return 'Vende al momento lo que lleves';
+  if (p.kind === 'upg') return r.attr ? 'Atracción: vende entradas' : 'Mejora';
+  return {
+    till2: 'Otra caja: se cobra a más clientes a la vez', house: 'Casa: vendrán más clientes', cafe: 'Los clientes esperan más tranquilos y dejan propina',
+    park: 'Los clientes tienen más paciencia', hotel: 'Llegarán más clientes VIP', bank: 'Te da intereses cada 30 segundos', townhall: 'Todo se vende un 25 % más caro',
+    police: 'Un policía atrapa a los ladrones', fountain: 'El enfado de los clientes baja solo', music: 'Los clientes esperan más calmados', recycler: 'Aquí se vacía el saco de basura',
+  }[r.kind || p.id] || (r.shop ? `Otra caja en ${r.shop.name}` : 'Edificio nuevo para la granja');
+}
+function buyItems() {
+  const m = MISSIONS[S.mission], mt = S.tut >= 2 && m && m.target ? m.target() : null, out = [];
+  pads.forEach(p => {
+    if (!p.g.visible || !p.info || !p.info.active || p.kind === 'move') return;
+    if (p.kind === 'stall') {
+      const open = p.list.filter(q => upgState(q) === 'open'); if (!open.length) return;
+      const costs = open.map(upgCost), n = costs.filter(c => S.coins >= c).length;
+      out.push({ pad: p, icon: '🛠️', name: `Mejoras · ${zoneName(p.ref.area)}`, what: n ? `${n} ${n > 1 ? 'mejoras' : 'mejora'} para comprar ya (cajeras, ayudantes…)` : `${open.length} ${open.length > 1 ? 'mejoras' : 'mejora'}: cajeras, ayudantes…`, cost: Math.min(...costs), can: n > 0, mission: !!mt && (mt === p || mt.stall === p), stall: true });
+      return;
+    }
+    const left = p.info.cost - (S.paid[p.id] || 0); if (left <= 0) return;
+    const name = p.kind === 'patch' ? `Campo de ${p.info.name.toLowerCase()}` : p.info.name;
+    out.push({ pad: p, icon: p.info.icon, name, what: buyWhat(p), cost: left, can: S.coins >= left, mission: mt === p });
+  });
+  return out.sort((a, b) => b.mission - a.mission || b.can - a.can || a.cost - b.cost);
+}
+function buyRows() {
+  const list = buyItems();
+  if (!list.length) return '<div class="prow locked"><span class="pi">🌱</span><span class="pt2"><b>Ahora no hay nada a la venta</b>Sigue vendiendo y haciendo misiones: irán saliendo cosas nuevas.</span></div>';
+  return list.slice(0, 14).map(it => `<div class="prow ${it.can ? '' : 'locked'}"><span class="pi">${it.icon}</span><span class="pt2"><b>${it.mission ? '⭐ Tu misión · ' : ''}${it.name}</b>${it.what}<br><small>${it.stall ? 'Desde ' : ''}<span class="coin"></span> ${fmt(it.cost)} · ${it.can ? '✅ Te llega el dinero' : `Te faltan ${fmt(it.cost - S.coins)}`}</small></span><button data-goto="${it.pad.id}">📍 Ir</button></div>`).join('');
+}
+
+/* ---------- 📖 How to play ---------- */
+const HELP = [
+  ['👆', 'Moverte', 'Arrastra el dedo por cualquier parte de la pantalla y Sonia anda hacia allí.'],
+  ['🌷', 'Cosechar', 'Pasa por encima de un campo con plantas maduras. Lo que recoges se apila en tu cesta.'],
+  ['🧺', 'Vender', 'Lleva la cosecha al mostrador de la tienda. Los clientes la cogen y esperan en la caja.'],
+  ['💵', 'Cobrar', 'Ponte en el círculo de la caja para cobrar y luego pasa por encima de los billetes del suelo. Una cajera cobra por ti.'],
+  ['🛒', 'Comprar campos y edificios', 'Por la granja hay círculos con un dibujo y un precio. Ve hasta uno y quédate de pie encima: el dinero se paga solo, poco a poco. Si no te llega, lo pagado se guarda. Cuando ya te llega, el precio se pone verde.'],
+  ['🛠️', 'Mejoras y ayudantes', 'Cajeras, cesta más grande, botas, ardillas que cosechan… se compran en el puesto «🛠️ Mejoras» de cada zona (el del toldo de rayas rojas). Písalo y toca el precio de lo que quieras.'],
+  ['🚪', 'Zonas nuevas', 'Las verjas también tienen su círculo con precio. Algunas zonas nuevas están llenas de basura: bárrela andando por encima y vacía el saco en el contenedor 🗑️. Limpia, ya se puede construir.'],
+  ['🧭', 'Si no sabes qué hacer', 'Sigue la flecha: te lleva a tu misión (la pastilla de arriba). Si queda fuera de la pantalla, sale una flecha en el borde. El botón 🛒 de la derecha te enseña todo lo que puedes comprar: toca «📍 Ir».'],
+  ['😠', 'El enfado', 'Si los clientes esperan mucho se enfadan. No dejes la tienda vacía y contrata cajeras. Al 100 %, al cerrar pierdes el dinero del día.'],
+  ['🗺️', 'La cámara', '🗺️ enseña la granja desde arriba. 🔄 gira la vista; si lo arrastras, la inclinas.'],
+  ['⏸️', 'Pausa', 'El botón ⏸️ para el juego. Si sales de la app, se pausa solo.'],
+  ['🎁', 'Volver cada día', 'Cada día hay 3 misiones nuevas con cofre, y el cofre 🎁 de arriba vale más cuantos más días seguidos juegues.'],
+];
+const helpRows = () => '<div class="prow"><span class="pi">▶️</span><span class="pt2"><b>Ver otra vez el tutorial</b>Las tarjetas del principio, paso a paso</span><button data-retut="1">Ver</button></div>'
+  + HELP.map(([i, t, x]) => `<div class="prow"><span class="pi">${i}</span><span class="pt2"><b>${t}</b>${x}</span></div>`).join('');
+
+const openPanelNoHelp = openPanel;
+openPanel = kind => {
+  if (kind !== 'buy' && kind !== 'help') { openPanelNoHelp(kind); return; }
+  panelKind = kind; $('menu').hidden = true;
+  const buy = kind === 'buy', rows = buy ? buyRows() : helpRows();
+  $('panelTitle').textContent = buy ? '🛒 ¿Qué puedo comprar?' : '📖 Cómo se juega';
+  $('panelSub').textContent = buy ? 'Para comprar, ve hasta el círculo con el precio y quédate de pie encima: se paga solo. Toca «📍 Ir» y sigue la flecha.' : 'El juego está en pausa mientras lees.';
+  if ($('panelList')._h !== rows) { $('panelList').innerHTML = rows; $('panelList')._h = rows; $('panelList').scrollTop = 0; }
+  $('panelOverlay').hidden = false;
+  if (buy) stat('lista_compras', { cosas: buyItems().length });
+};
+$('buyBtn').addEventListener('click', () => { sfx.drop(); openPanel('buy'); });
+$('panelList').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.goto) {
+    guidePad = padById(b.dataset.goto); $('panelOverlay').hidden = true; last = performance.now(); sfx.drop();
+    toast(guidePad.kind === 'stall' ? '📍 Sigue la flecha hasta el puesto 🛠️ y písalo' : '📍 Sigue la flecha y quédate de pie en el círculo');
+  } else if (b.dataset.retut) {
+    $('panelOverlay').hidden = true; tutI = 0; tutList = TUTORIAL; showTutCard(); $('tutOverlay').hidden = false;
+  }
+});
+
+/* ---------- Every quarter of a second: the 🛒 badge and paying hints ---------- */
+let buyCanN = -1, padHintId = null;
+function renderHelp() {
+  const on = S.tut >= 2 && !SEA.on && !SEA.land;
+  $('buyBtn').hidden = !on;
+  if (on) {
+    const n = buyItems().filter(i => i.can).length;
+    if (n !== buyCanN) { if (n > buyCanN && buyCanN >= 0) { $('buyBtn').classList.remove('pop'); void $('buyBtn').offsetWidth; $('buyBtn').classList.add('pop'); } buyCanN = n; $('buyBadge').textContent = n; $('buyBadge').hidden = !n; }
+  }
+  // On a priced circle: the first time, how paying works; without enough money, how much is missing
+  const p = P.padOn, info = p && p.info;
+  if (!p || !info || !info.cost || p.kind === 'stall') { padHintId = null; return; }
+  if (padHintId === p.id) return;
+  padHintId = p.id;
+  const left = info.cost - (S.paid[p.id] || 0), tips = S.meta.tips || (S.meta.tips = {});
+  if (S.coins < left) toast(`Te faltan ${fmt(left - S.coins)} monedas. Lo que pagues se guarda: vuelve cuando vendas más 🧺`);
+  else if (!tips.payHow) { tips.payHow = true; toast('Quédate quieta encima: el dinero se paga solo 🪙'); }
+}
+
+/* ---------- An arrow at the screen edge when the guide arrow is out of sight ---------- */
+const updateLabelsNoEdge = updateLabels;
+updateLabels = dt => {
+  updateLabelsNoEdge(dt);
+  const el = $('edgeArrow'), t = guideTarget;
+  if (!t || topView || creatorOn || SEA.on) { if (!el.hidden) el.hidden = true; return; }
+  const s = toScreen(t.x, 1.6, t.z), behind = v3.z > 1, w = innerWidth, h = innerHeight, m = 30;
+  if (!behind && s.x > m && s.x < w - m && s.y > m + 60 && s.y < h - m) { if (!el.hidden) el.hidden = true; return; }
+  let dx = s.x - w / 2, dy = s.y - h / 2; if (behind) { dx = -dx; dy = -dy; }
+  const k = Math.min((w / 2 - 34) / Math.max(1, Math.abs(dx)), (h / 2 - 90) / Math.max(1, Math.abs(dy)));
+  el.hidden = false;
+  el.style.left = (w / 2 + dx * k) + 'px'; el.style.top = (h / 2 + dy * k + 20) + 'px';
+  el.firstChild.style.transform = `rotate(${Math.atan2(dy, dx)}rad)`;
+};
+
 /* ================= Tips: each new system explains itself the first time it shows up ================= */
 // The opening tutorial stays short. Daily missions, morale and decisions, chores, mishaps, timed works and dirty zones
 // each get one or two cards the first time they appear (once per player, S.meta.tips), in the tutorial's own window.
 if (!S.meta.tips || typeof S.meta.tips !== 'object') S.meta.tips = {};
 const TIPS = [
+  { id: 'buy', when: () => buyItems().some(i => i.can && !i.stall), cards: [
+    { icon: '🛒', title: '¡Ya puedes comprar algo!', text: 'Cuando el precio de un círculo se pone verde, te llega el dinero. Ve hasta él y quédate de pie encima: se paga solo.' },
+    { icon: '📍', title: 'El botón 🛒', text: 'El botón 🛒 de la derecha te enseña todo lo que puedes comprar ahora. Toca «📍 Ir» y sigue la flecha.' },
+  ] },
   { id: 'sea', when: () => seaOpen(), cards: [
     { icon: '⛵', title: 'Tienes barco', text: 'Está en el muelle de esta isla. Lleva lo que produces hasta el círculo del final del muelle: se carga solo en la bodega.' },
     { icon: '🗺️', title: 'Abre el mapa y zarpa', text: 'Al pisar el círculo sale el muelle. Abre el mapa, toca una isla y el barco sale. Lo manejas con el dedo.' },
