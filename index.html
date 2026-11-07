@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 </head>
 <body>
-<title>Huerto de Sonia</title>
+<title>Sprouty Town</title>
+<meta name="application-name" content="Sprouty Town">
+<meta name="apple-mobile-web-app-title" content="Sprouty Town">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -504,6 +506,12 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
 .moodwhy { pointer-events: auto; align-self: flex-start; border: 0; cursor: pointer; font: inherit; font-weight: 900; font-size: .78rem; color: var(--cream); background: #3d7a3f; border-radius: 999px; padding: 3px 10px; box-shadow: 0 2px 0 rgba(0,0,0,.25); margin-top: -2px; }
 .moodwhy.up { background: #b8402c; }
 .moodwhy i { font-style: normal; opacity: .85; margin-left: 2px; }
+/* Sprouty Town: the name on the loading screen and at the top of the menu */
+.loading .logo { font-family: var(--font-display); font-size: 2.6rem; line-height: 1.05; color: #2f8a3c; text-shadow: 0 3px 0 #fff8e7, 0 5px 0 rgba(0,0,0,.18); display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.loading .logo .sprout { font-size: 3.4rem; animation: sproutbob 1.4s ease-in-out infinite; }
+.loading p { margin: 10px 0 0; font-size: 1.1rem; color: var(--ink-soft); }
+@keyframes sproutbob { 0%, 100% { transform: translateY(0) rotate(-6deg); } 50% { transform: translateY(-6px) rotate(6deg); } }
+.menulogo { font-family: var(--font-display); font-size: 1.25rem; color: #2f8a3c; text-align: center; padding: 2px 0 4px; }
 </style>
 
 <div id="game"></div>
@@ -560,6 +568,7 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
 </div>
 <div class="banner" id="banner">¡Recoge la cosecha!</div>
 <div class="menu" id="menu" hidden>
+  <div class="menulogo">🌱 Sprouty Town</div>
   <div class="stats" id="stats"></div>
   <button id="avatarBtn">🧑‍🎨 Personaje</button>
   <button id="skinBtn">👗 Aspecto</button>
@@ -810,7 +819,7 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
 <div class="joy" id="joy" hidden><i id="knob"></i></div>
 <div class="hint" id="hint"><span class="hand">👆</span> Arrastra el dedo para mover a Sonia</div>
 <div class="toast" id="toast" hidden></div>
-<div class="loading" id="loading">Cargando el huerto…</div>
+<div class="loading" id="loading"><div><div class="logo"><span class="sprout">🌱</span>Sprouty Town</div><p>Cargando…</p></div></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <div class="gridbar" id="gridBar" hidden>
@@ -1117,8 +1126,8 @@ const MAPS = [];
 const mapOf = n => MAPS[n % MAPS.length];
 const mapById = id => MAPS.find(m => m.id === id);
 // The version goes up with every release; the build (vite.config.js) stamps the date (while developing it says 'en pruebas')
-const GAME_VERSION = '51';
-const BUILD_DATE = '07/11/2026 12:30';
+const GAME_VERSION = '52';
+const BUILD_DATE = '07/11/2026 12:40';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -5848,7 +5857,7 @@ $('resetYes').addEventListener('click', () => {
 let fbRate = 0;
 function feedbackText() {
   const m = Math.floor((S.meta.playT || 0) / 60), mobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
-  return `🌷 Opinión sobre Huerto de Sonia\n`
+  return `🌱 Opinión sobre Sprouty Town\n`
     + (fbRate ? `Nota: ${'★'.repeat(fbRate)}${'☆'.repeat(5 - fbRate)}\n` : '')
     + `\n${$('fbText').value.trim() || '(sin comentario)'}\n\n`
     + `— Progreso: ${who()} · granja ${(S.farm || 0) + 1} (${THEME.name}) · misión ${S.mission + 1}/${MISSIONS.length} · ${Math.floor(m / 60)} h ${m % 60} min jugados · día ${S.dayN || 1} · ${fmt(S.earned)} ganado\n`
@@ -5903,7 +5912,7 @@ function closeCreator() {
   $('creator').hidden = true; document.querySelector('.hud').hidden = false; labelsEl.hidden = false;
   $('hint').lastChild.textContent = ' Arrastra el dedo para mover a ' + who();
   $('hint').hidden = $('banner').hidden = false; pads.forEach(p => { p.icon.visible = true; });
-  last = performance.now(); sfx.mission(); toast(`¡Hola, ${who()}! Te damos la bienvenida al huerto`);
+  last = performance.now(); sfx.mission(); toast(`¡Hola, ${who()}! Te damos la bienvenida a Sprouty Town 🌱`);
   if (S.tut === 0 && !S.meta.tutSeen) openTutorial();
 }
 // While the creator is open the game is paused: only the close-up camera, a gentle turn of the character and the sparkles move
@@ -6785,23 +6794,11 @@ function updateTrouble(dt) {
   }
 }
 
-/* Customers who will only pay to Sonia: the cashier cannot serve them, and they hold up the line until she comes */
-let bossToastT = 0;
-const spawnCustomerPlain = spawnCustomer;
-spawnCustomer = s => {
-  const n = customers.length; spawnCustomerPlain(s);
-  const c = customers[n];
-  if (!c || c.vip || S.tut < 3 || !(S.lv[s.tills[0].staff] > 0) || customers.some(o => o.boss) || Math.random() > .07) return;
-  c.boss = true;
-  const hat = mesh(new T.CylinderGeometry(.15, .15, .24, 10), mat(0x6a2c91)); hat.position.y = .38; c.m.head.add(hat);
-  const band = mesh(new T.CylinderGeometry(.155, .155, .05, 10), M.gold); band.position.y = .3; c.m.head.add(band);
-};
-const servedFor = c => c.boss ? !!c.shop.tills[c.till].open && near(c.shop.tills[c.till].zone) : c.shop.servedAt[c.till];
+// The customers who would only pay to Sonia (purple hat) were removed in v52: they held up the line and annoyed players
+const servedFor = c => c.shop.servedAt[c.till];
 function renderTrouble() {
-  const boss = customers.find(c => c.boss && (c.state === 'toPay' || c.state === 'pay'));
-  if (boss && boss.state === 'pay' && performance.now() - bossToastT > 20000) { bossToastT = performance.now(); sfx.drop(); toast(`🎩 Un cliente de ${boss.shop.name} solo quiere que le cobre ${who()}. ¡Ve a la caja!`); }
   // Only the first problem gets a line; the rest are counted, so the side panel stays short
-  const all = [...TROUBLES.map(t => `${t.text} · ${zoneName(t.area)}`), ...(boss ? [`🎩 Te esperan en la caja de ${boss.shop.name}`] : [])];
+  const all = [...TROUBLES.map(t => `${t.text} · ${zoneName(t.area)}`)];
   const h = (all.length ? `<span class="chip thief">${all[0]}${all.length > 1 ? ` <b>+${all.length - 1}</b>` : ''}</span>` : '') + (all.length ? '' : choreChip());
   if ($('trouble')._h !== h) { $('trouble').innerHTML = h; $('trouble')._h = h; }
 }
@@ -8344,7 +8341,7 @@ async function flushMail() {
     const m = q[0];
     try {
       const r = await fetch('https://api.web3forms.com/submit', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ access_key: FEEDBACK_KEY, from_name: 'Huerto de Sonia', subject: m.subject, message: m.text }) });
+        body: JSON.stringify({ access_key: FEEDBACK_KEY, from_name: 'Sprouty Town', subject: m.subject, message: m.text }) });
       if (!r.ok) return;
     } catch (e) { return; }
     q.shift(); setMailQueue(q);
