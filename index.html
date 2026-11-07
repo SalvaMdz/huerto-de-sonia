@@ -829,6 +829,41 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
 <script>
 (() => {
 'use strict';
+// Sprouty Town lives at sproutytown.com. Saves stay in each phone under the old address
+// (salvamdz.github.io), so the first time a player opens the new one, the game hops to the bridge
+// page there (tools/partidas/index.html, published as salvamdz.github.io/partidas/), which sends the
+// save back in the address (#partida=…). ?traslado=1 tests it on localhost (bridge at 127.0.0.1:8766, the «huerto-movil» preview).
+const MOVE_TEST = /[?&]traslado=1/.test(location.search);
+let moveHold = false; // while true, save() writes nothing: a save is arriving or we are leaving
+async function decodeSave(s) {
+  const plain = s.startsWith('j.'), bin = atob((plain ? s.slice(2) : s).replace(/-/g, '+').replace(/_/g, '/'));
+  const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+  const text = plain ? new TextDecoder().decode(bytes)
+    : await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+  return JSON.parse(text);
+}
+(function moveSave() {
+  if (!MOVE_TEST && !/(^|\.)sproutytown\.com$/.test(location.hostname)) return;
+  let ls; try { ls = window.localStorage; ls.getItem('huerto-traida'); } catch { return; }
+  const home = location.origin + location.pathname + (MOVE_TEST ? '?traslado=1' : '');
+  const m = location.hash.match(/^#partida=(.+)$/);
+  if (m) {
+    history.replaceState(null, '', home);
+    if (m[1] === 'no') { ls.setItem('huerto-traida', '1'); return; }
+    moveHold = true;
+    decodeSave(m[1]).then(data => {
+      Object.keys(data).forEach(k => { if (k.startsWith('huerto-')) ls.setItem(k, data[k]); });
+      ls.setItem('huerto-traida', '1'); location.reload();
+    }).catch(() => { ls.setItem('huerto-traida', '1'); moveHold = false; });
+    return;
+  }
+  if (ls.getItem('huerto-traida') || ls.getItem('huerto-sonia-v4')) return;
+  if (Date.now() - (+ls.getItem('huerto-traida-intento') || 0) < 10 * 60e3) return; // the bridge failed a moment ago: play on
+  ls.setItem('huerto-traida-intento', String(Date.now()));
+  moveHold = true;
+  location.replace(MOVE_TEST ? 'http://127.0.0.1:8767/tools/partidas/?a=' + encodeURIComponent(home) : 'https://salvamdz.github.io/partidas/');
+})();
+
 if (!window.THREE) { document.getElementById('loading').textContent = 'No se pudo cargar el juego. Recarga la página.'; throw new Error('Three.js no se ha cargado'); }
 const T = THREE;
 // Every color in this file is written in sRGB. Converting them on the way in lets the light work in linear space,
@@ -1126,8 +1161,8 @@ const MAPS = [];
 const mapOf = n => MAPS[n % MAPS.length];
 const mapById = id => MAPS.find(m => m.id === id);
 // The version goes up with every release; the build (vite.config.js) stamps the date (while developing it says 'en pruebas')
-const GAME_VERSION = '52';
-const BUILD_DATE = '07/11/2026 12:40';
+const GAME_VERSION = '53';
+const BUILD_DATE = '07/11/2026 13:14';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -1562,7 +1597,7 @@ const mapIndex = id => MAPS.findIndex(m => m.id === id);
 let S = sanitize(window.claude?.hot?.data?.state || { farm: mapIndex(WORLD.map), ...WORLD.farms[WORLD.map], ...WORLD.player });
 let leaving = false; // set while going to another map, so nothing writes this farm into the next map's place
 function save() {
-  if (leaving) return;
+  if (leaving || moveHold) return;
   S.t = Date.now(); WORLD.player = {}; const farm = {};
   Object.entries(S).forEach(([k, v]) => { if (PLAYER_KEYS.includes(k)) WORLD.player[k] = v; else farm[k] = v; });
   WORLD.farms[WORLD.map] = farm;
