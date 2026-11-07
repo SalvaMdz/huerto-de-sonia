@@ -491,6 +491,19 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
 .edgearrow span { font-size: 1.05rem; line-height: 1; color: var(--ink); display: block; }
 @keyframes edgepulse { 0%, 100% { scale: 1; } 50% { scale: 1.12; } }
 .prow small .coin { display: inline-block; width: 12px; height: 12px; border-width: 1px; vertical-align: -1px; }
+/* Windows never grow taller than the screen (phones with big system text): they scroll inside,
+   and the end-of-day buttons stay pinned at the bottom so «Seguir» is always reachable */
+.adbox { max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow-y: auto; overscroll-behavior: contain; }
+.adbox.dayend { padding-bottom: 0; }
+.adbox.dayend .bigface { font-size: 2.4rem; }
+.dbtns { position: sticky; bottom: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: var(--cream); padding: 8px 0 14px; margin-top: auto; box-shadow: 0 -8px 10px -6px var(--cream); }
+.dbtns button { font-size: 1rem; padding: 10px 8px; }
+.dbtns:has(> button[hidden]) { grid-template-columns: 1fr; }
+/* 😠 Why the anger rises (49g-help.js) */
+#moodBar { pointer-events: auto; cursor: pointer; }
+.moodwhy { pointer-events: auto; align-self: flex-start; border: 0; cursor: pointer; font: inherit; font-weight: 900; font-size: .78rem; color: var(--cream); background: #3d7a3f; border-radius: 999px; padding: 3px 10px; box-shadow: 0 2px 0 rgba(0,0,0,.25); margin-top: -2px; }
+.moodwhy.up { background: #b8402c; }
+.moodwhy i { font-style: normal; opacity: .85; margin-left: 2px; }
 </style>
 
 <div id="game"></div>
@@ -514,6 +527,7 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
   </div>
   <div class="townbar" id="townBar" hidden><span id="townMorale">😊 60</span><span id="townTrust">⭐ 60</span></div>
   </div>
+  <button class="moodwhy" id="moodWhy" hidden aria-label="Por qué se enfadan los clientes"></button>
   <div class="chips" id="zoneChip"></div>
   <div class="chips" id="urgent"></div>
   <div class="chips" id="trouble"></div>
@@ -605,8 +619,10 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
     <h3 id="dayTitle"></h3>
     <div class="dstats" id="dayStats"></div>
     <p id="dayHint"></p>
-    <button id="dayAd">📺 Ver anuncio: doblar las ventas</button>
-    <button class="ghost" id="dayOk">Seguir</button>
+    <div class="dbtns">
+      <button id="dayOk">▶️ Seguir</button>
+      <button class="ghost" id="dayAd">📺 Doblar las ventas</button>
+    </div>
   </div>
 </div>
 <div class="overlay" id="decOverlay" hidden>
@@ -1101,8 +1117,8 @@ const MAPS = [];
 const mapOf = n => MAPS[n % MAPS.length];
 const mapById = id => MAPS.find(m => m.id === id);
 // The version goes up with every release; the build (vite.config.js) stamps the date (while developing it says 'en pruebas')
-const GAME_VERSION = '49';
-const BUILD_DATE = '07/11/2026 12:11';
+const GAME_VERSION = '50';
+const BUILD_DATE = '07/11/2026 12:20';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -3971,12 +3987,14 @@ function spawnCustomer(s) {
 function customerLeaves(c, angry) {
   const s = c.shop;
   if (angry) {
+    const why = c.state === 'pay' || c.state === 'toPay' ? 'nadie le cobraba en la caja 💵' : `no había ${ITEMS[c.want].icon} ${ITEMS[c.want].name.toLowerCase()} en el mostrador`;
     if (c.got) { const st = S.shops[s.id].stock; st[c.want] = (st[c.want] || 0) + c.got; s.dirty = true; }
     c.m.stack.clear(); c.angry = true; S.angry++; S.today.angry++; puff(c.x, 1.9, c.z, 0xd8402f, 6, .6, 2);
     addMood((c.type === 'critic' ? 45 : c.vip ? 40 : c.type === 'kid' ? 22 : 28) * (s === FARM ? 1 : .6)); S.meta.streak = 0;
     if (c.type === 'critic') toast(`🧐 ¡El crítico se ha ido enfadado de ${s.name}! Mala reseña: +40% de enfado`);
-    if (nearShop(s, 16)) { sfx.angry(); burst(c.x, 2.2, c.z, '😡', 'red'); }
-    else if (performance.now() - angryToastT > 7000) { angryToastT = performance.now(); toast(`😡 ${s.icon} ${s.name}: un cliente se ha ido sin pagar`); }
+    const jump = Math.round((c.type === 'critic' ? 45 : c.vip ? 40 : c.type === 'kid' ? 22 : 28) * (s === FARM ? 1 : .6) * (1 - .08 * (S.perks.calm || 0)));
+    if (nearShop(s, 16)) { sfx.angry(); burst(c.x, 2.2, c.z, `😡 +${jump}%`, 'red'); }
+    if (c.type !== 'critic' && moodOn() && performance.now() - angryToastT > 5000) { angryToastT = performance.now(); toast(`😡 Un cliente se ha ido enfadado${s === FARM ? '' : ` de ${s.name}`}: ${why}. Enfado +${jump} %`); }
   }
   c.state = 'leave'; c.spot = -1;
 }
@@ -5756,7 +5774,7 @@ function showSummary() {
   $('dayTitle').textContent = d.medal ? `Medalla de ${MEDALS[d.medal].name.toLowerCase()}` : 'Tienda cerrada antes de tiempo';
   $('dayStats').innerHTML = `<span>😊 Clientes atendidos</span><b>${fmt(d.served)}</b><span>😡 Enfadados</span><b>${fmt(d.angry)}</b><span>💵 Ventas del día</span><b>${fmt(d.sales)}</b><span>${d.medal ? MEDALS[d.medal].icon : '🔒'} Premio por medalla</span><b>${d.medal ? '+' + fmt(d.bonus) : 'sin premio'}</b>`;
   $('dayHint').textContent = d.medal === 'gold' ? '¡Día perfecto! Casi nadie se ha enfadado.' : d.medal === 'silver' ? 'Para el oro: que casi nadie se vaya enfadado y no pases del 75% de enfado.' : d.medal ? 'Para la plata: que se enfaden menos de 15 de cada 100 clientes.' : 'Mañana el enfado vuelve a empezar desde cero.';
-  $('dayAd').hidden = !d.sales; $('dayAd').textContent = `📺 Ver anuncio: doblar las ventas (+${fmt(d.sales + d.bonus)})`;
+  $('dayAd').hidden = !d.sales; $('dayAd').textContent = `📺 Anuncio: +${fmt(d.sales + d.bonus)}`;
   $('dayOverlay').hidden = false;
 }
 function claimSummary(extra) {
@@ -5918,7 +5936,7 @@ const TUTORIAL = [
   { icon: '🛒', title: 'Compra cosas nuevas', text: 'Los círculos del suelo con un precio son cosas que puedes comprar: campos, tiendas, talleres, puertas a zonas nuevas… Ve hasta uno y quédate de pie encima: el dinero se paga solo. Cuando te llega, el precio se pone verde.' },
   { icon: '🛠️', title: 'Mejoras y ayudantes', text: 'Las cajeras, la cesta más grande o las ardillas que cosechan por ti están en el puesto «🛠️ Mejoras» de cada zona, con toldo de rayas rojas. Písalo y toca el precio.' },
   { icon: '🧭', title: '¿Te pierdes?', text: 'Sigue la flecha: te lleva a tu misión. El botón 🛒 de la derecha te dice todo lo que puedes comprar y te lleva hasta allí.' },
-  { icon: '😠', title: 'Cuidado con el enfado', text: 'Si los clientes esperan demasiado se enfadan. Si llega al 100 % y cierras, pierdes el dinero del día.' },
+  { icon: '😠', title: 'Cuidado con el enfado', text: 'Los clientes se enfadan si esperan: cuando no hay lo que quieren en el mostrador o nadie les cobra en la caja. Debajo de la barra de enfado verás qué lo sube; tócala para saber más.' },
   { icon: '⏸️', title: 'Pausa y ayuda', text: 'El botón ⏸️ para el juego. En ☰ → «📖 Cómo se juega» tienes todo esto explicado otra vez.' },
 ];
 let tutI = 0, tutList = TUTORIAL;
@@ -8720,7 +8738,7 @@ addEventListener('keydown', e => {
   else if (e.key === 'Escape' && !$('pauseOverlay').hidden) pauseOff();
 });
 // The guide and the shopping list stop the game too, so it can be read calmly (34-loop.js)
-function helpOpen() { return !$('pauseOverlay').hidden || (!$('panelOverlay').hidden && (panelKind === 'help' || panelKind === 'buy')); }
+function helpOpen() { return !$('pauseOverlay').hidden || (!$('panelOverlay').hidden && (panelKind === 'help' || panelKind === 'buy' || panelKind === 'anger')); }
 
 /* ---------- 🛒 What can be bought now ---------- */
 function buyWhat(p) {
@@ -8768,7 +8786,7 @@ const HELP = [
   ['🛠️', 'Mejoras y ayudantes', 'Cajeras, cesta más grande, botas, ardillas que cosechan… se compran en el puesto «🛠️ Mejoras» de cada zona (el del toldo de rayas rojas). Písalo y toca el precio de lo que quieras.'],
   ['🚪', 'Zonas nuevas', 'Las verjas también tienen su círculo con precio. Algunas zonas nuevas están llenas de basura: bárrela andando por encima y vacía el saco en el contenedor 🗑️. Limpia, ya se puede construir.'],
   ['🧭', 'Si no sabes qué hacer', 'Sigue la flecha: te lleva a tu misión (la pastilla de arriba). Si queda fuera de la pantalla, sale una flecha en el borde. El botón 🛒 de la derecha te enseña todo lo que puedes comprar: toca «📍 Ir».'],
-  ['😠', 'El enfado', 'Si los clientes esperan mucho se enfadan. No dejes la tienda vacía y contrata cajeras. Al 100 %, al cerrar pierdes el dinero del día.'],
+  ['😠', 'El enfado', 'Sube cuando los clientes esperan: porque no hay lo que quieren en el mostrador o porque nadie les cobra. Debajo de la barra pone qué lo está subiendo; tócala para verlo entero. Al 100 % pierdes el dinero del día.'],
   ['🗺️', 'La cámara', '🗺️ enseña la granja desde arriba. 🔄 gira la vista; si lo arrastras, la inclinas.'],
   ['⏸️', 'Pausa', 'El botón ⏸️ para el juego. Si sales de la app, se pausa solo.'],
   ['🎁', 'Volver cada día', 'Cada día hay 3 misiones nuevas con cofre, y el cofre 🎁 de arriba vale más cuantos más días seguidos juegues.'],
@@ -8802,6 +8820,7 @@ $('panelList').addEventListener('click', e => {
 let buyCanN = -1, padHintId = null;
 function renderHelp() {
   const on = S.tut >= 2 && !SEA.on && !SEA.land;
+  renderMoodWhy();
   $('buyBtn').hidden = !on;
   if (on) {
     const n = buyItems().filter(i => i.can).length;
@@ -8831,6 +8850,64 @@ updateLabels = dt => {
   el.style.left = (w / 2 + dx * k) + 'px'; el.style.top = (h / 2 + dy * k + 20) + 'px';
   el.firstChild.style.transform = `rotate(${Math.atan2(dy, dx)}rad)`;
 };
+
+/* ---------- 😠 Why the anger goes up ---------- */
+// Friends did not understand why the anger bar rose. The line under it says what is pushing it right now,
+// and tapping it explains everything. Same rules as updateMood in 32-mood.js: a customer pushes once its patience is under 60%.
+function angerCauses() {
+  const out = [], want = {}, pay = {};
+  customers.forEach(c => {
+    if (c.state === 'leave' || c.pat >= c.patMax * .6) return;
+    const far = c.shop !== FARM ? ` en ${c.shop.name}` : '';
+    if (c.state === 'pay' || c.state === 'toPay') pay[far] = (pay[far] || 0) + 1;
+    else { const k = c.want + '|' + far; want[k] = (want[k] || 0) + 1; }
+  });
+  Object.entries(want).sort((a, b) => b[1] - a[1]).forEach(([k, n]) => {
+    const [item, far] = k.split('|'), it = ITEMS[item];
+    out.push({ icon: it.icon, short: `${n} ${n > 1 ? "esperan" : "espera"} ${it.icon}`, text: `${n} ${n > 1 ? 'clientes esperan' : 'cliente espera'} ${it.name.toLowerCase()}${far}: no hay en el mostrador. Llévalo tú.` });
+  });
+  Object.entries(pay).forEach(([far, n]) => out.push({ icon: '💵', short: `${n} ${n > 1 ? "esperan" : "espera"} 💵`, text: `${n} ${n > 1 ? 'clientes esperan' : 'cliente espera'} para pagar${far}. Ponte en el círculo de la caja o contrata una cajera.` }));
+  if (litter.length > 4) out.push({ icon: '🗑️', short: 'basura', text: 'Hay mucha basura por el suelo: pasa por encima para recogerla.' });
+  if (weeds.length > 4) out.push({ icon: '🌿', short: 'hierbas', text: 'Hay muchas malas hierbas: córtalas con el cortacésped o contrata un jardinero.' });
+  if (ATTRS.some(a => S.lv[a.id] > 0 && a.broken)) out.push({ icon: '🎡', short: 'atracción rota', text: 'Una atracción está averiada: ve a repararla.' });
+  if (thieves.length) out.push({ icon: '🦹', short: 'ladrón', text: 'Un ladrón roba a los clientes: atrápalo pasando por encima.' });
+  return out;
+}
+function renderMoodWhy() {
+  const el = $('moodWhy'), on = !$('moodBar').hidden;
+  const list = on ? angerCauses() : [], m = Math.round(S.mood || 0);
+  let html = '';
+  if (list.length) html = `⬆️ Sube: ${list.slice(0, 2).map(c => c.short).join(' · ')}${list.length > 2 ? ` +${list.length - 2}` : ''} <i>❓</i>`;
+  else if (on && m > 0) html = '⬇️ Baja: nadie espera <i>❓</i>';
+  if (el._h !== html) { el._h = html; el.innerHTML = html; el.classList.toggle('up', list.length > 0); }
+  el.hidden = !html;
+}
+const ANGER_HELP = [
+  ['🧺', 'El mostrador vacío', 'Si un cliente no encuentra lo que quiere, espera y se va enfadando (lo ves en la barrita encima de su cabeza). Mantén el mostrador lleno; las ardillas ayudan.'],
+  ['💵', 'Nadie cobra', 'Los clientes que esperan en la caja también se enfadan. Ponte en el círculo de la caja o contrata una cajera en el puesto 🛠️.'],
+  ['😡', 'Un cliente que se va', 'Si un cliente se cansa de esperar se va sin pagar, y el enfado sube de golpe (+28 %; los VIP y el crítico, más).'],
+  ['🗑️', 'Suciedad y problemas', 'Mucha basura, malas hierbas, una atracción rota o un ladrón también lo suben poco a poco.'],
+  ['⬇️', 'Cómo bajarlo', 'Cada cliente que paga lo baja un poco, y cuando nadie espera baja solo. Los pedidos especiales, la fuente ⛲ y la música 🎺 lo bajan más.'],
+  ['⚠️', 'Si llega al 100 %', 'Tienes que cerrar la tienda y pierdes el dinero del día (o ves un anuncio para seguir). Al día siguiente empieza otra vez en 0.'],
+];
+const angerRows = () => {
+  const now = angerCauses();
+  return (now.length ? now.map(c => `<div class="prow"><span class="pi">${c.icon}</span><span class="pt2"><b>Ahora</b>${c.text}</span></div>`).join('') : '<div class="prow done"><span class="pi">✅</span><span class="pt2"><b>Ahora nadie se está enfadando</b>El enfado baja solo.</span></div>')
+    + ANGER_HELP.map(([i, t, x]) => `<div class="prow locked"><span class="pi">${i}</span><span class="pt2"><b>${t}</b>${x}</span></div>`).join('');
+};
+const openPanelNoAnger = openPanel;
+openPanel = kind => {
+  if (kind !== 'anger') { openPanelNoAnger(kind); return; }
+  panelKind = kind; $('menu').hidden = true;
+  const rows = angerRows();
+  $('panelTitle').textContent = `😠 ¿Por qué se enfadan? · ${Math.round(S.mood || 0)} %`;
+  $('panelSub').textContent = 'El juego está en pausa mientras lees.';
+  if ($('panelList')._h !== rows) { $('panelList').innerHTML = rows; $('panelList')._h = rows; $('panelList').scrollTop = 0; }
+  $('panelOverlay').hidden = false;
+  stat('ayuda_enfado', { enfado: Math.round(S.mood || 0) });
+};
+$('moodWhy').addEventListener('click', () => { sfx.drop(); openPanel('anger'); });
+$('moodBar').addEventListener('click', () => { sfx.drop(); openPanel('anger'); });
 
 /* ================= Tips: each new system explains itself the first time it shows up ================= */
 // The opening tutorial stays short. Daily missions, morale and decisions, chores, mishaps, timed works and dirty zones
