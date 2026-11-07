@@ -1117,8 +1117,8 @@ const MAPS = [];
 const mapOf = n => MAPS[n % MAPS.length];
 const mapById = id => MAPS.find(m => m.id === id);
 // The version goes up with every release; the build (vite.config.js) stamps the date (while developing it says 'en pruebas')
-const GAME_VERSION = '50';
-const BUILD_DATE = '07/11/2026 12:20';
+const GAME_VERSION = '51';
+const BUILD_DATE = '07/11/2026 12:30';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -3990,9 +3990,9 @@ function customerLeaves(c, angry) {
     const why = c.state === 'pay' || c.state === 'toPay' ? 'nadie le cobraba en la caja 💵' : `no había ${ITEMS[c.want].icon} ${ITEMS[c.want].name.toLowerCase()} en el mostrador`;
     if (c.got) { const st = S.shops[s.id].stock; st[c.want] = (st[c.want] || 0) + c.got; s.dirty = true; }
     c.m.stack.clear(); c.angry = true; S.angry++; S.today.angry++; puff(c.x, 1.9, c.z, 0xd8402f, 6, .6, 2);
-    addMood((c.type === 'critic' ? 45 : c.vip ? 40 : c.type === 'kid' ? 22 : 28) * (s === FARM ? 1 : .6)); S.meta.streak = 0;
-    if (c.type === 'critic') toast(`🧐 ¡El crítico se ha ido enfadado de ${s.name}! Mala reseña: +40% de enfado`);
-    const jump = Math.round((c.type === 'critic' ? 45 : c.vip ? 40 : c.type === 'kid' ? 22 : 28) * (s === FARM ? 1 : .6) * (1 - .08 * (S.perks.calm || 0)));
+    addMood(angerJump(c)); S.meta.streak = 0;
+    if (c.type === 'critic') toast(`🧐 ¡El crítico se ha ido enfadado de ${s.name}! Mala reseña: +25% de enfado`);
+    const jump = Math.round(angerJump(c) * (1 - .08 * (S.perks.calm || 0)));
     if (nearShop(s, 16)) { sfx.angry(); burst(c.x, 2.2, c.z, `😡 +${jump}%`, 'red'); }
     if (c.type !== 'critic' && moodOn() && performance.now() - angryToastT > 5000) { angryToastT = performance.now(); toast(`😡 Un cliente se ha ido enfadado${s === FARM ? '' : ` de ${s.name}`}: ${why}. Enfado +${jump} %`); }
   }
@@ -4207,7 +4207,8 @@ function updateThieves(dt) {
   spawnOfficers();
   if (moodOn() && shopOpen() && S.gate && S.served > 40) {
     thiefT -= dt;
-    if (thiefT <= 0) {
+    if (thiefT <= 0 && eventBusy()) thiefT = 20;
+    else if (thiefT <= 0) {
       thiefT = Math.max(45, 120 - townCount() * 4) * (.7 + Math.random() * .6) * LAW.thief;
       const open = SHOPS.filter(s => s.open && customers.some(c => c.shop === s && !c.angry && c.state !== 'leave'));
       if (open.length && thieves.length < 2) {
@@ -5361,7 +5362,7 @@ function updateExtras(dt) {
       ORDER = null; orderNextT = 30; addMood(25); sfx.angry();
       toast('📋 Pedido no entregado a tiempo: el enfado sube un 25%');
     }
-  } else if (dayPhase().id === 'afternoon') { orderNextT -= dt; if (orderNextT <= 0) { orderNextT = 15; newOrder(); } }
+  } else if (dayPhase().id === 'afternoon') { orderNextT -= dt; if (orderNextT <= 0) { orderNextT = 15; if (!eventBusy()) newOrder(); } }
 }
 
 const PERKS = [
@@ -5656,6 +5657,10 @@ $('adGrow').addEventListener('click', () => {
 // It only starts once the player knows how to sell, and it is never touched while the game is closed.
 const moodOn = () => S.tut >= 2 && S.served >= 3;
 let moodWarnT = 0, moodShown = -1;
+const MOOD_RISE_CAP = 3.3;
+// How much one customer leaving angry adds (v51: halved, it jumped too much)
+const angerJump = c => (c.type === 'critic' ? 25 : c.vip ? 20 : c.type === 'kid' ? 10 : 12) * (c.shop === FARM ? 1 : .6);
+const moodCashier = c => { const t = c.shop.tills && c.shop.tills[c.till]; return !!t && S.lv[t.staff] > 0; };
 function addMood(v) {
   if (!moodOn() || S.over || !shopOpen()) return;
   if (v > 0) v *= 1 - .08 * (S.perks.calm || 0);
@@ -5667,12 +5672,19 @@ function updateMood(dt) {
   if (!moodOn() || S.over || !shopOpen()) return;
   S.dayPeak = Math.max(S.dayPeak || 0, S.mood || 0);
   let rise = 0;
-  // Customers far away in the other zones' shops weigh half as much: Sonia cannot be everywhere at once
-  customers.forEach(c => { if (c.state !== 'leave' && c.pat < c.patMax * .6) rise += (c.vip ? 1.7 : 1.1) * (c.shop === FARM ? 1 : .5); });
+  // Customers far away in the other zones' shops weigh a quarter: Sonia cannot be everywhere at once.
+  // Customers queuing at a till with its own cashier do not count: that is the cashier's job, not Sonia's.
+  customers.forEach(c => {
+    if (c.state === 'leave' || c.pat >= c.patMax * .6) return;
+    if ((c.state === 'pay' || c.state === 'toPay') && moodCashier(c)) return;
+    rise += (c.vip ? 1.7 : 1.1) * (c.shop === FARM ? 1 : .25);
+  });
   if (litter.length > 4) rise += (litter.length - 4) * .07;
+  // However many shops are busy, it never rises faster than with about three customers waiting (v51: it got out of hand late in the game)
+  rise = Math.min(rise, MOOD_RISE_CAP);
   const calm = (isBuilt('fountain') ? .25 : 0) + (isBuilt('music') ? .4 : 0);
   if (rise > calm) addMood((rise - calm) * dt);
-  else if (S.mood > 0) S.mood = Math.max(0, S.mood - (rise > 0 ? calm - rise : .25 + calm) * dt);
+  else if (S.mood > 0) S.mood = Math.max(0, S.mood - (rise > 0 ? calm - rise : .6 + calm) * dt);
   if (S.mood >= 70 && performance.now() - moodWarnT > 12000) { moodWarnT = performance.now(); sfx.full(); toast('😠 ¡Los clientes se están enfadando! Atiende la caja y repón el mostrador'); }
 }
 function renderMood() {
@@ -6735,11 +6747,13 @@ function endTrouble(t) {
   if (t.kind !== 'crows') { sfx.mission(); burst(P.x, 2, P.z, '¡Arreglado!', 'white'); }
   stat('imprevisto_arreglado', { tipo: t.kind });
 }
+// One event at a time (v51): a mishap, a thief, a special order or Santa never start while another one is on
+function eventBusy() { return TROUBLES.length > 0 || thieves.length > 0 || !!ORDER || !!(xmasP && xmasP.order); }
 function updateTrouble(dt) {
   const zones = Object.keys(AREAS).filter(a => areaOpen(+a)).length;
   if (S.tut >= 3 && S.mission >= 6) {
     troubleT -= dt;
-    if (troubleT <= 0) { troubleT = 80 + Math.random() * 50; if (TROUBLES.length < (zones >= 4 ? 2 : 1)) startTrouble(); }
+    if (troubleT <= 0) { if (eventBusy()) troubleT = 20; else { troubleT = 80 + Math.random() * 50; startTrouble(); } }
   }
   for (const t of [...TROUBLES]) {
     pulse(t.sign, 1.3); if (t.ring) t.ring.scale.setScalar(t.fix > 0 ? 1 : 1 + .08 * Math.sin(performance.now() / 150));
@@ -6890,7 +6904,7 @@ const CARDS = [
     opts: [{ label: 'Mandar al repartidor', fx: { carrierOff: 45 }, trust: 10, say: '🔨 El repartidor deja el reparto y se va a arreglar la valla' }, { label: 'No hay tiempo', trust: -6 }] },
 ];
 // Two cards a day: one in the morning (before the rush hour) and one in the afternoon
-const DEC_SLOTS = [[15, 50], [110, 215]];
+const DEC_SLOTS = [[60, 160]]; // one decision a day (v51: two were too much on top of everything else)
 const newDecAt = n => { const sl = DEC_SLOTS[Math.min(n, DEC_SLOTS.length - 1)]; return sl[0] + Math.random() * (sl[1] - sl[0]); };
 let decAt = 0, decKey = '', decCard = null, townWarn = { m: 0, t: 0 }, lastServed = S.today?.served || 0, lastAngry = S.today?.angry || 0;
 function optFx(o) {
@@ -8597,7 +8611,7 @@ function xmasPlay(dt) {
     }
   } else xmasP.cook = 0;
   // Santa: comes now and then, takes sweets when Sonia is close, leaves when time is up
-  if (!xmasP.order && (xmasP.wait -= dt) <= 0) santaArrive();
+  if (!xmasP.order && (xmasP.wait -= dt) <= 0) { if (eventBusy()) xmasP.wait = 20; else santaArrive(); }
   if (xmasP.order) {
     const p = xmasP.santa, o = xmasP.order; xmasP.t -= dt;
     p.g.position.y = Math.abs(Math.sin(GFX.uT.value * 3)) * .04;
@@ -8858,6 +8872,7 @@ function angerCauses() {
   const out = [], want = {}, pay = {};
   customers.forEach(c => {
     if (c.state === 'leave' || c.pat >= c.patMax * .6) return;
+    if ((c.state === 'pay' || c.state === 'toPay') && moodCashier(c)) return;
     const far = c.shop !== FARM ? ` en ${c.shop.name}` : '';
     if (c.state === 'pay' || c.state === 'toPay') pay[far] = (pay[far] || 0) + 1;
     else { const k = c.want + '|' + far; want[k] = (want[k] || 0) + 1; }
@@ -8884,8 +8899,8 @@ function renderMoodWhy() {
 }
 const ANGER_HELP = [
   ['🧺', 'El mostrador vacío', 'Si un cliente no encuentra lo que quiere, espera y se va enfadando (lo ves en la barrita encima de su cabeza). Mantén el mostrador lleno; las ardillas ayudan.'],
-  ['💵', 'Nadie cobra', 'Los clientes que esperan en la caja también se enfadan. Ponte en el círculo de la caja o contrata una cajera en el puesto 🛠️.'],
-  ['😡', 'Un cliente que se va', 'Si un cliente se cansa de esperar se va sin pagar, y el enfado sube de golpe (+28 %; los VIP y el crítico, más).'],
+  ['💵', 'Nadie cobra', 'Los clientes que esperan en la caja también se enfadan. Ponte en el círculo de la caja o contrata una cajera en el puesto 🛠️: con cajera, esa caja ya no te enfada.'],
+  ['😡', 'Un cliente que se va', 'Si un cliente se cansa de esperar se va sin pagar, y el enfado sube de golpe (+12 %; los VIP y el crítico, más).'],
   ['🗑️', 'Suciedad y problemas', 'Mucha basura, malas hierbas, una atracción rota o un ladrón también lo suben poco a poco.'],
   ['⬇️', 'Cómo bajarlo', 'Cada cliente que paga lo baja un poco, y cuando nadie espera baja solo. Los pedidos especiales, la fuente ⛲ y la música 🎺 lo bajan más.'],
   ['⚠️', 'Si llega al 100 %', 'Tienes que cerrar la tienda y pierdes el dinero del día (o ves un anuncio para seguir). Al día siguiente empieza otra vez en 0.'],
@@ -8937,7 +8952,7 @@ const TIPS = [
   ] },
   { id: 'town', when: () => townOn(), cards: [
     { icon: '😊', title: 'Ánimo y Confianza', text: 'Arriba ves el 😊 ánimo de tus trabajadores (si está alto van más rápido) y la ⭐ confianza de los vecinos (si está alta vienen más clientes).' },
-    { icon: '❓', title: 'Tú decides', text: 'Dos veces al día tendrás que tomar una decisión. Cada opción tiene algo bueno y algo malo: piénsalo bien.' },
+    { icon: '❓', title: 'Tú decides', text: 'Una vez al día tendrás que tomar una decisión. Cada opción tiene algo bueno y algo malo: piénsalo bien.' },
   ] },
   { id: 'chores', when: () => choresOn(), cards: [
     { icon: '💧', title: 'Riega los campos', text: 'Cuando sale una gota 💧 encima de un campo, pasa por dentro para regarlo. Si no, crece muy despacio.' },
