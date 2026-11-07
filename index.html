@@ -1101,8 +1101,8 @@ const MAPS = [];
 const mapOf = n => MAPS[n % MAPS.length];
 const mapById = id => MAPS.find(m => m.id === id);
 // The version goes up with every release; the build (vite.config.js) stamps the date (while developing it says 'en pruebas')
-const GAME_VERSION = '48';
-const BUILD_DATE = '07/11/2026 12:05';
+const GAME_VERSION = '49';
+const BUILD_DATE = '07/11/2026 12:11';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -6662,7 +6662,9 @@ function fixSpot(b) {
   const sides = [[-dz, dx], [dz, -dx]].sort((u, v) => v[1] - u[1]);
   const tries = [3.4, 4.2].flatMap(k => sides.map(([px, pz]) => ({ x: b.x + px * k + dx * 1.4, z: b.z + pz * k + dz * 1.4 })));
   tries.push({ x: b.zx + dx * 2.4, z: b.zz + dz * 2.4 });
-  b._fix = tries.find(q => inArea(q.x, q.z) && !blocked(q.x, q.z)) || tries[tries.length - 1];
+  // Never under the Christmas tree that stands beside every shop in December (49d-xmas.js), or it would hide the ring
+  const xmasTree = q => typeof xmasOn === 'function' && xmasOn() && SHOPS.some(s => (q.x - s.x + 3.4) ** 2 + (q.z - s.z + 1.6) ** 2 < 3.2);
+  b._fix = tries.find(q => inArea(q.x, q.z) && !blocked(q.x, q.z) && !xmasTree(q)) || tries.find(q => inArea(q.x, q.z) && !blocked(q.x, q.z)) || tries[tries.length - 1];
   return b._fix;
 }
 const fixRingMat = { red: new T.MeshBasicMaterial({ color: 0xd8402f, transparent: true, opacity: .85 }), blue: new T.MeshBasicMaterial({ color: 0x3a7bd5, transparent: true, opacity: .85 }) };
@@ -6670,7 +6672,18 @@ const fixRingGeo = new T.RingGeometry(.72, .92, 32), fixFillGeo = new T.CircleGe
 function fixRing(x, z, color) {
   const g = new T.Group(); g.position.set(x, 0, z);
   const r = flat(fixRingGeo, fixRingMat[color], 0, .03, 0), f = flat(fixFillGeo, new T.MeshBasicMaterial({ color: color === 'red' ? 0xd8402f : 0x3a7bd5, transparent: true, opacity: .25 }), 0, .025, 0);
-  g.add(r); g.add(f); scene.add(g); return g;
+  // A white arc fills the border while Sonia works on it, like paying on a circle (fixProg)
+  const arc = flat(new T.RingGeometry(.72, .92, 32, 1, 0, .001), fixArcMat, 0, .035, 0); arc.rotation.z = Math.PI / 2; arc.visible = false;
+  g.add(r); g.add(f); g.add(arc); g.userData.arc = arc; g.userData.k = 0; scene.add(g); return g;
+}
+const fixArcMat = new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .95 });
+// Repairs and cleaning take a few seconds, so it is clear something is happening
+const FIX_TIME = 3.5, CLEAN_TIME = 3;
+function fixProg(g, k) {
+  const arc = g && g.userData.arc; if (!arc) return;
+  k = Math.max(0, Math.min(1, k)); arc.visible = k > 0;
+  if (Math.abs(k - g.userData.k) < .02 && k < 1) return;
+  g.userData.k = k; arc.geometry.dispose(); arc.geometry = new T.RingGeometry(.72, .92, 32, 1, 0, Math.max(.001, k * Math.PI * 2));
 }
 const onSpot = q => (P.x - q.x) ** 2 + (P.z - q.z) ** 2 < .8;
 const pulse = (sp, size) => { const k = size * (1 + .12 * Math.sin(performance.now() / 180)); sp.scale.set(k, k * 140 / 128, 1); };
@@ -6696,7 +6709,7 @@ function startTrouble() {
     t.text = `🐑 Un animal se ha escapado de: ${r.name}`; troubleSign(t, t.x, t.z, '❗');
   }
   TROUBLES.push(t); sfx.drop();
-  toast(`${t.text} (${zoneName(t.area)}). ${kind === 'broken' ? 'Quédate un momento en el círculo rojo de al lado para repararlo' : '¡Ve a arreglarlo!'}`);
+  toast(`${t.text} (${zoneName(t.area)}). ${kind === 'broken' ? 'Quédate en el círculo rojo de al lado hasta que se llene: así lo reparas' : '¡Ve a arreglarlo!'}`);
 }
 function endTrouble(t) {
   TROUBLES.splice(TROUBLES.indexOf(t), 1); scene.remove(t.sign); if (t.ring) scene.remove(t.ring);
@@ -6711,7 +6724,7 @@ function updateTrouble(dt) {
     if (troubleT <= 0) { troubleT = 80 + Math.random() * 50; if (TROUBLES.length < (zones >= 4 ? 2 : 1)) startTrouble(); }
   }
   for (const t of [...TROUBLES]) {
-    pulse(t.sign, 1.3); if (t.ring) t.ring.scale.setScalar(1 + .08 * Math.sin(performance.now() / 150));
+    pulse(t.sign, 1.3); if (t.ring) t.ring.scale.setScalar(t.fix > 0 ? 1 : 1 + .08 * Math.sin(performance.now() / 150));
     if (t.kind === 'crows') {
       const on = P.x > t.box.x0 && P.x < t.box.x1 && P.z > t.box.z0 && P.z < t.box.z1;
       if (on && !t.scared) { t.scared = true; sfx.drop(); burst(P.x, 2, P.z, '¡Fuera, cuervos!', 'white'); }
@@ -6726,7 +6739,9 @@ function updateTrouble(dt) {
       const on = onSpot(fixSpot(t.r));
       t.fix = on ? t.fix + dt : 0;
       if (on && Math.random() < dt * 6) beep(300 + Math.random() * 200, .03, 'square', .02);
-      if (t.fix >= 1.5) endTrouble(t);
+      fixProg(t.ring, t.fix / FIX_TIME);
+      if (on && Math.random() < dt * 2) puff(t.ring.position.x, .4, t.ring.position.z, 0xffffff, 1, .3, 1);
+      if (t.fix >= FIX_TIME) endTrouble(t);
     } else {
       // The runaway wanders near its pen until Sonia reaches it
       t.wt -= dt; if (t.wt <= 0) { t.wt = 1.5 + Math.random() * 2; t.tx = t.r.zx + (Math.random() - .5) * 5; t.tz = t.r.zz + 1 + Math.random() * 3; }
@@ -6774,7 +6789,7 @@ function choreSign(key, icon, x, z, on) {
   if (on && !s) { s = choreSigns[key] = iconSprite(icon, 1.3, '#3a7bd5'); scene.add(s); }
   if (s) { s.visible = on; if (on) { s.position.set(x, 2.8 + Math.sin(performance.now() / 300) * .15, z); pulse(s, 1.3); } }
 }
-let choreT = 0, cleanT = 0, choreHelp = { water: false, dirt: false };
+let choreT = 0, cleanT = 0, cleanPen = null, choreHelp = { water: false, dirt: false };
 function updateChores(dt) {
   if (!choresOn()) return;
   const fields = PATCHES.filter(p => unlocked(p.id) && reachable(p));
@@ -6795,16 +6810,19 @@ function updateChores(dt) {
   }
   // Cleaning: a second on the pen's ring
   const pen = pens.find(b => onSpot(fixSpot(b)) && S.dirt[b.id] > .3);
+  if (pen !== cleanPen) { if (cleanPen) fixProg(cleanRings[cleanPen.id], 0); cleanPen = pen; cleanT = 0; }
   cleanT = pen ? cleanT + dt : 0;
-  if (pen && cleanT >= 1) { S.dirt[pen.id] = 0; cleanT = 0; sfx.mission(); puff(pen.x, .5, pen.z, 0xf6e7a8, 14, 1.5, 3); burst(P.x, 1.8, P.z, '🧹 ¡Limpio!', 'white'); }
+  if (pen) fixProg(cleanRings[pen.id], cleanT / CLEAN_TIME);
+  if (pen && Math.random() < dt * 3) puff(P.x, .3, P.z, 0xf6e7a8, 1, .4, 1.2);
+  if (pen && cleanT >= CLEAN_TIME) { fixProg(cleanRings[pen.id], 0); cleanPen = null; S.dirt[pen.id] = 0; cleanT = 0; sfx.mission(); puff(pen.x, .5, pen.z, 0xf6e7a8, 14, 1.5, 3); burst(P.x, 1.8, P.z, '🧹 ¡Limpio!', 'white'); }
   pens.forEach(b => {
     const dirty = S.dirt[b.id] >= 1;
-    if (dirty && !choreHelp.dirt) { choreHelp.dirt = true; toast(`🧹 ${b.name} está sucio y produce la mitad. Quédate un momento en el círculo azul de al lado para limpiarlo`); }
+    if (dirty && !choreHelp.dirt) { choreHelp.dirt = true; toast(`🧹 ${b.name} está sucio y produce la mitad. Quédate en el círculo azul de al lado hasta que se llene para limpiarlo`); }
     choreSign('d' + b.id, '🧹', b.x, b.z, dirty);
     // The cleaning ring sits beside the pen, apart from the ring where its goods are picked up
     let r = cleanRings[b.id];
     if (dirty && !r) { const q = fixSpot(b); r = cleanRings[b.id] = fixRing(q.x, q.z, 'blue'); }
-    if (r) { r.visible = dirty; if (dirty) r.scale.setScalar(1 + .08 * Math.sin(performance.now() / 150)); }
+    if (r) { r.visible = dirty; if (dirty) r.scale.setScalar(b === cleanPen ? 1 : 1 + .08 * Math.sin(performance.now() / 150)); }
   });
 }
 // The chip at the top says how many chores are waiting, so they are not forgotten
@@ -8846,10 +8864,10 @@ const TIPS = [
   ] },
   { id: 'chores', when: () => choresOn(), cards: [
     { icon: '💧', title: 'Riega los campos', text: 'Cuando sale una gota 💧 encima de un campo, pasa por dentro para regarlo. Si no, crece muy despacio.' },
-    { icon: '🧹', title: 'Limpia los corrales', text: 'Un corral sucio 🧹 produce la mitad. Para limpiarlo, quédate un momento en el círculo azul que sale a su lado.' },
+    { icon: '🧹', title: 'Limpia los corrales', text: 'Un corral sucio 🧹 produce la mitad. Para limpiarlo, quédate en el círculo azul que sale a su lado hasta que se llene.' },
   ] },
   { id: 'trouble', when: () => TROUBLES.length > 0, cards: [
-    { icon: '🔧', title: 'Imprevistos', text: 'A veces algo falla: un taller se avería (repáralo en el círculo rojo de al lado), llegan cuervos a un campo (entra para espantarlos) o se escapa un animal (ve a cogerlo).' },
+    { icon: '🔧', title: 'Imprevistos', text: 'A veces algo falla: un taller se avería (repáralo quedándote en el círculo rojo de al lado hasta que se llene), llegan cuervos a un campo (entra para espantarlos) o se escapa un animal (ve a cogerlo).' },
   ] },
   { id: 'works', when: () => Object.keys(S.works || {}).length > 0, cards: [
     { icon: '🏗️', title: 'Obras', text: 'Los edificios grandes tardan un rato en construirse, también con el juego cerrado. Si tienes prisa, acábalos con un anuncio o una estrella pisando su círculo.' },
