@@ -116,7 +116,9 @@ button:focus-visible { outline: 3px solid #3f7fd0; outline-offset: 2px; }
   position: fixed; z-index: 8; right: max(16px, env(safe-area-inset-right, 0px)); top: calc(62px + var(--safe-top));
   background: var(--cream); border: 3px solid var(--ink); border-radius: 16px; padding: 8px; box-shadow: 0 4px 0 var(--ink);
   display: flex; flex-direction: column; gap: 6px; min-width: 220px; max-width: calc(100% - 32px);
+  max-height: calc(100vh - 80px - var(--safe-top)); max-height: calc(100dvh - 80px - var(--safe-top)); overflow-y: auto; overscroll-behavior: contain;
 }
+.menu > * { flex-shrink: 0; }
 .menu button { border: 0; background: #f3e6cf; border-radius: 10px; padding: 9px 12px; text-align: left; cursor: pointer; font-weight: 900; }
 .menu .danger { background: var(--red); color: var(--cream); }
 .menu p { margin: 2px 4px; font-size: .82rem; color: var(--ink-soft); }
@@ -512,6 +514,32 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
 .loading p { margin: 10px 0 0; font-size: 1.1rem; color: var(--ink-soft); }
 @keyframes sproutbob { 0%, 100% { transform: translateY(0) rotate(-6deg); } 50% { transform: translateY(-6px) rotate(6deg); } }
 .menulogo { font-family: var(--font-display); font-size: 1.25rem; color: #2f8a3c; text-align: center; padding: 2px 0 4px; }
+
+/* Title screen and saved games (49h-title.js) */
+.titlescreen { z-index: 20; background: linear-gradient(rgba(140, 200, 235, .55), rgba(40, 25, 15, .7)); overflow-y: auto; }
+.titlebox { width: min(380px, 100%); display: flex; flex-direction: column; gap: 14px; text-align: center; }
+.titlebox .logo { font-family: var(--font-display); font-size: 3rem; line-height: 1.05; color: #2f8a3c; text-shadow: 0 3px 0 #fff8e7, 0 6px 0 rgba(0,0,0,.25); display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.titlebox .logo .sprout { font-size: 3.8rem; animation: sproutbob 1.4s ease-in-out infinite; }
+#titleMain, #titleList { background: var(--cream); border: 3px solid var(--ink); border-radius: 20px; padding: 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 6px 0 var(--ink); }
+#titleMain[hidden], #titleList[hidden] { display: none; }
+#titleList h3 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 1.4rem; }
+#titleList p { margin: 0; font-size: .85rem; color: var(--ink-soft); }
+.titlebox button { border: 3px solid var(--ink); border-radius: 14px; background: var(--gold); padding: 10px 14px; font-family: var(--font-display); font-size: 1.2rem; cursor: pointer; box-shadow: 0 3px 0 var(--ink); color: var(--ink); }
+.titlebox button.ghost { background: #f3e6cf; font-size: 1.05rem; }
+#titlePlay { font-size: 1.5rem; padding: 12px 14px; }
+.slotnow { font-size: .9rem; color: var(--ink-soft); line-height: 1.4; }
+.slotnow b { color: var(--ink); }
+.slots { display: flex; flex-direction: column; gap: 8px; }
+.slot { display: flex; align-items: center; gap: 8px; background: #fff8e7; border: 2px solid var(--ink); border-radius: 14px; padding: 8px 10px; text-align: left; }
+.slot.on { background: #e4f4d6; }
+.slot .sinfo { flex: 1; min-width: 0; font-size: .8rem; color: var(--ink-soft); line-height: 1.35; }
+.slot .sinfo b { color: var(--ink); font-size: .95rem; }
+.titlebox .slot button { font-size: .95rem; padding: 6px 10px; border-width: 2px; box-shadow: 0 2px 0 var(--ink); flex: 0 0 auto; }
+.titlebox .slot button.del { background: #f3e6cf; padding: 6px 8px; }
+.titlebox .slot button.danger { background: var(--red); color: var(--cream); }
+.titlever { color: #fff8e7; font-weight: 800; opacity: .8; text-shadow: 0 1px 2px rgba(0,0,0,.5); }
+body.titleon .hud, body.titleon #hint, body.titleon #banner, body.titleon #labels { visibility: hidden; }
+body.titleon .overlay:not(#titleOverlay), body.titleon .creator { visibility: hidden; }
 </style>
 
 <div id="game"></div>
@@ -584,6 +612,7 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
   <button id="albumBtn">📖 Colección</button>
   <button id="decorBtn" hidden>⛄ Decoraciones</button>
   <button id="achvBtn">🏆 Logros</button>
+  <button id="titleBtn">🏠 Inicio y partidas</button>
   <button id="helpBtn">📖 Cómo se juega</button>
   <button id="feedbackBtn">💬 Opinión</button>
   <button id="soundBtn">🔊 Sonido: sí</button>
@@ -680,6 +709,23 @@ button.chip { pointer-events: auto; border: 0; cursor: pointer; background: var(
     <button id="pauseGo">▶️ Seguir jugando</button>
     <button class="ghost" id="pauseBuy">🛒 ¿Qué puedo comprar?</button>
     <button class="ghost" id="pauseHelp">📖 Cómo se juega</button>
+  </div>
+</div>
+<div class="overlay titlescreen" id="titleOverlay" hidden>
+  <div class="titlebox">
+    <div class="logo"><span class="sprout">🌱</span>Sprouty Town</div>
+    <div id="titleMain">
+      <div class="slotnow" id="titleNow"></div>
+      <button id="titlePlay">▶️ Jugar</button>
+      <button class="ghost" id="titleSlots">📂 Partidas guardadas</button>
+    </div>
+    <div id="titleList" hidden>
+      <h3>Partidas guardadas</h3>
+      <p>Cada partida va por separado: empezar una nueva no borra las otras.</p>
+      <div class="slots" id="titleSlotList"></div>
+      <button class="ghost" id="titleBack">⬅️ Volver</button>
+    </div>
+    <small class="titlever" id="titleVer"></small>
   </div>
 </div>
 <div class="edgearrow" id="edgeArrow" hidden><span>➤</span></div>
@@ -1161,8 +1207,8 @@ const MAPS = [];
 const mapOf = n => MAPS[n % MAPS.length];
 const mapById = id => MAPS.find(m => m.id === id);
 // The version goes up with every release; the build (vite.config.js) stamps the date (while developing it says 'en pruebas')
-const GAME_VERSION = '53';
-const BUILD_DATE = '07/11/2026 13:14';
+const GAME_VERSION = '54';
+const BUILD_DATE = '07/11/2026 13:51';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -1521,7 +1567,14 @@ async function tryTesterCode(code) {
   return true;
 }
 function leaveTesting() { try { localStorage.removeItem(TESTER_KEY); } catch {} }
-const SAVE_KEY = 'huerto-sonia-v4', OLD_SAVE_KEY = 'huerto-sonia-v3';
+// Three saved games (slots). Slot 1 keeps the old key so nobody loses their game; the one being played is in 'huerto-hueco'
+const SLOTS = 3, SLOT_KEY = 'huerto-hueco';
+const slotKey = n => n === 1 ? 'huerto-sonia-v4' : 'huerto-sonia-v4-' + n;
+let SLOT = 1; try { SLOT = Math.min(SLOTS, Math.max(1, +localStorage.getItem(SLOT_KEY) || 1)); } catch {}
+const SAVE_KEY = slotKey(SLOT), OLD_SAVE_KEY = 'huerto-sonia-v3';
+// The title screen shows when the game is opened, not when the game itself reloads (moving map, changing slot…)
+let TITLE_ON = true; try { if (sessionStorage.getItem('huerto-directo')) { TITLE_ON = false; sessionStorage.removeItem('huerto-directo'); } } catch {}
+function reloadGame() { try { sessionStorage.setItem('huerto-directo', '1'); } catch {} location.reload(); }
 // What belongs to the player and goes with them to every map; everything else belongs to one farm
 const PLAYER_KEYS = ['meta', 'stars', 'perks', 'achv', 'chestDay', 'life', 'sound', 'boostUntil'];
 
@@ -1580,7 +1633,7 @@ function loadSave() {
 }
 function loadWorld() {
   try { const w = JSON.parse(localStorage.getItem(SAVE_KEY)); if (w && w.farms && mapById(w.map)) { if (!mapOpen(mapById(w.map))) w.map = 'valle'; return w; } } catch {}
-  const old = loadSave(), w = { map: 'valle', player: {}, farms: {} };
+  const old = SLOT === 1 ? loadSave() : null, w = { map: 'valle', player: {}, farms: {} }; // only slot 1 brings very old games
   if (!old) return w;
   // An old single-farm game becomes the farm of the map it was on
   const farm = { ...old }; w.map = mapOf(old.farm || 0).id;
@@ -1607,7 +1660,7 @@ function save() {
 function goToMap(id) {
   save(); leaving = true; WORLD.map = id;
   try { localStorage.setItem(SAVE_KEY, JSON.stringify(WORLD)); } catch {}
-  location.reload();
+  reloadGame();
 }
 const visitedMaps = () => MAPS.filter(m => WORLD.farms[m.id]);
 try { window.claude?.hot?.snapshot?.(() => ({ state: S })); } catch {}
@@ -5323,7 +5376,7 @@ function moveFarm(headStart) {
   if (headStart) Object.assign(S.lv, { bag: 4, boots: 3, sign: 2, cashier: 1, helper: 2, tractor: 1 });
   save();
   try { localStorage.removeItem('huerto-tito-3d-v2'); } catch {}
-  location.reload();
+  reloadGame();
 }
 $('moveYes').addEventListener('click', () => moveFarm(false));
 $('moveAd').addEventListener('click', () => { $('moveOverlay').hidden = true; showAd(() => moveFarm(true), 'mudanza'); });
@@ -5669,7 +5722,7 @@ $('panelList').addEventListener('click', e => {
   } else if (b.dataset.map) {
     $('panelOverlay').hidden = true; toast(`🚚 Viajando a ${mapById(b.dataset.map).name}…`); setTimeout(() => goToMap(b.dataset.map), 400);
   } else if (b.dataset.leavetest) {
-    leaveTesting(); $('panelOverlay').hidden = true; toast('Has salido del modo pruebas'); save(); setTimeout(() => location.reload(), 600);
+    leaveTesting(); $('panelOverlay').hidden = true; toast('Has salido del modo pruebas'); save(); setTimeout(reloadGame, 600);
   } else if (b.dataset.chest) {
     $('panelOverlay').hidden = true;
     if (b.dataset.chest === '2') showAd(() => openChest(2), 'cofre'); else openChest(1);
@@ -5885,8 +5938,8 @@ $('resetBtn').addEventListener('click', () => { $('resetConfirm').hidden = false
 $('resetYes').addEventListener('click', () => {
   // Starting from scratch wipes every farm and the player's progress, including the old saves it could come back from
   leaving = true;
-  try { [SAVE_KEY, OLD_SAVE_KEY, 'huerto-tito-3d-v2'].forEach(k => localStorage.removeItem(k)); } catch {}
-  location.reload();
+  try { [SAVE_KEY, ...(SLOT === 1 ? [OLD_SAVE_KEY, 'huerto-tito-3d-v2'] : [])].forEach(k => localStorage.removeItem(k)); } catch {}
+  reloadGame();
 });
 // Feedback: the player writes what they think and it reaches the owner by e-mail, with their progress attached
 let fbRate = 0;
@@ -6035,7 +6088,7 @@ if (S.meta.level === undefined) {
 renderLevel();
 renderMood(); if (S.over) gameOver(); else if (S.pendingSum) showSummary();
 $('hint').lastChild.textContent = ' Arrastra el dedo para mover a ' + who();
-if (S.tut === 0 && !S.meta.avatar) openCreator();
+if (S.tut === 0 && !S.meta.avatar && !TITLE_ON) openCreator(); // with the title screen, it opens on «Jugar» (49h-title.js)
 requestAnimationFrame(frame);
 
 /* ================= Anonymous play stats (PostHog) =================
@@ -6334,7 +6387,7 @@ function updateGrid() {
 $('testBtn').hidden = !TESTER;
 async function enterTesting(code) {
   if (TESTER) { toast('🧪 Ya estás en modo pruebas'); return; }
-  if (await tryTesterCode(code)) { toast('🧪 ¡Modo pruebas activado!'); save(); setTimeout(() => location.reload(), 900); }
+  if (await tryTesterCode(code)) { toast('🧪 ¡Modo pruebas activado!'); save(); setTimeout(reloadGame, 900); }
   else toast('Código incorrecto');
 }
 (() => {
@@ -8784,7 +8837,7 @@ addEventListener('keydown', e => {
   else if (e.key === 'Escape' && !$('pauseOverlay').hidden) pauseOff();
 });
 // The guide and the shopping list stop the game too, so it can be read calmly (34-loop.js)
-function helpOpen() { return !$('pauseOverlay').hidden || (!$('panelOverlay').hidden && (panelKind === 'help' || panelKind === 'buy' || panelKind === 'anger')); }
+function helpOpen() { return !$('pauseOverlay').hidden || !$('titleOverlay').hidden || (!$('panelOverlay').hidden && (panelKind === 'help' || panelKind === 'buy' || panelKind === 'anger')); }
 
 /* ---------- 🛒 What can be bought now ---------- */
 function buyWhat(p) {
@@ -8955,6 +9008,82 @@ openPanel = kind => {
 };
 $('moodWhy').addEventListener('click', () => { sfx.drop(); openPanel('anger'); });
 $('moodBar').addEventListener('click', () => { sfx.drop(); openPanel('anger'); });
+
+/* ================= Title screen and saved games ================= */
+// The game no longer starts straight away: a title screen with «Jugar» and three saved games (slots, 03-state.js).
+// Each slot is a whole game of its own; starting a new one never touches the others.
+
+// What a slot holds, read from the phone (the slot being played reads the live game, which is newer)
+function slotInfo(n) {
+  let w = null;
+  if (n === SLOT) { save(); w = WORLD; }
+  else { try { w = JSON.parse(localStorage.getItem(slotKey(n))); } catch {} }
+  if (!w || !w.farms) return null;
+  const meta = (w.player && w.player.meta) || {}, map = mapById(w.map) || MAPS[0], farm = w.farms[w.map] || {};
+  if (n === SLOT && !meta.avatar && !(meta.playT > 30)) return null; // just opened, nothing played yet
+  return {
+    name: (meta.avatar && meta.avatar.name) || 'Sonia', level: meta.level || 1, chapter: mapIndex(map.id) + 1, map,
+    mission: (farm.mission || 0) + 1, playT: meta.playT || 0, t: farm.t || 0,
+  };
+}
+const playTime = s => { const m = Math.floor(s / 60); return m < 60 ? `${m} min` : `${Math.floor(m / 60)} h ${m % 60} min`; };
+function agoText(t) {
+  if (!t) return '';
+  const m = (Date.now() - t) / 60e3;
+  if (m < 2) return 'ahora mismo'; if (m < 60) return `hace ${Math.round(m)} min`;
+  if (m < 1440) return `hace ${Math.round(m / 60)} h`; const d = Math.round(m / 1440); return d === 1 ? 'ayer' : `hace ${d} días`;
+}
+const slotLine = i => `<b>${i.name}</b> · Nivel ${i.level}<br>Capítulo ${i.chapter} · ${i.map.icon} ${i.map.name} · misión ${i.mission}<br>${playTime(i.playT)} jugados${i.t ? ' · ' + agoText(i.t) : ''}`;
+
+function renderTitle() {
+  const i = slotInfo(SLOT);
+  $('titleNow').innerHTML = i ? `Partida ${SLOT}<br>${slotLine(i)}` : `Partida ${SLOT} · nueva`;
+  $('titlePlay').textContent = i ? '▶️ Continuar' : '▶️ Empezar';
+  $('titleVer').textContent = `Versión ${GAME_VERSION}`;
+}
+let slotDel = 0; // the slot whose 🗑️ was touched once: the second touch deletes it
+function renderSlots() {
+  $('titleSlotList').innerHTML = Array.from({ length: SLOTS }, (_, k) => {
+    const n = k + 1, i = slotInfo(n), on = n === SLOT;
+    return `<div class="slot${on ? ' on' : ''}"><div class="sinfo">${i ? `Partida ${n}${on ? ' · ahora' : ''}<br>${slotLine(i)}` : `<b>Partida ${n}</b><br>Vacía`}</div>`
+      + `<button data-slot="${n}">${i ? '▶️ Jugar' : '➕ Nueva'}</button>`
+      + (i ? `<button class="${slotDel === n ? 'danger' : 'del'}" data-del="${n}" aria-label="Borrar partida ${n}">${slotDel === n ? '¿Borrar?' : '🗑️'}</button>` : '')
+      + `</div>`;
+  }).join('');
+}
+function openTitle() {
+  $('menu').hidden = true; $('pauseOverlay').hidden = true;
+  $('titleMain').hidden = false; $('titleList').hidden = true; slotDel = 0;
+  renderTitle(); $('titleOverlay').hidden = false; document.body.classList.add('titleon');
+}
+function closeTitle() {
+  $('titleOverlay').hidden = true; document.body.classList.remove('titleon'); last = performance.now();
+  if (S.tut === 0 && !S.meta.avatar) openCreator(); // a new game starts by making the character
+}
+function useSlot(n) {
+  if (n === SLOT) { closeTitle(); return; }
+  save(); leaving = true;
+  try { localStorage.setItem(SLOT_KEY, String(n)); } catch {}
+  stat('partida_cambiada', { hueco: n });
+  reloadGame();
+}
+$('titlePlay').addEventListener('click', () => { sfx.drop(); closeTitle(); });
+$('titleSlots').addEventListener('click', () => { sfx.drop(); slotDel = 0; renderSlots(); $('titleMain').hidden = true; $('titleList').hidden = false; });
+$('titleBack').addEventListener('click', () => { sfx.drop(); renderTitle(); $('titleMain').hidden = false; $('titleList').hidden = true; });
+$('titleSlotList').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  sfx.drop();
+  if (b.dataset.slot) { useSlot(+b.dataset.slot); return; }
+  const n = +b.dataset.del;
+  if (slotDel !== n) { slotDel = n; renderSlots(); return; }
+  // Deleting the game being played starts that slot again from zero
+  try { localStorage.removeItem(slotKey(n)); if (n === 1) [OLD_SAVE_KEY, 'huerto-tito-3d-v2'].forEach(k => localStorage.removeItem(k)); } catch {}
+  stat('partida_borrada', { hueco: n });
+  if (n === SLOT) { leaving = true; reloadGame(); return; }
+  slotDel = 0; renderSlots();
+});
+$('titleBtn').addEventListener('click', () => { sfx.drop(); openTitle(); });
+if (TITLE_ON) openTitle();
 
 /* ================= Tips: each new system explains itself the first time it shows up ================= */
 // The opening tutorial stays short. Daily missions, morale and decisions, chores, mishaps, timed works and dirty zones
