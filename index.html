@@ -550,6 +550,61 @@ body.titleon .overlay:not(#titleOverlay), body.titleon .creator { visibility: hi
 .dmrow.lawnew { border-width: 3px; box-shadow: 0 0 0 3px var(--gold); }
 .dmrow .newtag, .dmrow .ontag { font-style: normal; font-size: .72rem; padding: 1px 6px; border-radius: 8px; background: var(--gold); border: 1px solid var(--ink); vertical-align: 2px; }
 .dmrow .ontag { background: #c8ecb4; }
+
+/* ===== Cleaner screen (v56): one small status line, one alert, smaller order and bubbles ===== */
+/* Anger is just its face and number (tap it to see why); no bar, no word */
+.statrow { flex-wrap: wrap; gap: 4px 5px; max-width: calc(100% - 60px); }
+.statrow .moodbar { width: auto; padding: 2px 9px 2px 4px; gap: 3px; cursor: pointer; pointer-events: auto; }
+.statrow .moodbar .mtrack, .statrow .moodbar .ml { display: none; }
+.statrow .moodbar .mp { min-width: 0; font-size: .85rem; }
+.statrow .moodbar .mf { font-size: 1.1rem; width: auto; }
+.statrow .townbar { font-size: .8rem; padding: 2px 8px; gap: 5px; }
+.statrow .daychip .chip { font-size: .74rem; padding: 2px 8px; }
+.moodwhy { font-size: .72rem; padding: 2px 9px; }
+/* The single alert and its "+N" share one line */
+.alertrow { display: flex; align-items: center; gap: 5px; flex-wrap: nowrap; align-self: flex-start; max-width: calc(100% - 52px); }
+.alertrow > .chips { flex-wrap: nowrap; min-width: 0; }
+.alertrow .chip { overflow: hidden; text-overflow: ellipsis; max-width: 62vw; font-size: .74rem; padding: 2px 8px; }
+.alertrow .chip.more { flex: none; font-size: .74rem; padding: 2px 8px; align-self: center; }
+/* The special order: a small card */
+.order { padding: 3px 8px 4px; gap: 2px; border-width: 2px; box-shadow: 0 2px 0 var(--gold-dark); max-width: min(230px, 60vw); }
+.order .mk { font-size: .66rem; letter-spacing: .2px; text-transform: none; }
+.order .mr { font-size: .8rem; }
+.order .ox { font-size: .8rem; }
+.order .mb { height: 4px; }
+@media (max-width: 520px) { .order .okw { display: none; } }
+/* Customers' bubbles a bit smaller */
+.cbubble { font-size: .68rem; padding: 0 4px 1px; border-width: 1.5px; }
+/* Cleaner screen, second pass (v56) */
+.moodwhy { display: none !important; }
+.moodbar .mdir { font-style: normal; font-size: .8rem; margin-left: 1px; }
+.moodbar .mdir:empty { display: none; }
+.moodbar.rising { background: #b8402c; }
+.lvl.lvlcorner { position: fixed; z-index: 5; left: max(10px, env(safe-area-inset-left, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); width: 40px; height: 40px; padding: 3px; }
+.lvl.lvlcorner b { font-size: .9rem; }
+.sidebtns .chest { pointer-events: auto; }
+.missionrow { display: flex; align-items: flex-start; gap: 6px; align-self: flex-start; max-width: calc(100% - 52px); pointer-events: none; }
+.missionrow .drawtab { flex: none; height: 30px; min-width: 30px; padding: 0 9px; font-size: .85rem; }
+.missionrow .drawer { min-width: 0; }
+.missionrow .mpill { max-width: calc(100vw - 132px); }
+/* Cleaner screen, third pass (v56): only the essentials */
+.statrow { display: none !important; }
+.hudrow .moodbar { flex: none; align-self: center; width: auto; padding: 2px 9px 2px 4px; gap: 3px; cursor: pointer; pointer-events: auto; height: 34px; }
+.hudrow .moodbar .mtrack, .hudrow .moodbar .ml { display: none; }
+.hudrow .moodbar .mp { min-width: 0; font-size: .85rem; }
+.hudrow .moodbar .mf { font-size: 1.1rem; width: auto; }
+.alertrow .daychip > :first-child { display: none; }
+.alertrow .chip.warnchip { background: #b8402c; color: #fff8e7; }
+.drawtab { display: none !important; }
+.missionrow .drawer.shut { display: flex; }
+.sidebtns .boost { pointer-events: auto; padding: 0 10px; font-size: .9rem; }
+/* The special order on one line, with a thin bar underneath */
+.order { flex-direction: row; flex-wrap: nowrap; align-items: center; gap: 6px; position: relative; border-radius: 999px; padding: 3px 10px 6px; max-width: calc(100vw - 110px); }
+.order .mt { display: contents; }
+.order .mr { order: 3; }
+.order .ox { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.order .mb { position: absolute; left: 12px; right: 12px; bottom: 2px; height: 3px; }
+.missionrow { width: calc(100% - 60px); } .missionrow .drawer { flex: 1 1 auto; max-width: 100%; }
 </style>
 
 <div id="game"></div>
@@ -569,7 +624,7 @@ body.titleon .overlay:not(#titleOverlay), body.titleon .creator { visibility: hi
   <div class="statrow">
   <div class="moodbar" id="moodBar" hidden title="Enfado de los clientes">
     <span class="mf" id="moodFace">🙂</span><span class="ml">Enfado</span>
-    <span class="mtrack"><i id="moodFill"></i></span><span class="mp" id="moodPct">0%</span>
+    <span class="mtrack"><i id="moodFill"></i></span><span class="mp" id="moodPct">0%</span><i class="mdir" id="moodDir"></i>
   </div>
   <div class="townbar" id="townBar" hidden><span id="townMorale">😊 60</span><span id="townTrust">⭐ 60</span></div>
   </div>
@@ -578,7 +633,7 @@ body.titleon .overlay:not(#titleOverlay), body.titleon .creator { visibility: hi
   <div class="chips" id="urgent"></div>
   <div class="chips" id="trouble"></div>
   <div class="order" id="order" hidden>
-    <div class="mt"><span class="mk">📋 Pedido especial · <span id="orderTime">2:30</span></span><span class="mr"><span class="coin"></span><span id="orderReward">0</span></span></div>
+    <div class="mt"><span class="mk">📋 <span class="okw">Pedido especial · </span><span id="orderTime">2:30</span></span><span class="mr"><span class="coin"></span><span id="orderReward">0</span></span></div>
     <div class="ox" id="orderTxt"></div>
     <div class="mb"><i id="orderBar"></i></div>
   </div>
@@ -1217,8 +1272,8 @@ const MAPS = [];
 const mapOf = n => MAPS[n % MAPS.length];
 const mapById = id => MAPS.find(m => m.id === id);
 // The version goes up with every release; the build (vite.config.js) stamps the date (while developing it says 'en pruebas')
-const GAME_VERSION = '55';
-const BUILD_DATE = '07/11/2026 14:03';
+const GAME_VERSION = '56';
+const BUILD_DATE = '07/11/2026 14:21';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -5324,7 +5379,8 @@ function updateLabels(dt) {
   customers.forEach(c => {
     const p = Math.max(0, c.pat / c.patMax), col = p > .6 ? '#3fa34d' : p > .3 ? '#f6c445' : '#d8402f';
     const busy = c.state === 'shop' || c.state === 'pay' || (p < .35 && c.state !== 'leave');
-    if (!show(c.bubble, (c.angry || busy) && dist(c.x, c.z) < 12)) return;
+    const dc = dist(c.x, c.z); // a calmer screen: only angry or impatient customers, or the ones right next to Sonia
+    if (!show(c.bubble, (c.angry || (busy && (p < .6 || dc < 6))) && dc < 12)) return;
     const who = c.vip ? '⭐' : ({ kid: '🧒', grandpa: '👴', critic: '🧐' }[c.type] || '');
     const txt = c.angry ? '😡' : c.state === 'pay' || c.state === 'toPay' ? `${who}💵` : `${who}${ITEMS[c.want].icon} ${c.got}/${c.need}`;
     setHtml(c.bubble, c.angry ? txt : `${txt}<span class="pt"><i style="width:${Math.round(p * 100)}%;background:${col}"></i></span>`);
@@ -5596,7 +5652,7 @@ function renderExtras() {
   const ob = $('order'); ob.hidden = !ORDER;
   if (ORDER) {
     $('orderTime').textContent = fmtT(ORDER.left); $('orderReward').textContent = fmt(ORDER.reward);
-    $('orderTxt').textContent = ORDER.items.map(i => `${ITEMS[i.k].icon} ${i.got}/${i.need}`).join('   ') + '  · al mostrador';
+    $('orderTxt').innerHTML = ORDER.items.map(i => `${ITEMS[i.k].icon} ${i.got}/${i.need}`).join('  ') + '<span class="okw"> · al mostrador</span>';
     const need = ORDER.items.reduce((a, i) => a + i.need, 0), got = ORDER.items.reduce((a, i) => a + i.got, 0);
     $('orderBar').style.width = (got / need * 100) + '%';
     ob.classList.toggle('late', ORDER.left < 30);
@@ -5941,7 +5997,7 @@ function frame(now) {
 const menu = $('menu');
 function renderStats() {
   const top = Object.entries(S.sold).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([k, v]) => `${ITEMS[k].icon} ${fmt(v)}`).join(' · ');
-  $('stats').innerHTML = `<b>Granja ${(S.farm || 0) + 1} · ${THEME.icon} ${THEME.name}</b>${THEME.bonus ? `<br>✨ ${THEME.bonus.text}` : ''}<br>Pueblo: <b>${townCount()}/${TOWN.length}</b> edificios<br>Ganado en esta granja: <b>${fmt(S.earned)}</b><br>Clientes atendidos: <b>${fmt(S.served)}</b> · enfadados: <b>${fmt(S.angry)}</b><br>${SHOPS.filter(sh => areaOpen(sh.area)).map(sh => `${sh.icon} ${fmt(S.servedBy[sh.id] || 0)}`).join(' · ')}<br>Enfado ahora: <b>${Math.round(S.mood || 0)}%</b><br>Peces: <b>${fmt(S.caught)}</b> · reciclado: <b>${fmt(S.recycled)} kg</b><br>Vendido: ${top || 'nada aún'}<br><small>Versión ${GAME_VERSION} · ${BUILD_DATE}</small>`;
+  $('stats').innerHTML = `<b>Granja ${(S.farm || 0) + 1} · ${THEME.icon} ${THEME.name}</b>${THEME.bonus ? `<br>✨ ${THEME.bonus.text}` : ''}<br>Pueblo: <b>${townCount()}/${TOWN.length}</b> edificios<br>Ganado en esta granja: <b>${fmt(S.earned)}</b><br>Clientes atendidos: <b>${fmt(S.served)}</b> · enfadados: <b>${fmt(S.angry)}</b><br>${SHOPS.filter(sh => areaOpen(sh.area)).map(sh => `${sh.icon} ${fmt(S.servedBy[sh.id] || 0)}`).join(' · ')}<br>Día <b>${S.dayN || 1}</b>${townOn() ? ` · 😊 Ánimo <b>${Math.round(S.morale)}</b> · ⭐ Confianza <b>${Math.round(S.trust)}</b>` : ''}<br>Enfado ahora: <b>${Math.round(S.mood || 0)}%</b><br>Peces: <b>${fmt(S.caught)}</b> · reciclado: <b>${fmt(S.recycled)} kg</b><br>Vendido: ${top || 'nada aún'}<br><small>Versión ${GAME_VERSION} · ${BUILD_DATE}</small>`;
 }
 $('menuBtn').addEventListener('click', () => { menu.hidden = !menu.hidden; $('resetConfirm').hidden = true; renderStats(); });
 const soundLabel = () => { $('soundBtn').textContent = S.sound ? '🔊 Sonido: sí' : '🔈 Sonido: no'; };
@@ -7217,6 +7273,7 @@ const debtDays = () => (S.debt ? Math.max(0, S.debt.due - S.dayN) : 0);
 function debtChip() {
   if (!S.debt || !debtOn()) return '';
   const d = debtDays(), short = S.coins < S.debt.amount;
+  if (d > 1) return ''; // a calmer screen: only shown when the payment is close
   return `<span class="tfx${d <= 1 && short ? ' low' : ''}" title="Letra del banco: ${fmt(S.debt.amount)} monedas">🏦 ${d ? d + ' d' : 'hoy'}</span>`;
 }
 function debtEndOfDay() {
@@ -7299,6 +7356,7 @@ function openLaws(fresh) {
 function lawChip() {
   if (!townOn() || !lawsOpen().length) return '';
   const on = lawsActive().length, room = on < lawMax() && !lawChanged();
+  if (!room) return ''; // full or changed today: it is in the menu ☰
   return `<span class="tfx lawchip${room ? ' lawroom' : ''}" data-lawchip title="Leyes del pueblo">⚖️ ${on}/${lawMax()}</span>`;
 }
 $('townBar').addEventListener('click', e => { if (e.target.closest('[data-lawchip]')) { sfx.drop(); openLaws(); } });
@@ -7434,6 +7492,7 @@ function buildCanteen() {
 function staffChip() {
   if (!staffOn()) return '';
   const d = potDays();
+  if (d >= 1.5) return ''; // only when the canteen runs low
   return `<span class="tfx${d < 1 ? ' low' : ''}" title="Comida del comedor">🍲 ${d <= 0 ? '¡0!' : d < 1 ? '<1 d' : Math.floor(d) + ' d'}</span>`;
 }
 function updateStaff(dt) {
@@ -8400,7 +8459,10 @@ padInfoBase = pad => {
 const statRow = document.querySelector('.statrow');
 statRow.appendChild($('chips')); $('chips').classList.add('daychip');
 const moreBtn = document.createElement('button'); moreBtn.className = 'chip more'; moreBtn.id = 'moreAlerts'; moreBtn.hidden = true;
-$('trouble').after(moreBtn);
+const alertRow = document.createElement('div'); alertRow.className = 'alertrow';
+$('zoneChip').before(alertRow);
+['zoneChip', 'urgent', 'trouble'].forEach(id => alertRow.appendChild($(id)));
+alertRow.appendChild(moreBtn); alertRow.prepend($('order'));
 let alertPick = 0;
 moreBtn.addEventListener('click', () => { alertPick++; sfx.drop(); tidyHud(); });
 // News (level rewards and such) are already told by a toast or a window: they no longer pile up on the side
@@ -8411,11 +8473,12 @@ function tidyHud() {
   if (!$('order').hidden) c.push($('order'));
   [...$('urgent').children].forEach(e => c.push(e));
   [...$('trouble').children].forEach(e => c.push(e));
+  [...($('townAlerts') ? $('townAlerts').children : [])].forEach(e => c.push(e));
   // Only the day chip stays in the status line; "rush hour in 0:09" and the like become alerts
   const dayKids = [...$('chips').children];
   dayKids.slice(1).forEach(e => c.push(e));
   [...$('zoneChip').children].filter(e => e.classList.contains('dirty')).forEach(e => c.push(e));
-  const all = [$('order'), ...$('urgent').children, ...$('trouble').children, ...dayKids.slice(1), ...$('zoneChip').children];
+  const all = [$('order'), ...$('urgent').children, ...$('trouble').children, ...($('townAlerts') ? $('townAlerts').children : []), ...dayKids.slice(1), ...$('zoneChip').children];
   const pick = c.length ? c[alertPick % c.length] : null;
   all.forEach(e => e.classList.toggle('hudhide', e !== pick && !(e === dayKids[0])));
   if (!c.length) alertPick = 0;
@@ -8445,6 +8508,36 @@ function tidyMission() {
 }
 const tidyHudBase = tidyHud;
 tidyHud = () => { tidyHudBase(); tidyMission(); };
+
+/* Cleaner screen, second pass: the level goes to the bottom corner, the daily chest to the right-hand column,
+   and the drawer button sits on the same line as the mission */
+document.body.appendChild($('lvlPill')); $('lvlPill').classList.add('lvlcorner');
+document.querySelector('.sidebtns').prepend($('chestBtn'));
+const missionRow = document.createElement('div'); missionRow.className = 'missionrow';
+$('drawTab').before(missionRow); missionRow.append($('drawTab'), $('drawer'));
+
+/* Cleaner screen, third pass: only the essentials stay on screen.
+   Top row: coins, the anger face, pause and menu. Ánimo, Confianza, the day, the bank, the canteen and the laws
+   leave the screen and only come back as the single alert when something needs the player. */
+$('coinsPill').after($('moodBar'));
+document.querySelector('.sidebtns').prepend($('boostBtn'));
+alertRow.appendChild($('chips')); // the day chip hides; rush hour and the like still come as the alert
+const townAlerts = document.createElement('div'); townAlerts.className = 'chips'; townAlerts.id = 'townAlerts';
+$('urgent').after(townAlerts);
+let townAlertsH = '';
+function renderTownAlerts() {
+  const a = [];
+  if (townOn()) {
+    if (S.morale < 30) a.push(`😟 Ánimo bajo: ${Math.round(S.morale)}`);
+    if (S.trust < 30) a.push(`⭐ Confianza baja: ${Math.round(S.trust)}`);
+    if (typeof debtOn === 'function' && S.debt && debtOn() && debtDays() <= 1) a.push(`🏦 El banco cobra ${debtDays() ? 'mañana' : 'hoy'}: ${fmt(S.debt.amount)}`);
+    if (typeof staffOn === 'function' && staffOn() && potDays() < 1) a.push(`🍲 El comedor se vacía`);
+  }
+  const h = a.map(t => `<span class="chip warnchip">${t}</span>`).join('');
+  if (h !== townAlertsH) { townAlerts.innerHTML = h; townAlertsH = h; }
+}
+const tidyHudClean = tidyHud;
+tidyHud = () => { renderTownAlerts(); tidyHudClean(); };
 
 /* ================= Opinions by e-mail and the testers' survey ================= */
 // Web3Forms turns a message from the game into an e-mail to the owner. The key is not secret: it can only send to that one address.
@@ -9010,10 +9103,13 @@ function renderMoodWhy() {
   const el = $('moodWhy'), on = !$('moodBar').hidden;
   const list = on ? angerCauses() : [], m = Math.round(S.mood || 0);
   let html = '';
-  if (list.length) html = `⬆️ Sube: ${list.slice(0, 2).map(c => c.short).join(' · ')}${list.length > 2 ? ` +${list.length - 2}` : ''} <i>❓</i>`;
-  else if (on && m > 0) html = '⬇️ Baja: nadie espera <i>❓</i>';
+  if (list.length && m >= 10) html = `⬆️ Sube: ${list.slice(0, 2).map(c => c.short).join(' · ')}${list.length > 2 ? ` +${list.length - 2}` : ''} <i>❓</i>`;
+  else if (on && m >= 10 && !list.length) html = '⬇️ Baja: nadie espera <i>❓</i>';
   if (el._h !== html) { el._h = html; el.innerHTML = html; el.classList.toggle('up', list.length > 0); }
   el.hidden = !html;
+  // The arrow beside the anger face says the same in one sign (the pill itself is hidden by the cleaner screen)
+  const dir = html ? (list.length ? '⬆️' : '⬇️') : ''; const md = $('moodDir'); if (md.textContent !== dir) md.textContent = dir;
+  $('moodBar').classList.toggle('rising', !!html && list.length > 0);
 }
 const ANGER_HELP = [
   ['🧺', 'El mostrador vacío', 'Si un cliente no encuentra lo que quiere, espera y se va enfadando (lo ves en la barrita encima de su cabeza). Mantén el mostrador lleno; las ardillas ayudan.'],
