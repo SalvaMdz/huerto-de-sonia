@@ -612,6 +612,11 @@ body.titleon .overlay:not(#titleOverlay), body.titleon .creator { visibility: hi
 /* A long alert (a broken workshop with its zone…) wraps onto a second line instead of being cut */
 .alertrow .chip { white-space: normal; overflow: visible; text-overflow: clip; max-width: calc(100vw - 120px); line-height: 1.25; }
 .alertrow .chip { border-radius: 12px; }
+
+/* Fewer words (v59): the bottom coach line replaces the red banner; buy circles show only the price until you are close */
+.banner { display: none !important; }
+.padlabel:not(.near) .nm { display: none; }
+.hint .hand { margin-right: 4px; }
 </style>
 
 <div id="game"></div>
@@ -924,6 +929,7 @@ body.titleon .overlay:not(#titleOverlay), body.titleon .creator { visibility: hi
   <div class="cbox">
     <h3>Crea tu personaje</h3>
     <label class="crow"><span>Nombre</span><input id="avName" maxlength="12" autocomplete="off" enterkeyhint="done"></label>
+    <div class="ctabs csex" id="avSex"></div>
     <div class="ctabs" id="avTabs"><button class="on" data-tab="hair">💇 Pelo</button><button data-tab="face">🙂 Cara</button><button data-tab="acc">🕶️ Accesorios</button></div>
     <div class="cpage" data-page="hair">
       <div class="crow"><span>Peinado</span><div class="opts" id="avHair"></div></div>
@@ -970,7 +976,18 @@ async function decodeSave(s) {
     : await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
   return JSON.parse(text);
 }
+// v60: everybody starts again (new «modo sencillo», owner's decision on 8 Nov 2026). Once per phone, every saved game
+// (the three slots and the very old v3 one) is deleted; the tester flag, the stats id and the graphics level stay.
+// The rescue from the old address is switched off too, or it would bring the old saves back.
+const SAVE_RESET = '60';
+(function freshStart() {
+  let ls; try { ls = window.localStorage; if (ls.getItem('huerto-reinicio') === SAVE_RESET) return; } catch { return; }
+  Object.keys(ls).filter(k => /^huerto-sonia-v\d/.test(k) || k === 'huerto-hueco').forEach(k => ls.removeItem(k));
+  ls.setItem('huerto-traida', '1'); ls.setItem('huerto-reinicio', SAVE_RESET);
+  try { sessionStorage.removeItem('huerto-directo'); } catch {}
+})();
 (function moveSave() {
+  return; // v60: no more rescue (see freshStart above)
   if (!MOVE_TEST && !/(^|\.)sproutytown\.com$/.test(location.hostname)) return;
   let ls; try { ls = window.localStorage; ls.getItem('huerto-traida'); } catch { return; }
   const home = location.origin + location.pathname + (MOVE_TEST ? '?traslado=1' : '');
@@ -1019,7 +1036,7 @@ float gN(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.-2.*f);
   float a=fract(sin(dot(i,vec2(127.1,311.7)))*43758.5453), b=fract(sin(dot(i+vec2(1.,0.),vec2(127.1,311.7)))*43758.5453),
         c=fract(sin(dot(i+vec2(0.,1.),vec2(127.1,311.7)))*43758.5453), d=fract(sin(dot(i+vec2(1.,1.),vec2(127.1,311.7)))*43758.5453);
   return mix(mix(a,b,f.x),mix(c,d,f.x),f.y); }
-vec3 gGrade(vec3 c){ c*=.63; c=clamp((c*(2.51*c+.03))/(c*(2.43*c+.59)+.14),0.,1.); float gx=max(0.,c.g-max(c.r,c.b)); c.g-=gx*.2; c.r+=gx*.09; return mix(vec3(dot(c,vec3(.2126,.7152,.0722))),c,1.02); }
+vec3 gGrade(vec3 c){ c*=vec3(.76,.74,.7); c=clamp((c*(2.51*c+.03))/(c*(2.43*c+.59)+.14),0.,1.); float gx=max(0.,c.g-max(c.r,c.b)); c.g-=gx*.2; c.r+=gx*.09; return mix(vec3(dot(c,vec3(.2126,.7152,.0722))),c,1.18); }
 `;
 const GFX_SURFACE = `
 #ifdef WATER
@@ -1052,7 +1069,7 @@ function gfxHook(shader) {
       vGW=(modelMatrix*gw).xyz; }`);
   const anchor = std ? '#include <lights_physical_fragment>' : '#include <specularmap_fragment>';
   // Fog moves before the color curve so faraway things melt into the sky; in the stock order it comes out too dark
-  const extras = std && GFX.tier ? `gl_FragColor.rgb*=1.-.17*gDay*smoothstep(.5,.72,gN(vGW.xz*.035+vec2(gT*.018,gT*.007)));
+  const extras = std && GFX.tier ? `gl_FragColor.rgb*=1.-.06*gDay*smoothstep(.5,.72,gN(vGW.xz*.035+vec2(gT*.018,gT*.007)));
     gl_FragColor.rgb+=diffuseColor.rgb*pow(1.-saturate(dot(normal,normalize(vViewPosition))),3.)*.24*gDay;` : '';
   shader.fragmentShader = shader.fragmentShader
     .replace('#include <common>', '#include <common>\n' + GFX_HEAD)
@@ -1289,8 +1306,8 @@ const MAPS = [];
 const mapOf = n => MAPS[n % MAPS.length];
 const mapById = id => MAPS.find(m => m.id === id);
 // The version goes up with every release; the build (vite.config.js) stamps the date (while developing it says 'en pruebas')
-const GAME_VERSION = '58';
-const BUILD_DATE = '08/11/2026 01:23';
+const GAME_VERSION = '60';
+const BUILD_DATE = '08/11/2026 17:38';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -1861,7 +1878,11 @@ const PIER = { x0: -17, x1: -11.5, z0: 15.75, z1: 17.25 };
 const LAW_BASE = { work: 1, trust: 1, price: 1, patience: 1, thief: 1, moraleTo: 55, trustTo: 55 };
 const LAW = { ...LAW_BASE };
 const decFx = k => (DEC.fx[k] || 0) > 0;
-const townOn = () => S.tut >= 3 && S.mission >= 4;
+// v60 «modo sencillo» (friends: «super abrumador»): morale, trust, daily decisions, laws, the bank loan and the team are switched off.
+// The code stays, so any of them can come back by setting SIMPLE to false.
+const SIMPLE = true;
+const playOn = () => S.tut >= 3 && S.mission >= 4;
+const townOn = () => !SIMPLE && playOn();
 const decPriceF = () => decFx('price') ? 1.25 : 1;
 const decClosed = () => decFx('closed');
 // Morale 50 is normal speed; 100 is 40 % quicker, 0 is 40 % slower. On strike, a day off or helping a neighbour they stop
@@ -1940,11 +1961,11 @@ renderer.toneMapping = T.NoToneMapping;
 $('game').appendChild(renderer.domElement);
 const scene = new T.Scene();
 scene.background = new T.Color(THEME.sky);
-scene.fog = new T.Fog(THEME.sky, 26, 52);
+scene.fog = new T.Fog(THEME.sky, 38, 72);
 const camera = new T.PerspectiveCamera(42, 1, 1, 140);
-const LIGHT = { hemi: .62, sun: 1.5 };
-const hemi = new T.HemisphereLight(0xc4dcff, 0x8f8a55, LIGHT.hemi); scene.add(hemi);
-const sun = new T.DirectionalLight(0xfff0dc, LIGHT.sun);
+const LIGHT = { hemi: .7, sun: 1.6 };
+const hemi = new T.HemisphereLight(0xd4eaff, 0xa89a5c, LIGHT.hemi); scene.add(hemi);
+const sun = new T.DirectionalLight(0xffecc8, LIGHT.sun);
 sun.castShadow = true; sun.shadow.mapSize.set(GFX.shadow, GFX.shadow);
 Object.assign(sun.shadow.camera, { left: -17, right: 17, top: 17, bottom: -17, near: 1, far: 60 });
 sun.shadow.bias = -0.0006; sun.shadow.normalBias = .02; sun.shadow.radius = 3;
@@ -1955,7 +1976,7 @@ const skyDome = new T.Mesh(new T.SphereGeometry(125, 16, 10), new T.ShaderMateri
   uniforms: { top: { value: new T.Color() }, hor: { value: new T.Color() }, gDay: GFX.uDay },
   vertexShader: 'varying vec3 vD; void main(){ vD=normalize(position); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }',
   fragmentShader: `varying vec3 vD; uniform vec3 top, hor; uniform float gDay;
-    vec3 gGrade(vec3 c){ c*=.63; c=clamp((c*(2.51*c+.03))/(c*(2.43*c+.59)+.14),0.,1.); return mix(vec3(dot(c,vec3(.2126,.7152,.0722))),c,1.02); }
+    vec3 gGrade(vec3 c){ c*=.72; c=clamp((c*(2.51*c+.03))/(c*(2.43*c+.59)+.14),0.,1.); return mix(vec3(dot(c,vec3(.2126,.7152,.0722))),c,1.2); }
     void main(){ vec3 d=normalize(vD); float s=max(dot(d,normalize(vec3(.55,.62,.35))),0.);
       vec3 c=mix(hor,top,smoothstep(0.,.55,d.y))+vec3(1.,.8,.55)*(pow(s,18.)*.35+pow(s,300.)*2.)*gDay;
       gl_FragColor=vec4(gGrade(c),1.);
@@ -3109,7 +3130,7 @@ function makePerson(o) {
     const f = mesh(new T.SphereGeometry(.1, 8, 6).scale(1, .6, 1.4), o.boot || M.boot); f.position.set(0, -.32, .04); leg.add(f);
     body.add(leg); return leg;
   });
-  const torso = mesh(new T.CylinderGeometry(.23, .27, .52, 14), o.shirt); torso.position.y = .62; body.add(torso);
+  const torso = mesh(new T.CylinderGeometry(o.sex === 'm' ? .27 : o.sex === 'f' ? .21 : .23, o.sex === 'f' ? .28 : .27, .52, 14), o.shirt); torso.position.y = .62; body.add(torso);
   if (o.bib) {
     const pants = mesh(new T.CylinderGeometry(.28, .28, .22, 14), o.bib); pants.position.y = .43; body.add(pants);
     const bib = mesh(new T.BoxGeometry(.34, .3, .06), o.bib); bib.position.set(0, .68, .23); body.add(bib);
@@ -3254,7 +3275,7 @@ function makeSonia(id) {
     hair, hair2, curly: av.hair === 'curly', long: av.hair === 'long', bun: av.hair === 'bun', afro: av.hair === 'afro', shortBack: ['short', 'bun', 'ponytail', 'braid', 'spiky'].includes(av.hair),
     bald: av.hair === 'bald' || av.hair === 'mohawk', buzz: av.hair === 'buzz', ponytail: av.hair === 'ponytail', braid: av.hair === 'braid', bob: av.hair === 'bob', straight: av.hair === 'straight', spiky: av.hair === 'spiky', mohawk: av.hair === 'mohawk',
     eyes: av.eyes, eyeColor: AVATAR_EYE_COLORS[av.eyeColor] || 0, blush: av.blush, lips: av.lips, specs: av.glasses, ears: av.ears, beardStyle: av.beard,
-    freckles: av.freckles, beard: av.beard === true || av.beard === 'full' || av.beard === 'long', hat: hatO ? hatO.hat : null, hatColor: hatO && hatO.hatColor, cap: o.cap && L(o.cap), kerchief: o.kerchief, badge: o.badge, glasses: o.glasses, boot: L(o.boot) });
+    freckles: av.freckles, beard: av.beard === true || av.beard === 'full' || av.beard === 'long', hat: hatO ? hatO.hat : null, hatColor: hatO && hatO.hatColor, cap: o.cap && L(o.cap), kerchief: o.kerchief, badge: o.badge, glasses: o.glasses, boot: L(o.boot), sex: av.sex });
   const sickle = new T.Group(); sickle.position.set(0, -.32, .08); p.arm.add(sickle);
   const handle = mesh(new T.CylinderGeometry(.03, .03, .3, 6), M.woodDark); handle.rotation.x = Math.PI / 2; handle.position.z = .14; sickle.add(handle);
   const blade = mesh(new T.TorusGeometry(.19, .025, 5, 14, Math.PI * 1.1), M.metal); blade.position.set(-.17, 0, .3); blade.rotation.x = Math.PI / 2; sickle.add(blade);
@@ -4119,7 +4140,7 @@ function updateWorkers(dt) {
 /* ---------- Customers (with patience), each shop with its own ---------- */
 const customers = [];
 let angryToastT = 0;
-const patienceMax = s => (s.id === 'farm' ? 35 : 32) * (1 + (isBuilt('park') ? .3 : 0) + (isBuilt('cafe') ? .4 : 0) + (isBuilt('music') ? .15 : 0)) * (1 + .1 * (S.perks.patience || 0)) * LAW.patience;
+const patienceMax = s => (s.id === 'farm' ? 45 : 42) * (1 + (isBuilt('park') ? .3 : 0) + (isBuilt('cafe') ? .4 : 0) + (isBuilt('music') ? .15 : 0)) * (1 + .1 * (S.perks.patience || 0)) * LAW.patience;
 // The first field is always open, whatever it grows on this map
 function shopKinds(s) {
   const k = new Set([PATCHES[0].crop]);
@@ -4189,7 +4210,7 @@ function updateCustomers(dt) {
     const mine = customers.filter(c => c.shop === s);
     s.spawnT -= dt;
     if (s.spawnT <= 0) {
-      s.spawnT = (s.id === 'farm' ? Math.max(1.1, (5 - S.lv.sign * .3) * .92 ** houses()) : Math.max(1.8, (6.5 - S.lv.sign * .3) * .95 ** houses())) * (rushing ? .3 : dayOn() && dayPhase().id === 'morning' ? 1.4 : 1) * trustF();
+      s.spawnT = (s.id === 'farm' ? Math.max(1.6, (5 - S.lv.sign * .3) * .92 ** houses()) : Math.max(2.4, (6.5 - S.lv.sign * .3) * .95 ** houses())) * (rushing ? .5 : dayOn() && dayPhase().id === 'morning' ? 1.4 : 1) * trustF();
       // The other zones' shops only draw customers once Sonia has stocked them or hired their cashier
       const ready = s === FARM || S.lv[s.tills[0].staff] > 0 || Object.values(S.shops[s.id].stock).some(v => v > 0);
       if (ready && shopOpen() && !decClosed() && mine.filter(c => c.state !== 'leave').length < shopMax(s) + (rushing ? (s === FARM ? 5 : 2) : 0)) spawnCustomer(s);
@@ -4208,6 +4229,7 @@ function updateCustomers(dt) {
     const arrived = stepToward(c, tx, tz, 2.2, dt);
     if (c.state !== 'leave') {
       const waitingHere = c.state === 'queue' || (c.state === 'shop' && !(stock[c.want] > 0)) || c.state === 'toPay' || (c.state === 'pay' && !servedFor(c));
+      if (c.state === 'pay') c.selfT = (c.selfT || 0) + dt;
       if (waitingHere && shopOpen()) c.pat -= dt * (dirty ? 1.5 : 1);
       if (c.pat <= 0) customerLeaves(c, true);
     }
@@ -4584,12 +4606,12 @@ function updateSky() {
   const dusk = Math.min(1, 4 * day * (1 - day)) * (1 - stormK);
   sun.color.copy(sunNoon).lerp(sunDusk, dusk * .75);
   sun.intensity = LIGHT.sun * (.1 + .9 * day) * (1 - .72 * stormK); hemi.intensity = LIGHT.hemi * (.3 + .7 * day) * (1 - .55 * stormK) + stormFlash * 1.6;
-  hemi.color.setHex(0xc4dcff).lerp(skyNight, nightF * .5);
+  hemi.color.setHex(0xd4eaff).lerp(skyNight, nightF * .5);
   skyNow.setHex(THEME.sky).lerp(skyNight, nightF * .9).lerp(stormGrey, stormK * .85);
   GFX.uDay.value = day * (1 - .5 * stormK);
   { const on = !topView && GFX.tier > 0; if (clouds[0].visible !== on) clouds.forEach(c => { c.visible = on; }); }
   const dome = skyDome.material.uniforms;
-  dome.top.value.copy(skyNow).multiplyScalar(.62); dome.hor.value.copy(skyNow).lerp(skyHaze, .42 * day).lerp(skyDusk, dusk * .6);
+  dome.top.value.copy(skyNow).multiplyScalar(.82); dome.hor.value.copy(skyNow).lerp(skyHaze, .28 * day).lerp(skyDusk, dusk * .6);
   scene.background.copy(dome.hor.value); scene.fog.color.copy(dome.hor.value); skyDome.position.copy(camera.position);
   lantern.intensity = Math.max(0, nightF - .3) * 2.2; lantern.position.x = P.x; lantern.position.z = P.z;
   // A dark veil over the screen with a pool of light around Sonia: the night shows even on unlit ground
@@ -4601,7 +4623,7 @@ function updateSky() {
     if (vy !== veilY) { veilY = vy; nightVeil.style.setProperty('--veil-y', vy); }
   }
   // Seen from above, the fog moves back so the whole farm shows
-  const far = topView ? 95 : 52; if (scene.fog.far !== far) { scene.fog.far = far; scene.fog.near = topView ? 60 : 26; }
+  const far = topView ? 95 : 72; if (scene.fog.far !== far) { scene.fog.far = far; scene.fog.near = topView ? 60 : 38; }
   // Lamps and windows come on little by little as it gets dark
   const glow = Math.min(1, Math.max(0, nightF - .22) * 1.7);
   M.lamp.emissiveIntensity = glow; M.window.emissiveIntensity = glow * .6; updateLamps(glow);
@@ -5166,9 +5188,10 @@ function update(dt) {
   // Vehicles: instant sale at a lower price
   SELLS.forEach((s, i) => {
     if (!sellActive(s)) return;
-    const inside = near(s);
-    sellVehicles[i].fill.material.opacity = inside ? .6 : .3;
-    if (inside && P.stack.length && P.sellT <= 0) { if (sellAtVehicle(s)) P.sellT = Math.max(.03, .09 - P.stack.length * .002); }
+    // v59: Sonia has to stand still on it for a moment, so running past with the boots never sells the harvest cheap by mistake
+    const inside = near(s); s.hold = inside ? (s.hold || 0) + dt : 0;
+    sellVehicles[i].fill.material.opacity = inside ? (s.hold > .8 ? .6 : .3 + Math.abs(Math.sin(s.hold * 12)) * .3) : .3;
+    if (inside && s.hold > .8 && P.stack.length && P.sellT <= 0) { if (sellAtVehicle(s)) P.sellT = Math.max(.03, .09 - P.stack.length * .002); }
   });
 
   // Buildings, animals and docks
@@ -5375,7 +5398,7 @@ function updateLabels(dt) {
   });
   thieves.forEach(th => { if (show(th.tag, dist(th.x, th.z) < 22)) place(th.tag, toScreen(th.x, 2.1, th.z)); });
   const al = $('alerts');
-  if (show(al, waits.length > 0)) setHtml(al, `<b>⏳ Te esperan</b>${waits.join('')}`);
+  if (show(al, waits.length > 0)) setHtml(al, `<b>⏳</b>${waits.join('')}`);
   const rec = isBuilt('recycler');
   if (show(recTag, rec && dist(REC.plant.x, REC.plant.z) < 9)) {
     const kg = S.rec.queue + beltItems.length;
@@ -5838,9 +5861,9 @@ $('adGrow').addEventListener('click', () => {
 // It only starts once the player knows how to sell, and it is never touched while the game is closed.
 const moodOn = () => S.tut >= 2 && S.served >= 3;
 let moodWarnT = 0, moodShown = -1;
-const MOOD_RISE_CAP = 3.3;
+const MOOD_RISE_CAP = 2; // v59: friends found it too stressful (3.3 before)
 // How much one customer leaving angry adds (v51: halved, it jumped too much)
-const angerJump = c => (c.type === 'critic' ? 25 : c.vip ? 20 : c.type === 'kid' ? 10 : 12) * (c.shop === FARM ? 1 : .6);
+const angerJump = c => (c.type === 'critic' ? 16 : c.vip ? 13 : c.type === 'kid' ? 6 : 8) * (c.shop === FARM ? 1 : .6);
 const moodCashier = c => { const t = c.shop.tills && c.shop.tills[c.till]; return !!t && S.lv[t.staff] > 0; };
 function addMood(v) {
   if (!moodOn() || S.over || !shopOpen()) return;
@@ -5856,16 +5879,16 @@ function updateMood(dt) {
   // Customers far away in the other zones' shops weigh a quarter: Sonia cannot be everywhere at once.
   // Customers queuing at a till with its own cashier do not count: that is the cashier's job, not Sonia's.
   customers.forEach(c => {
-    if (c.state === 'leave' || c.pat >= c.patMax * .6) return;
+    if (c.state === 'leave' || c.pat >= c.patMax * .45) return;
     if ((c.state === 'pay' || c.state === 'toPay') && moodCashier(c)) return;
-    rise += (c.vip ? 1.7 : 1.1) * (c.shop === FARM ? 1 : .25);
+    rise += (c.vip ? 1.2 : .8) * (c.shop === FARM ? 1 : .1);
   });
   if (litter.length > 4) rise += (litter.length - 4) * .07;
   // However many shops are busy, it never rises faster than with about three customers waiting (v51: it got out of hand late in the game)
   rise = Math.min(rise, MOOD_RISE_CAP);
   const calm = (isBuilt('fountain') ? .25 : 0) + (isBuilt('music') ? .4 : 0);
   if (rise > calm) addMood((rise - calm) * dt);
-  else if (S.mood > 0) S.mood = Math.max(0, S.mood - (rise > 0 ? calm - rise : .6 + calm) * dt);
+  else if (S.mood > 0) S.mood = Math.max(0, S.mood - (rise > 0 ? calm - rise : 1 + calm) * dt);
   if (S.mood >= 70 && performance.now() - moodWarnT > 12000) { moodWarnT = performance.now(); sfx.full(); toast('😠 ¡Los clientes se están enfadando! Atiende la caja y repón el mostrador'); }
 }
 function renderMood() {
@@ -6065,6 +6088,7 @@ function openCreator() {
 }
 function renderCreator() {
   const on = v => (v ? ' on' : '');
+  $('avSex').innerHTML = `<button class="${on(draft.sex !== 'm').trim()}" data-sex="f">👧 Chica</button><button class="${on(draft.sex === 'm').trim()}" data-sex="m">👦 Chico</button>`;
   $('avHair').innerHTML = AVATAR_HAIR.map(h => `<button class="opt${on(draft.hair === h.id)}" data-hair="${h.id}">${h.name}</button>`).join('');
   $('avColor').innerHTML = AVATAR_COLORS.map((c, i) => `<button class="sw${on(draft.color === i)}" data-color="${i}" style="background:${hex(c)}" aria-label="Color de pelo ${i + 1}"></button>`).join('');
   $('avSkin').innerHTML = AVATAR_SKINS.map((c, i) => `<button class="sw${on(draft.skin === i)}" data-skin="${i}" style="background:${hex(c)}" aria-label="Tono de piel ${i + 1}"></button>`).join('');
@@ -6084,8 +6108,9 @@ function closeCreator() {
   $('creator').hidden = true; document.querySelector('.hud').hidden = false; labelsEl.hidden = false;
   $('hint').lastChild.textContent = ' Arrastra el dedo para mover a ' + who();
   $('hint').hidden = $('banner').hidden = false; pads.forEach(p => { p.icon.visible = true; });
-  last = performance.now(); sfx.mission(); toast(`¡Hola, ${who()}! Te damos la bienvenida a Sprouty Town 🌱`);
-  if (S.tut === 0 && !S.meta.tutSeen) openTutorial();
+  last = performance.now(); sfx.mission(); toast(`¡Hola, ${who()}! 🌱`);
+  // No cards at the start: the game teaches while playing, with short lines at the bottom (coach in 50-tips.js)
+  if (S.tut === 0 && !S.meta.tutSeen) { S.meta.tutSeen = true; S.meta.scenes = S.meta.scenes || {}; S.meta.scenes[THEME.id + ':intro'] = true; save(); }
 }
 // While the creator is open the game is paused: only the close-up camera, a gentle turn of the character and the sparkles move
 function creatorView(dt) {
@@ -6103,6 +6128,7 @@ function creatorView(dt) {
 }
 $('creator').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.sex) { setSex(b.dataset.sex); applyDraft(); renderCreator(); return; }
   if (b.dataset.tab) { $('avTabs').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); document.querySelectorAll('.cpage').forEach(p => { p.hidden = p.dataset.page !== b.dataset.tab; }); return; }
   if (b.dataset.pick) draft[b.dataset.pick] = b.dataset.val;
   else if (b.dataset.eyecolor) draft.eyeColor = +b.dataset.eyecolor;
@@ -6111,11 +6137,21 @@ $('creator').addEventListener('click', e => {
   else if (b.dataset.skin) draft.skin = +b.dataset.skin;
   else if (b.dataset.extra) draft[b.dataset.extra] = !draft[b.dataset.extra];
   else if (b.dataset.hat !== undefined) draft.hat = b.dataset.hat || undefined;
-  else if (b.id === 'avRandom') Object.assign(draft, { hair: pick(AVATAR_HAIR).id, color: Math.floor(Math.random() * AVATAR_COLORS.length), skin: Math.floor(Math.random() * AVATAR_SKINS.length), freckles: Math.random() < .5, beard: Math.random() < .3 ? pick(AVATAR_BEARD).id : '', eyes: pick(AVATAR_EYES).id, eyeColor: Math.floor(Math.random() * AVATAR_EYE_COLORS.length), glasses: Math.random() < .35 ? pick(AVATAR_GLASSES).id : '', ears: Math.random() < .35 ? pick(AVATAR_EARS).id : '', blush: Math.random() < .7, lips: Math.random() < .2 });
+  else if (b.id === 'avRandom') Object.assign(draft, { hair: pick(AVATAR_HAIR).id, color: Math.floor(Math.random() * AVATAR_COLORS.length), skin: Math.floor(Math.random() * AVATAR_SKINS.length), freckles: Math.random() < .5, beard: draft.sex === 'm' && Math.random() < .4 ? pick(AVATAR_BEARD).id : '', eyes: pick(AVATAR_EYES).id, eyeColor: Math.floor(Math.random() * AVATAR_EYE_COLORS.length), glasses: Math.random() < .35 ? pick(AVATAR_GLASSES).id : '', ears: Math.random() < .35 ? pick(AVATAR_EARS).id : '', blush: Math.random() < .7, lips: Math.random() < .2 });
   else if (b.id === 'avOk') { closeCreator(); return; }
   else return;
   applyDraft(); renderCreator();
 });
+// Chico / chica: a starting look for each (everything can still be changed after)
+const SEX_LOOK = {
+  f: { hair: 'curly', eyes: 'lashes', blush: true, beard: '', name: 'Sonia' },
+  m: { hair: 'short', eyes: 'round', blush: false, lips: false, ears: '', name: 'Tomás' },
+};
+function setSex(x) {
+  const l = SEX_LOOK[x], nm = $('avName').value.trim();
+  Object.assign(draft, l, { sex: x, name: !nm || nm === 'Sonia' || nm === 'Tomás' ? l.name : nm });
+  $('avName').value = draft.name;
+}
 $('avName').addEventListener('input', () => { draft.name = $('avName').value.trim().slice(0, 12); });
 $('avName').addEventListener('keydown', e => { if (e.key === 'Enter') $('avName').blur(); });
 $('avatarBtn').addEventListener('click', openCreator);
@@ -6941,7 +6977,7 @@ function updateTrouble(dt) {
   const zones = Object.keys(AREAS).filter(a => areaOpen(+a)).length;
   if (S.tut >= 3 && S.mission >= 6) {
     troubleT -= dt;
-    if (troubleT <= 0) { if (eventBusy()) troubleT = 20; else { troubleT = 80 + Math.random() * 50; startTrouble(); } }
+    if (troubleT <= 0) { if (eventBusy()) troubleT = 20; else { troubleT = (SIMPLE ? 220 : 80) + Math.random() * (SIMPLE ? 120 : 50); startTrouble(); } }
   }
   for (const t of [...TROUBLES]) {
     pulse(t.sign, 1.3); if (t.ring) t.ring.scale.setScalar(t.fix > 0 ? 1 : 1 + .08 * Math.sin(performance.now() / 150));
@@ -6974,7 +7010,9 @@ function updateTrouble(dt) {
 }
 
 // The customers who would only pay to Sonia (purple hat) were removed in v52: they held up the line and annoyed players
-const servedFor = c => c.shop.servedAt[c.till];
+// v59: Sonia cannot be at every till. After mission 8 a customer left alone at a till pays by itself after a while (SELF_PAY s)
+const SELF_PAY = 8;
+const servedFor = c => c.shop.servedAt[c.till] || (S.mission >= 8 && c.state === 'pay' && (c.selfT || 0) > SELF_PAY);
 function renderTrouble() {
   // Only the first problem gets a line; the rest are counted, so the side panel stays short
   const all = [...TROUBLES.map(t => `${t.text} · ${zoneName(t.area)}`)];
@@ -6988,7 +7026,7 @@ function renderTrouble() {
 if (!S.water || typeof S.water !== 'object') S.water = {};
 if (!S.dirt || typeof S.dirt !== 'object') S.dirt = {};
 const choresOn = () => S.tut >= 3 && S.mission >= 5;
-const waterSecs = () => 210 * (1 + .08 * S.lv.water);
+const waterSecs = () => (SIMPLE ? 480 : 210) * (1 + .08 * S.lv.water);
 const waterF = p => choresOn() && (S.water[p.id] ?? 1) <= 0 ? .33 : 1;
 const penDirty = b => !b.dock && choresOn() && (S.dirt[b.id] || 0) >= 1;
 const choreSigns = {}, cleanRings = {};
@@ -7003,7 +7041,7 @@ function updateChores(dt) {
   const fields = PATCHES.filter(p => unlocked(p.id) && reachable(p));
   fields.forEach(p => { S.water[p.id] = Math.max(0, (S.water[p.id] ?? 1) - dt / waterSecs()); });
   const pens = ANIMALS.filter(b => isBuilt(b.id) && !b.dock && reachable(b));
-  pens.forEach(b => { S.dirt[b.id] = Math.min(1, (S.dirt[b.id] || 0) + dt / 240); });
+  pens.forEach(b => { S.dirt[b.id] = Math.min(1, (S.dirt[b.id] || 0) + dt / (SIMPLE ? 480 : 240)); });
   // Watering: walking among a field's plants fills it up
   choreT -= dt;
   if (choreT <= 0) {
@@ -7578,7 +7616,7 @@ showSummary = () => {
 // Script → dress the set with what the workshops make → shoot the takes live (Sonia runs to fix what goes wrong and to send away whoever walks in)
 // → editing (real time, it goes on with the game closed; an ad or a star finishes it) → premiere at the Cine Luna → box office for some game days.
 // The takes decide the reviews, with a nudge from morale, trust and the on-set decisions. Nothing blocks the game.
-const filmHere = () => THEME.id === 'cine' && townOn();
+const filmHere = () => THEME.id === 'cine' && playOn();
 if (!S.film || typeof S.film !== 'object' || !S.film.v2) S.film = { v2: 1, stage: 'idle', sets: ['comedia'], run: [], hist: [], made: 0, q: 0 };
 const GENRES = [
   { id: 'comedia', icon: '😂', name: 'Comedia', set: 'Salón de comedia', at: [10.2, -8.4], area: 1, cost: 0, takes: 2, gap: 4.2, life: 5.5, mins: 2, money: .8, note: 'Rápida y sin riesgo', size: .7, wants: ['costume', 'popcorn2', 'floss'],
@@ -7768,9 +7806,9 @@ function filmScripts() {
 function filmRating() {
   const f = S.film, g = genreOf(f.g), takes = f.takes.length ? f.takes : [2], avg = takes.reduce((a, b) => a + b, 0) / takes.length;
   let r = 1 + (avg - 1) * 1.5 + (f.q || 0);
-  r += S.morale >= 65 ? .5 : S.morale < 35 ? -.5 : 0; r += S.trust >= 65 ? .5 : S.trust < 35 ? -.5 : 0;
-  if (g.needMorale) r += S.morale >= 60 ? .7 : -.7;
-  if (g.needTrust) r += S.trust >= 60 ? .7 : -.7;
+  if (!SIMPLE) r += S.morale >= 65 ? .5 : S.morale < 35 ? -.5 : 0; if (!SIMPLE) r += S.trust >= 65 ? .5 : S.trust < 35 ? -.5 : 0;
+  if (g.needMorale && !SIMPLE) r += S.morale >= 60 ? .7 : -.7;
+  if (g.needTrust && !SIMPLE) r += S.trust >= 60 ? .7 : -.7;
   if (g.swing) r += Math.random() < .5 ? 1 : -.7;
   return Math.max(1, Math.min(5, Math.round(r + (Math.random() - .5) * .5)));
 }
@@ -9035,7 +9073,6 @@ const HELP = [
   ['🚪', 'Zonas nuevas', 'Las verjas también tienen su círculo con precio. Algunas zonas nuevas están llenas de basura: bárrela andando por encima y vacía el saco en el contenedor 🗑️. Limpia, ya se puede construir.'],
   ['🧭', 'Si no sabes qué hacer', 'Sigue la flecha: te lleva a tu misión (la pastilla de arriba). Si queda fuera de la pantalla, sale una flecha en el borde. El botón 🛒 de la derecha te enseña todo lo que puedes comprar: toca «📍 Ir».'],
   ['😠', 'El enfado', 'Sube cuando los clientes esperan: porque no hay lo que quieren en el mostrador o porque nadie les cobra. Debajo de la barra pone qué lo está subiendo; tócala para verlo entero. Al 100 % pierdes el dinero del día.'],
-  ['⚖️', 'Las leyes', 'Más adelante salen leyes para tu pueblo: cada una tiene algo bueno y algo malo. Cuando sale una nueva se abre su ventana para que la apruebes. Las ves y las cambias tocando ⚖️ junto a 😊 y ⭐ (brilla si te cabe otra). Puedes cambiar una al día.'],
   ['🗺️', 'La cámara', '🗺️ enseña la granja desde arriba. 🔄 gira la vista; si lo arrastras, la inclinas.'],
   ['⏸️', 'Pausa', 'El botón ⏸️ para el juego. Si sales de la app, se pausa solo.'],
   ['🎁', 'Volver cada día', 'Cada día hay 3 misiones nuevas con cofre, y el cofre 🎁 de arriba vale más cuantos más días seguidos juegues.'],
@@ -9106,7 +9143,7 @@ updateLabels = dt => {
 function angerCauses() {
   const out = [], want = {}, pay = {};
   customers.forEach(c => {
-    if (c.state === 'leave' || c.pat >= c.patMax * .6) return;
+    if (c.state === 'leave' || c.pat >= c.patMax * .45) return;
     if ((c.state === 'pay' || c.state === 'toPay') && moodCashier(c)) return;
     const far = c.shop !== FARM ? ` en ${c.shop.name}` : '';
     if (c.state === 'pay' || c.state === 'toPay') pay[far] = (pay[far] || 0) + 1;
@@ -9271,53 +9308,66 @@ if (awayCoins) {
 // each get one or two cards the first time they appear (once per player, S.meta.tips), in the tutorial's own window.
 if (!S.meta.tips || typeof S.meta.tips !== 'object') S.meta.tips = {};
 const TIPS = [
-  { id: 'buy', when: () => buyItems().some(i => i.can && !i.stall), cards: [
+  { id: 'buy', line: '🟢 Verde = te llega. Quédate encima', when: () => buyItems().some(i => i.can && !i.stall), cards: [
     { icon: '🛒', title: '¡Ya puedes comprar algo!', text: 'Cuando el precio de un círculo se pone verde, te llega el dinero. Ve hasta él y quédate de pie encima: se paga solo.' },
     { icon: '📍', title: 'El botón 🛒', text: 'El botón 🛒 de la derecha te enseña todo lo que puedes comprar ahora. Toca «📍 Ir» y sigue la flecha.' },
   ] },
-  { id: 'sea', when: () => seaOpen(), cards: [
+  { id: 'sea', line: '⛵ Lleva carga al final del muelle', when: () => seaOpen(), cards: [
     { icon: '⛵', title: 'Tienes barco', text: 'Está en el muelle de esta isla. Lleva lo que produces hasta el círculo del final del muelle: se carga solo en la bodega.' },
     { icon: '🗺️', title: 'Abre el mapa y zarpa', text: 'Al pisar el círculo sale el muelle. Abre el mapa, toca una isla y el barco sale. Lo manejas con el dedo.' },
     { icon: '📈', title: 'Compra barato, vende caro', text: 'Cada isla paga distinto y los precios cambian cada día. Baja a las islas: hay cosas que recoger y sitio para tus huertos.' },
   ] },
-  { id: 'cam', when: () => S.mission >= 3, cards: [
+  { id: 'cam', line: '🎥 Arrastra 🔄 para girar la vista', when: () => S.mission >= 3, cards: [
     { icon: '🎥', title: 'Mueve la cámara', text: 'Arrastra el botón 🔄 para girar y subir o bajar la vista, o usa un segundo dedo mientras andas. Un toque en 🔄 la deja recta otra vez.' },
   ] },
-  { id: 'film', when: () => filmHere(), cards: [
+  { id: 'film', line: '🎬 Pisa el círculo rosa del plató', when: () => filmHere(), cards: [
     { icon: '🎬', title: 'Vas a dirigir películas', text: 'Pisa el círculo rosa del plató y elige un guion. Después lleva allí lo que pide, y el decorado se irá montando.' },
     { icon: '🎥', title: '¡Acción!', text: 'En las tomas, corre a los círculos rojos para arreglar lo que falle y toca a los curiosos antes de que entren en el plano. Cada fallo quita una estrella.' },
     { icon: '🍿', title: 'Noche de estreno', text: 'Tras el montaje, ve a la alfombra roja del Cine Luna. Cuanto mejor sea la crítica, más gana la película cada día en cartelera y más gente viene al estudio.' },
   ] },
-  { id: 'daily', when: () => !$('daily').hidden, cards: [
+  { id: 'daily', line: '📅 Misiones del día: toca la misión', when: () => !$('daily').hidden, cards: [
     { icon: '📅', title: 'Misiones del día', text: 'Cada día hay 3 misiones nuevas. Al completarlas abres un cofre con monedas y una estrella. Tócalas en el panel para verlas.' },
     { icon: '🎁', title: 'Vuelve cada día', text: 'El cofre diario 🎁 de arriba vale más cada día seguido que juegas. ¡No pierdas la racha!' },
   ] },
-  { id: 'town', when: () => townOn(), cards: [
+  { id: 'town', line: '😊 Ánimo = rapidez · ⭐ Confianza = clientes', when: () => townOn(), cards: [
     { icon: '😊', title: 'Ánimo y Confianza', text: 'Arriba ves el 😊 ánimo de tus trabajadores (si está alto van más rápido) y la ⭐ confianza de los vecinos (si está alta vienen más clientes).' },
     { icon: '❓', title: 'Tú decides', text: 'Una vez al día tendrás que tomar una decisión. Cada opción tiene algo bueno y algo malo: piénsalo bien.' },
   ] },
-  { id: 'chores', when: () => choresOn(), cards: [
+  { id: 'chores', line: '💧 Pasa por el campo para regarlo', when: () => choresOn(), cards: [
     { icon: '💧', title: 'Riega los campos', text: 'Cuando sale una gota 💧 encima de un campo, pasa por dentro para regarlo. Si no, crece muy despacio.' },
     { icon: '🧹', title: 'Limpia los corrales', text: 'Un corral sucio 🧹 produce la mitad. Para limpiarlo, quédate en el círculo azul que sale a su lado hasta que se llene.' },
   ] },
-  { id: 'trouble', when: () => TROUBLES.length > 0, cards: [
+  { id: 'trouble', line: '🔧 ¡Algo falla! Sigue la flecha', when: () => TROUBLES.length > 0, cards: [
     { icon: '🔧', title: 'Imprevistos', text: 'A veces algo falla: un taller se avería (repáralo quedándote en el círculo rojo de al lado hasta que se llene), llegan cuervos a un campo (entra para espantarlos) o se escapa un animal (ve a cogerlo).' },
   ] },
-  { id: 'works', when: () => Object.keys(S.works || {}).length > 0, cards: [
+  { id: 'works', line: '🏗️ Las obras siguen con el juego cerrado', when: () => Object.keys(S.works || {}).length > 0, cards: [
     { icon: '🏗️', title: 'Obras', text: 'Los edificios grandes tardan un rato en construirse, también con el juego cerrado. Si tienes prisa, acábalos con un anuncio o una estrella pisando su círculo.' },
   ] },
-  { id: 'rubble', when: () => [...$('zoneChip').children].some(e => e.classList.contains('dirty')), cards: [
+  { id: 'rubble', line: '🧹 Pisa la basura y vacíala en 🗑️', when: () => [...$('zoneChip').children].some(e => e.classList.contains('dirty')), cards: [
     { icon: '🧹', title: 'Zona sucia', text: 'Las zonas nuevas están llenas de basura. Camina por encima para barrerla y vacía el saco en el contenedor 🗑️. Cuando esté limpia podrás construir.' },
   ] },
 ];
-// At most one tip a minute, so a returning player is not met by a pile of windows
-let tipT = performance.now() - 45000;
+// Teach while playing: one short line at the bottom (#hint), never a window. First the opening steps, then each new
+// system's line the first time it shows up (once per player, S.meta.tips). The long explanations stay in ☰ → 📖.
+let tipT = performance.now() - 45000, coachTip = null, coachTxt = '';
+function coachNow() {
+  const fs = S.shops.farm, cs = customers.filter(c => c.shop === fs);
+  if (S.tut === 0) return moved <= 2 ? '👆 Arrastra el dedo para andar' : '🌷 Pisa el campo para cosechar';
+  if (S.tut === 1) return P.stack.length >= 3 ? '🧺 Llévalo al mostrador' : '🌷 Sigue cosechando';
+  if (S.mission < 8 && cs.some(c => c.state === 'pay' && !servedFor(c)) && !(S.lv.cashier > 0)) return '💵 Ponte en la caja para cobrar';
+  if (S.earned <= 25 && fs.cash > 0) return '💰 Coge los billetes del suelo';
+  if (coachTip && performance.now() - tipT < 7000) return coachTip;
+  return '';
+}
 function renderTips() {
-  if (performance.now() - tipT < 60000 || S.tut < 2 || creatorOn || sceneQueue || !$('creator').hidden || document.querySelector('.overlay:not([hidden])')) return;
-  const t = TIPS.find(x => !S.meta.tips[x.id] && x.when());
-  if (!t) return;
-  S.meta.tips[t.id] = true; tipT = performance.now(); save(); stat('consejo', { cual: t.id });
-  tutI = 0; tutList = t.cards; showTutCard(); $('tutOverlay').hidden = false;
+  const busy = creatorOn || sceneQueue || !$('creator').hidden || document.querySelector('.overlay:not([hidden])');
+  if (!busy && S.tut >= 2 && performance.now() - tipT > 25000) {
+    const t = TIPS.find(x => !S.meta.tips[x.id] && x.when());
+    if (t) { S.meta.tips[t.id] = true; tipT = performance.now(); coachTip = t.line; save(); stat('consejo', { cual: t.id }); }
+  }
+  const txt = busy ? '' : coachNow(), h = $('hint');
+  if (txt !== coachTxt) { coachTxt = txt; if (txt) { const i = txt.indexOf(' '); h.innerHTML = `<span class="hand">${txt.slice(0, i)}</span> ${txt.slice(i + 1)}`; } }
+  h.style.opacity = txt ? 1 : 0;
 }
 
 // Last script: from here on the main loop can run (34-loop.js waits for this)
