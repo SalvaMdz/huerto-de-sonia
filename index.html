@@ -735,6 +735,16 @@ body.titleon .overlay:not(#titleOverlay), body.titleon .creator { visibility: hi
     </div>
   </div>
 </div>
+<div class="overlay" id="awayOverlay" hidden>
+  <div class="adbox">
+    <p class="dsub" id="awaySub">Mientras no estabas</p>
+    <div class="bigface">💰</div>
+    <h3 id="awayTitle"></h3>
+    <p id="awayText"></p>
+    <button id="awayAd">📺 Ver anuncio: ×2</button>
+    <button class="ghost" id="awayOk">Cobrar</button>
+  </div>
+</div>
 <div class="overlay" id="decOverlay" hidden>
   <div class="adbox decision">
     <p class="dsub" id="decSub">Decisión</p>
@@ -1279,8 +1289,8 @@ const MAPS = [];
 const mapOf = n => MAPS[n % MAPS.length];
 const mapById = id => MAPS.find(m => m.id === id);
 // The version goes up with every release; the build (vite.config.js) stamps the date (while developing it says 'en pruebas')
-const GAME_VERSION = '57';
-const BUILD_DATE = '07/11/2026 14:41';
+const GAME_VERSION = '58';
+const BUILD_DATE = '08/11/2026 01:23';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -1870,9 +1880,10 @@ const trashValue = () => 10 * (1 + .5 * S.lv.compactor);
 
 // Zones opened before they came full of rubbish start clean
 if (S.rubbleV !== 1) { S.rubble = S.rubble || {}; [[2, 'gate'], [4, 'gate4'], [6, 'gate5'], [7, 'gate6'], [8, 'gate7'], [9, 'gate8']].forEach(([a, g]) => { if (S[g]) S.rubble[a] = 'done'; }); S.rubbleV = 1; }
-// Work done while the game was closed (capped at 8 hours)
+// Work done while the game was closed (capped at 8 hours); awaySecs also pays the «Mientras no estabas» coins (49i-away.js)
+let awaySecs = 0;
 {
-  const away = Math.min(8 * 3600, Math.max(0, (Date.now() - (S.t || Date.now())) / 1000));
+  const away = awaySecs = Math.min(8 * 3600, Math.max(0, (Date.now() - (S.t || Date.now())) / 1000));
   const mm = machineOf(S.lv.machine), fishers = fishersOn();
   PROCS.forEach(p => { if (!isBuilt(p.id)) return; const st = pstate(p.id); const n = Math.min(st.in, Math.floor(away * mm / p.time), PROC_MAX - st.out); st.in -= n; st.out += n; });
   ATTRS.forEach(a => { const lv = S.lv[a.id]; if (lv) S.tick[a.id] = Math.min(a.rate * lv * 2 ** (S.farm || 0) * 180, (S.tick[a.id] || 0) + away * a.rate * lv * 2 ** (S.farm || 0) * .25); });
@@ -5741,8 +5752,7 @@ function openPanel(kind) {
     title = '🎁 Cofre diario'; sub = `Un cofre gratis cada día. Cada día seguido que vuelves, el cofre vale más (hasta ×4 el día 7), y cada 7 días ganas ⭐ 2 estrellas.`;
     rows = `<div class="streak">${[1, 2, 3, 4, 5, 6, 7].map(i => { const n = st > 7 ? st - 7 + i : i; return `<span class="${n < st ? 'got' : n === st ? 'now' : ''}"><b>${n % 7 ? '🔥' : '⭐'}</b>Día ${n}</span>`; }).join('')}</div>`
       + (lost ? `<div class="prow"><span class="pi">💔</span><span class="pt2"><b>Salvar tu racha de ${S.meta.dayStreakLost} días</b>Ayer no viniste. Mira un anuncio y sigues por el día ${S.meta.dayStreakLost + 1}</span><button data-streak="1">📺 Salvar</button></div>` : '')
-      + `<div class="prow"><span class="pi">🎁</span><span class="pt2"><b>Abrir</b>+${fmt(v)} monedas</span><button data-chest="1">Abrir</button></div>`
-      + `<div class="prow"><span class="pi">📺</span><span class="pt2"><b>Ver anuncio</b>+${fmt(v * 2)} monedas</span><button data-chest="2">×2</button></div>`;
+      + `<div class="prow"><span class="pi">🎁</span><span class="pt2"><b>Abrir</b>+${fmt(v)} monedas</span><button data-chest="1">Abrir</button></div>`;
   } else if (kind === 'sea') {
     ({ title, sub, rows } = seaPanel());
   } else if (kind === 'stall') {
@@ -5754,8 +5764,7 @@ function openPanel(kind) {
   } else if (kind === 'daily') {
     const v = dailyValue();
     title = '📅 Cofre del día'; sub = '¡Has hecho las tres misiones de hoy! Mañana habrá tres nuevas.';
-    rows = `<div class="prow"><span class="pi">📅</span><span class="pt2"><b>Abrir</b>+${fmt(v)} monedas y ⭐ 1 estrella</span><button data-daily="1">Abrir</button></div>`
-      + `<div class="prow"><span class="pi">📺</span><span class="pt2"><b>Ver anuncio</b>+${fmt(v * 2)} monedas y ⭐ 1 estrella</span><button data-daily="2">×2</button></div>`;
+    rows = `<div class="prow"><span class="pi">📅</span><span class="pt2"><b>Abrir</b>+${fmt(v)} monedas y ⭐ 1 estrella</span><button data-daily="1">Abrir</button></div>`;
   }
   $('panelTitle').textContent = title; $('panelSub').textContent = sub;
   if ($('panelList')._h !== rows) { $('panelList').innerHTML = rows; $('panelList')._h = rows; }
@@ -5958,7 +5967,7 @@ function showSummary() {
   $('dayTitle').textContent = d.medal ? `Medalla de ${MEDALS[d.medal].name.toLowerCase()}` : 'Tienda cerrada antes de tiempo';
   $('dayStats').innerHTML = `<span>😊 Clientes atendidos</span><b>${fmt(d.served)}</b><span>😡 Enfadados</span><b>${fmt(d.angry)}</b><span>💵 Ventas del día</span><b>${fmt(d.sales)}</b><span>${d.medal ? MEDALS[d.medal].icon : '🔒'} Premio por medalla</span><b>${d.medal ? '+' + fmt(d.bonus) : 'sin premio'}</b>`;
   $('dayHint').textContent = d.medal === 'gold' ? '¡Día perfecto! Casi nadie se ha enfadado.' : d.medal === 'silver' ? 'Para el oro: que casi nadie se vaya enfadado y no pases del 75% de enfado.' : d.medal ? 'Para la plata: que se enfaden menos de 15 de cada 100 clientes.' : 'Mañana el enfado vuelve a empezar desde cero.';
-  $('dayAd').hidden = !d.sales; $('dayAd').textContent = `📺 Anuncio: +${fmt(d.sales + d.bonus)}`;
+  $('dayAd').hidden = !d.sales || d.n % 3 !== 0; // only every third day: it was ignored 9 times out of 10 $('dayAd').textContent = `📺 Anuncio: +${fmt(d.sales + d.bonus)}`;
   $('dayOverlay').hidden = false;
 }
 function claimSummary(extra) {
@@ -6186,10 +6195,17 @@ function stat(event, props) {
   };
   if (STATS_TEST) { console.log('[stats]', event, properties); return; }
   if (!STATS_KEY) return;
+  // Nothing goes out until the game has been open 10 s: robots and link previews of the web leave before that
+  if (!statsLive) { statsQueue.push([event, properties, new Date().toISOString()]); return; }
+  sendStat(event, properties, new Date().toISOString());
+}
+let statsLive = false, statsQueue = [];
+setTimeout(() => { statsLive = true; statsQueue.forEach(e => sendStat(...e)); statsQueue = []; }, 10000);
+function sendStat(event, properties, timestamp) {
   try {
     fetch(STATS_HOST + '/i/v0/e/', {
       method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ api_key: STATS_KEY, event, distinct_id: statsId, properties, timestamp: new Date().toISOString() })
+      body: JSON.stringify({ api_key: STATS_KEY, event, distinct_id: statsId, properties, timestamp })
     }).catch(() => {});
   } catch {}
 }
@@ -6212,11 +6228,11 @@ $('boostBtn').addEventListener('click', () => { if (!boosted()) stat('anuncio_of
 $('adCancel').addEventListener('click', () => stat('anuncio_rechazado', { sitio: 'x2' }));
 $('adWatch').addEventListener('click', () => stat('anuncio_aceptado', { sitio: 'x2' }));
 [['levelOverlay', 'nivel'], ['dayOverlay', 'dia'], ['moveOverlay', 'mudanza']].forEach(([id, sitio]) => {
-  const el = $(id), seen = () => { if (!el.hidden) stat('anuncio_ofrecido', { sitio }); };
+  const el = $(id), seen = () => { if (!el.hidden && (sitio !== 'dia' || !$('dayAd').hidden)) stat('anuncio_ofrecido', { sitio }); };
   new MutationObserver(seen).observe(el, { attributes: true, attributeFilter: ['hidden'] });
   seen();
 });
-[['skinBtn', 'ropa'], ['vskinBtn', 'pintura'], ['chestBtn', 'cofre']].forEach(([id, sitio]) =>
+[['skinBtn', 'ropa'], ['vskinBtn', 'pintura']].forEach(([id, sitio]) =>
   $(id).addEventListener('click', () => stat('anuncio_ofrecido', { sitio })));
 
 /* ================= Free building on a grid ================= */
@@ -6553,7 +6569,7 @@ function renderDaily() {
   box.classList.toggle('ready', ready);
 }
 $('daily').addEventListener('click', e => {
-  if (e.target.closest('[data-dopen]')) { openPanel('daily'); stat('anuncio_ofrecido', { sitio: 'diarias' }); return; }
+  if (e.target.closest('[data-dopen]')) { openPanel('daily'); return; }
   S.meta.dailyFold = !(S.meta.dailyFold ?? true); sfx.drop(); renderDaily(); save();
 });
 // Harvests and upgrades are counted where they happen
@@ -7083,7 +7099,8 @@ function showCard(c) {
   S.decSeen = [...S.decSeen.filter(i => i !== c.id), c.id].slice(-6);
   $('decSub').textContent = `Día ${S.dayN} · Decisión`;
   $('decIcon').textContent = c.icon; $('decTitle').textContent = c.title; $('decText').textContent = c.text;
-  $('decOpts').innerHTML = c.opts.map((o, i) => {
+  // The options come in a random order: players almost always tapped the first one
+  $('decOpts').innerHTML = c.opts.map((o, i) => [o, i]).sort(() => Math.random() - .5).map(([o, i]) => {
     const cost = o.coins < 0 ? Math.round(-o.coins * decBase()) : 0, poor = cost > S.coins;
     return `<button data-i="${i}" ${poor ? 'disabled' : ''}><b>${o.label}${poor ? ' (no te llega)' : ''}</b><span class="fx">${optFx(o).map(([t, good]) => `<i class="${good ? 'good' : 'bad'}">${t}</i>`).join('')}</span></button>`;
   }).join('');
@@ -9220,6 +9237,34 @@ $('titleSlotList').addEventListener('click', e => {
 });
 $('titleBtn').addEventListener('click', () => { sfx.drop(); openTitle(); });
 if (TITLE_ON) openTitle();
+
+/* ================= «Mientras no estabas»: coins earned with the game closed, doubled with an ad ================= */
+// 5 % of the normal sales per minute, for up to 8 hours away; only after 5 minutes away and once the shop runs on its own (mission 5)
+const AWAY_RATE = .05, AWAY_MIN_S = 300;
+let awayCoins = (awaySecs >= AWAY_MIN_S && S.mission >= 5) ? Math.round(incomeRef() * awaySecs / 60 * AWAY_RATE) : 0;
+function awayTime(s) { const h = Math.floor(s / 3600), m = Math.round(s % 3600 / 60); return h ? `${h} h${m ? ` ${m} min` : ''}` : `${m} min`; }
+function claimAway(mult) {
+  const v = awayCoins * mult; awayCoins = 0; $('awayOverlay').hidden = true; last = performance.now();
+  if (v > 0) { addCoins(v); flyCoins(P.x, 1.5, P.z, 10); burst(P.x, 2.2, P.z, '+' + fmt(v)); sfx.coin(); }
+  save();
+}
+function showAway() {
+  $('awayTitle').textContent = `+${fmt(awayCoins)} monedas`;
+  $('awayText').textContent = `Has estado fuera ${awayTime(awaySecs)}${awaySecs >= 8 * 3600 ? ' (lo máximo que cuenta)' : ''}. Tus cajeras siguieron vendiendo y los talleres trabajando. ¡Vuelve mañana y habrá más!`;
+  $('awayAd').textContent = `📺 Ver anuncio: +${fmt(awayCoins * 2)}`;
+  $('awayOk').textContent = `Cobrar +${fmt(awayCoins)}`;
+  $('awayOverlay').hidden = false; sfx.bell();
+  stat('anuncio_ofrecido', { sitio: 'ausencia' });
+}
+$('awayOk').addEventListener('click', () => claimAway(1));
+$('awayAd').addEventListener('click', () => { $('awayOverlay').hidden = true; showAd(() => claimAway(2), 'ausencia'); });
+// Waits until the title screen and any other window are gone
+if (awayCoins) {
+  const t = setInterval(() => {
+    if (document.querySelector('.overlay:not([hidden])') || !$('creator').hidden || $('loading').offsetParent || helpOpen()) return;
+    clearInterval(t); showAway();
+  }, 700);
+}
 
 /* ================= Tips: each new system explains itself the first time it shows up ================= */
 // The opening tutorial stays short. Daily missions, morale and decisions, chores, mishaps, timed works and dirty zones
