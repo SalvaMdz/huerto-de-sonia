@@ -678,7 +678,7 @@ body.titleon .overlay:not(#titleOverlay), body.titleon .creator { visibility: hi
   <button id="avatarBtn">🧑‍🎨 Personaje</button>
   <button id="skinBtn">👗 Aspecto</button>
   <button id="vskinBtn">🚜 Pintura del tractor</button>
-  <button id="farmsBtn">🗺️ Capítulos</button>
+  <button id="farmsBtn">🗺️ Barrios</button>
   <button id="testBtn" hidden>🧪 Pruebas</button>
   <button id="starsBtn">⭐ Estrellas</button>
   <button id="xmasBtn" hidden>🎄 Calendario</button>
@@ -839,12 +839,12 @@ body.titleon .overlay:not(#titleOverlay), body.titleon .creator { visibility: hi
 </div>
 <div class="overlay" id="moveOverlay" hidden>
   <div class="adbox">
-    <h3 id="moveTitle">¿Mudarse a un mapa nuevo?</h3>
+    <h3 id="moveTitle">¿Abrir un barrio nuevo?</h3>
     <div class="mapcard"><b id="moveMap"></b><span id="moveBonus"></span></div>
     <p id="moveTxt"></p>
-    <button id="moveAd">📺 Mudarse con ventaja</button>
-    <p class="small">Con el anuncio empiezas con cesta, botas y precios mejorados, cajera, 2 ardillas, tractor y 50.000 monedas.</p>
-    <button class="ghost" id="moveYes">🚚 Mudarse sin más</button>
+    <button id="moveAd">📺 Abrir con ventaja</button>
+    <p class="small">Con el anuncio el barrio empieza con precios mejorados, cajera, 2 ardillas y 50.000 monedas más.</p>
+    <button class="ghost" id="moveYes">🚌 Abrir sin más</button>
     <button class="ghost" id="moveNo">Todavía no</button>
   </div>
 </div>
@@ -1306,8 +1306,8 @@ const MAPS = [];
 const mapOf = n => MAPS[n % MAPS.length];
 const mapById = id => MAPS.find(m => m.id === id);
 // The version goes up with every release; the build (vite.config.js) stamps the date (while developing it says 'en pruebas')
-const GAME_VERSION = '60';
-const BUILD_DATE = '08/11/2026 17:38';
+const GAME_VERSION = '61';
+const BUILD_DATE = '08/11/2026 19:00';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -1359,7 +1359,7 @@ const OUTFITS = [
     look: { shirt: 0xe8384a, shorts: 0xe8384a, pants: 'skin', hat: 'visor', hatColor: 0xfdf6ea, glasses: true, boot: 0xf5c518 } },
   { id: 'gold',    name: 'Campeona',         icon: '🥇', text: 'Todo de oro, para las mejores tenderas', need: 'Consigue 5 medallas de oro', goal: 5, prog: () => S.meta.golds || 0,
     look: { shirt: 'gold', pants: 0xc98f12, bib: 0xc98f12, hat: 'straw', hatColor: 0xf6c445, kerchief: true, boot: 0xc98f12 } },
-  { id: 'queen',   name: 'Reina del huerto', icon: '👑', text: 'Vestido largo y corona', need: 'Múdate a una granja nueva', goal: 1, prog: () => +(S.farm > 0),
+  { id: 'queen',   name: 'Reina del huerto', icon: '👑', text: 'Vestido largo y corona', need: 'Abre un barrio nuevo', goal: 1, prog: () => +(S.farm > 0),
     look: { shirt: 0x8e5bd0, skirt: 0x6a2fb4, skirtLong: true, pants: 'skin', hat: 'crown', boot: 0x6a2fb4 } },
   { id: 'sailor',  name: 'Marinera',         icon: '⚓', text: 'Camiseta de rayas y gorra de marinera', need: 'Abre el puerto pesquero en la Costa Dorada', goal: 1, prog: () => +(THEME.id === 'costa' && S.gate5),
     look: { shirt: 'stripes', pants: 0x2f4f8f, hat: 'sailor', kerchief: true, boot: 0xfdfdfd } },
@@ -1677,7 +1677,10 @@ const SAVE_KEY = slotKey(SLOT), OLD_SAVE_KEY = 'huerto-sonia-v3';
 let TITLE_ON = true; try { if (sessionStorage.getItem('huerto-directo')) { TITLE_ON = false; sessionStorage.removeItem('huerto-directo'); } } catch {}
 function reloadGame() { try { sessionStorage.setItem('huerto-directo', '1'); } catch {} location.reload(); }
 // What belongs to the player and goes with them to every map; everything else belongs to one farm
-const PLAYER_KEYS = ['meta', 'stars', 'perks', 'achv', 'chestDay', 'life', 'sound', 'boostUntil'];
+// v61 «un solo pueblo»: the coins are one wallet for every neighbourhood (barrio); nothing starts from zero any more
+const PLAYER_KEYS = ['meta', 'stars', 'perks', 'achv', 'chestDay', 'life', 'sound', 'boostUntil', 'coins'];
+// Sonia's own gear goes with her too: basket, boots, broom, sack, fishing rod, tractor and mower (best level reached anywhere)
+const GEAR = ['bag', 'boots', 'broom', 'bin', 'rod', 'tractor', 'mower'];
 
 // Every zone has its own squirrels (harvest its fields) and carriers (take its workshops' and animals' goods to the shop).
 // The first zone keeps the old 'helper' and 'carrier'; the others get 'helper_N' and 'carrier_N', bought in that zone's stall.
@@ -1749,10 +1752,13 @@ if (WORLD.farms.cine && !(WORLD.farms.cine.film && WORLD.farms.cine.film.v2)) { 
 if (WORLD.farms.costa && !WORLD.farms.costa.sea) { WORLD.farms.costa = {}; const sc = WORLD.player.meta && WORLD.player.meta.scenes; if (sc) Object.keys(sc).forEach(k => { if (k.startsWith('costa:')) delete sc[k]; }); }
 const mapIndex = id => MAPS.findIndex(m => m.id === id);
 let S = sanitize(window.claude?.hot?.data?.state || { farm: mapIndex(WORLD.map), ...WORLD.farms[WORLD.map], ...WORLD.player });
+S.meta.gear = S.meta.gear || {};
+GEAR.forEach(k => { if (UPGRADES[k]) S.lv[k] = Math.min(UPGRADES[k].max, Math.max(S.lv[k] || 0, S.meta.gear[k] || 0)); });
 let leaving = false; // set while going to another map, so nothing writes this farm into the next map's place
 function save() {
   if (leaving || moveHold) return;
   S.t = Date.now(); WORLD.player = {}; const farm = {};
+  GEAR.forEach(k => { if ((S.lv[k] || 0) > (S.meta.gear[k] || 0)) S.meta.gear[k] = S.lv[k]; });
   Object.entries(S).forEach(([k, v]) => { if (PLAYER_KEYS.includes(k)) WORLD.player[k] = v; else farm[k] = v; });
   WORLD.farms[WORLD.map] = farm;
   try { localStorage.setItem(SAVE_KEY, JSON.stringify(WORLD)); } catch {}
@@ -3816,12 +3822,17 @@ const AREA_GATE = { 2: 'gate', 3: 'gate3', 4: 'gate4', 6: 'gate5', 7: 'gate6', 8
 const areaOpen = a => a === 1 || a === 5 || !!S[AREA_GATE[a]];
 const reachable = ref => areaOpen(ref.area || 1) && zoneClean(ref.area || 1) && (ref.sector === undefined || sectorClean(ref.sector));
 let MOVE_AFTER = 999;
+// v61: one town with neighbourhoods. Once a second one exists, the bus stop (the old lorry) is free and opens the list of barrios
+let moveBuying = false;
+const barrioHub = () => Object.keys(WORLD.farms).filter(id => id !== THEME.id).length > 0;
+const barrioCost = () => Math.round(MOVE.cost * fscale());
 function padInfoBase(pad) {
   const r = pad.ref;
   if (pad.kind === 'move') {
     // Once the next map has a farm of its own, the lorry takes Sonia there for free
-    const next = mapOf((S.farm || 0) + 1), there = !!WORLD.farms[next.id];
-    return { active: S.mission >= MOVE_AFTER && mapOpen(next), cost: there ? 0 : MOVE.cost, name: there ? 'Viajar a tu granja' : 'Mudarse de granja', icon: '🚚', sub: next.name };
+    const next = mapOf((S.farm || 0) + 1);
+    if (barrioHub()) return { active: true, cost: 0, name: 'Parada del pueblo', icon: '🚌', sub: 'Ir a otro barrio' };
+    return { active: S.mission >= MOVE_AFTER && mapOpen(next), cost: barrioCost(), name: `Camino a ${next.name}`, icon: '🚌', sub: 'Barrio nuevo' };
   }
   if (pad.kind === 'upg') {
     const l = S.lv[pad.id];
@@ -3872,10 +3883,12 @@ function refreshWorld() {
 function completePad(pad) {
   if (pad.kind === 'move') {
     const n = (S.farm || 0) + 1, th = mapOf(n);
-    if (WORLD.farms[th.id]) { toast(`🚚 Viajando a ${th.name}…`); goToMap(th.id); return; }
+    if (!moveBuying && barrioHub()) { P.moveBlock = 4; openPanel('farms'); return; }
+    moveBuying = false;
+    if (WORLD.farms[th.id]) { toast(`🚌 Yendo a ${th.name}…`); goToMap(th.id); return; }
     $('moveMap').textContent = `${th.icon} ${th.name}`;
     $('moveBonus').textContent = th.bonus ? `✨ ${th.bonus.text}` : '';
-    $('moveTxt').textContent = `Granja ${n + 1}: un mapa nuevo. Todo se venderá ×${2 ** n} y las mejoras costarán algo más. Ganas ⭐ ${starGain()} estrellas para mejoras permanentes.`;
+    $('moveTxt').textContent = `Un barrio nuevo del pueblo. Tu dinero, tu cesta y tus botas vienen contigo, y ${THEME.name} sigue vendiendo mientras no estás. Allí todo se vende ×${2 ** n}. Ganas ⭐ ${starGain()}.`;
     $('moveOverlay').hidden = false; return;
   }
   delete S.paid[pad.id]; addXP(15);
@@ -4811,7 +4824,7 @@ const MISSIONS = [
   { text: 'Construye el tobogán', reward: 6000000, goal: 1, prog: () => S.lv.slide, target: padT('slide'), v3: true },
   { text: 'Construye la piscina de olas', reward: 10000000, goal: 1, prog: () => S.lv.waves, target: padT('waves'), v3: true },
   { text: 'Gana 100 millones en total', reward: 20000000, goal: 1e8, prog: () => S.earned, target: () => null, v3: true },
-  { text: 'Múdate a una granja nueva', reward: 0, goal: 1, prog: () => 0, target: padT('move') },
+  { text: 'Abre un barrio nuevo en la parada 🚌', reward: 0, goal: 1, prog: () => 0, target: padT('move') },
 ];
 // The film studios weave shooting films into the story: the arrow takes a new player through the first film and each new set
 if (THEME.id === 'cine') {
@@ -4854,7 +4867,21 @@ if (THEME.id === 'costa') {
     ['Abre la feria', [{ text: 'Gana 1 millón comerciando', reward: 400000, goal: 1000000, prog: profit, target: () => null }, { text: 'Cumple 20 encargos', reward: 500000, goal: 20, prog: () => S.sea.done, target: () => null }]],
   ].forEach(([after, list]) => { const i = MISSIONS.findIndex(m => m.text === after); if (i >= 0) MISSIONS.splice(i + 1, 0, ...list); });
 }
-MOVE_AFTER = MISSIONS.findIndex(m => m.text.startsWith('Abre las piscinas')) + 1;
+// v61: the barrios after the Valle skip what would only repeat it (the town's houses and hall, the lake, recycling,
+// the fair and the pools): each one is about its own way of making money. The pads are still there, just not missions
+if (THEME.id !== 'valle') {
+  const REPEAT = new Set(['Construye tu primera casa en el pueblo', 'Construye el parque del pueblo', 'Construye la cafetería', 'Construye la comisaría para frenar a los ladrones',
+    'Atrapa a un ladrón (o que lo atrape la policía)', 'Construye 3 casas', 'Abre el lago', 'Construye el muelle de sardinas', 'Vende pescado a 10 clientes en la pescadería', 'Pesca 30 peces',
+    'Construye la conservera', 'Contrata a un pescador', 'Contrata una cajera en la pescadería', 'Construye el hotel', 'Construye el muelle de truchas', 'Construye la planta de reciclaje',
+    'Recicla 500 kilos de basura', 'Consigue el rastrillo', 'Compra un robot barrendero', 'Construye el banco', 'Abre la segunda caja de la pescadería y contrata cajera', 'Construye el muelle de cangrejos',
+    'Pon la furgoneta del mercado', 'Pon 2 cajeras en todas las tiendas', 'Construye el ayuntamiento', 'Construye las 5 casas', 'Construye la fuente para calmar a los clientes', 'Construye el quiosco de música',
+    'Pon 2 policías más de patrulla', 'Abre la feria', 'Construye el tiovivo', 'Construye la palomitería', 'Construye la casa del terror', 'Contrata al mecánico de la feria', 'Construye los autos de choque',
+    'Construye la noria', 'Sube el tiovivo al nivel 3', 'Construye la montaña rusa', 'Abre las piscinas', 'Construye la piscina', 'Planta los limoneros', 'Construye la limonadería', 'Construye la heladería',
+    'Construye el tobogán', 'Construye la piscina de olas', 'Gana 100 millones en total']);
+  for (let i = MISSIONS.length - 1; i >= 0; i--) if (REPEAT.has(MISSIONS[i].text)) MISSIONS.splice(i, 1);
+}
+// The bus stop to the next barrio opens with the last mission before «Abre un barrio nuevo»
+MOVE_AFTER = THEME.id === 'valle' ? MISSIONS.findIndex(m => m.text.startsWith('Abre las piscinas')) + 1 : MISSIONS.findIndex(m => m.text.startsWith('Abre un barrio nuevo'));
 // Missions about the last zones take the current map's names
 MISSIONS.forEach(m => { if (MAPC.missions && MAPC.missions[m.text]) m.text = MAPC.missions[m.text]; });
 function renderMission() {
@@ -4863,7 +4890,7 @@ function renderMission() {
   box.hidden = false;
   const m = MISSIONS[S.mission];
   if (!m) { $('missionNum').textContent = 'Granja completa'; $('missionTxt').textContent = '¡Has terminado todas las misiones!'; $('missionReward').textContent = '—'; $('missionBar').style.width = '100%'; return; }
-  $('missionNum').textContent = `Capítulo ${(S.farm || 0) + 1} · Misión ${S.mission + 1} de ${MISSIONS.length}`;
+  $('missionNum').textContent = `Barrio ${(S.farm || 0) + 1} · Misión ${S.mission + 1} de ${MISSIONS.length}`;
   const p = Math.min(m.goal, m.prog());
   $('missionTxt').textContent = m.goal > 1 ? `${m.text} (${fmt(p)}/${fmt(m.goal)})` : m.text;
   $('missionReward').textContent = fmt(m.reward * fscale());
@@ -5477,10 +5504,10 @@ function moveFarm(headStart) {
   if (WORLD.farms[next.id]) { goToMap(next.id); return; }
   const gain = starGain();
   S.meta.starsTotal = (S.meta.starsTotal || 0) + gain;
-  const keep = { farm: (S.farm || 0) + 1, life: S.life, sound: S.sound, boostUntil: S.boostUntil, ...prestigeKeep(), stars: S.stars + gain };
+  const keep = { farm: (S.farm || 0) + 1, life: S.life, sound: S.sound, boostUntil: S.boostUntil, ...prestigeKeep(), stars: S.stars + gain, coins: S.coins };
   save(); WORLD.map = next.id;
   S = { ...fresh(), ...keep, tut: 3 };
-  S.coins = Math.round((5000 * (S.perks.start || 0) + (headStart ? 50000 : 0)) * fscale());
+  S.coins += Math.round((5000 * (S.perks.start || 0) + (headStart ? 50000 : 0)) * fscale()); // the wallet comes along (v61)
   // Watching the ad starts the new map with a few skills already learnt
   if (headStart) Object.assign(S.lv, { bag: 4, boots: 3, sign: 2, cashier: 1, helper: 2, tractor: 1 });
   save();
@@ -5593,7 +5620,7 @@ const ACHV = [
   { id: 'stars10', icon: '🌟', name: 'Estrella', text: 'Consigue 10 estrellas de prestigio', goal: 10, prog: () => S.meta.starsTotal || 0, reward: 200000 },
   { id: 'thief10', icon: '🚔', name: 'Sheriff', text: 'Atrapa a 10 ladrones', goal: 10, prog: () => S.meta.thieves || 0, reward: 120000 },
   { id: 'rides', icon: '🎢', name: 'Feriante', text: 'Construye las 8 atracciones', goal: 8, prog: () => ATTRS.filter(a => S.lv[a.id] > 0).length, reward: 2000000 },
-  { id: 'maps', icon: '🗺️', name: 'Viajera', text: 'Múdate a 3 mapas distintos', goal: 3, prog: () => visitedMaps().length - 1, reward: 500000 },
+  { id: 'maps', icon: '🗺️', name: 'Viajera', text: 'Abre 3 barrios del pueblo', goal: 3, prog: () => visitedMaps().length - 1, reward: 500000 },
   { id: 'weeds200', icon: '🌿', name: 'Mano verde', text: 'Arranca 200 malas hierbas', goal: 200, prog: () => S.meta.weeds || 0, reward: 50000 },
   { id: 'pets25', icon: '🐶', name: 'Mejor amiga', text: 'Acaricia al perro 25 veces', goal: 25, prog: () => S.meta.pets || 0, reward: 25000 },
   { id: 'days10', icon: '📅', name: 'Tienda abierta', text: 'Termina 10 jornadas', goal: 10, prog: () => S.meta.days || 0, reward: 60000 },
@@ -5741,7 +5768,7 @@ function openPanel(kind) {
     }).join('');
   } else if (kind === 'farms') {
     // The story path: one chapter per map (48-story.js)
-    title = '🗺️ Capítulos'; sub = 'La historia de Sonia, capítulo a capítulo. Cada granja se queda guardada tal como la dejaste y puedes volver cuando quieras.';
+    title = '🗺️ Barrios del pueblo'; sub = 'Tu dinero y tu equipo van contigo a todos los barrios, y cada uno sigue vendiendo cuando no estás.';
     rows = chapterRows();
   } else if (kind === 'tests') {
     // Testers jump to any map at once, even the ones nobody else can see yet
@@ -5826,8 +5853,12 @@ $('panelList').addEventListener('click', e => {
     const o = OUTFITS.find(x => x.id === b.dataset.skinad);
     $('panelOverlay').hidden = true;
     showAd(() => { S.meta.skins = [...(S.meta.skins || []), o.id]; wearSkin(o); }, 'ropa');
+  } else if (b.dataset.openbarrio) {
+    const c = barrioCost(); if (S.coins < c) { toast('Aún no te llega'); return; }
+    S.coins -= c; S.paid.move = c; $('coinsTxt').textContent = fmt(S.coins); $('panelOverlay').hidden = true;
+    moveBuying = true; completePad(padById('move'));
   } else if (b.dataset.map) {
-    $('panelOverlay').hidden = true; toast(`🚚 Viajando a ${mapById(b.dataset.map).name}…`); setTimeout(() => goToMap(b.dataset.map), 400);
+    $('panelOverlay').hidden = true; toast(`🚌 Yendo a ${mapById(b.dataset.map).name}…`); setTimeout(() => goToMap(b.dataset.map), 400);
   } else if (b.dataset.leavetest) {
     leaveTesting(); $('panelOverlay').hidden = true; toast('Has salido del modo pruebas'); save(); setTimeout(reloadGame, 600);
   } else if (b.dataset.chest) {
@@ -8387,7 +8418,7 @@ const STORY = {
     outro: { icon: '🏆', lines: [
       [SONIA, 'Mira todo lo que hemos construido… Empecé con un huerto y ahora hay un pueblo entero.'],
       [['👴', 'El abuelo Paco'], 'Me han dicho que en la Costa el viejo puerto está abandonado. Necesitan a alguien como tú.'],
-      [SONIA, '¿Una granja junto al mar? ¡Me encanta! El Valle queda en buenas manos.'],
+      [SONIA, '¡Un barrio junto al mar! Y el Valle seguirá vendiendo mientras tanto.'],
     ] },
   },
   costa: {
@@ -8454,26 +8485,26 @@ function renderStory() {
   if (!st || creatorOn || sceneQueue || document.querySelector('.overlay:not([hidden])') || !$('creator').hidden) return;
   if (!sceneSeen(THEME.id + ':intro')) {
     markSeen(THEME.id + ':intro'); stat('escena', { cual: THEME.id + ':intro' });
-    showScene(st.intro, { tag: `Capítulo ${chapterN()}`, title: st.title }); return;
+    showScene(st.intro, { tag: `Barrio ${chapterN()}`, title: st.title }); return;
   }
   const s = st.steps.find(x => !sceneSeen(THEME.id + ':' + x.id) && x.when());
-  if (s) { markSeen(THEME.id + ':' + s.id); stat('escena', { cual: THEME.id + ':' + s.id }); showScene(s, { tag: `Capítulo ${chapterN()} · ${st.title}`, title: s.title }); }
+  if (s) { markSeen(THEME.id + ':' + s.id); stat('escena', { cual: THEME.id + ':' + s.id }); showScene(s, { tag: `Barrio ${chapterN()} · ${st.title}`, title: s.title }); }
 }
 // The end of a chapter: paying the lorry first closes the chapter with its scene, then offers the next one
 const completePadStory = completePad;
 completePad = pad => {
   const st = story(), next = mapOf(chapterN());
-  if (pad.kind === 'move' && st && st.outro && !WORLD.farms[next.id] && !sceneSeen(THEME.id + ':outro')) {
+  if (pad.kind === 'move' && st && st.outro && !WORLD.farms[next.id] && !sceneSeen(THEME.id + ':outro') && (moveBuying || !barrioHub())) {
     markSeen(THEME.id + ':outro'); S.meta.chapters = Math.max(S.meta.chapters || 0, chapterN());
     stat('capitulo_completado', { capitulo: chapterN() }); addXP(200);
-    showScene(st.outro, { tag: `¡Capítulo ${chapterN()} completado!`, title: st.title }, () => openMove(pad));
+    showScene(st.outro, { tag: `¡Barrio ${chapterN()} terminado!`, title: st.title }, () => openMove(pad));
     return;
   }
   if (pad.kind === 'move') openMove(pad); else completePadStory(pad);
 };
 function openMove(pad) {
   completePadStory(pad);
-  $('moveTitle').textContent = `¿Empezar el capítulo ${chapterN() + 1}?`;
+  $('moveTitle').textContent = `¿Abrir el barrio ${chapterN() + 1}?`;
   const st = STORY[mapOf(chapterN()).id]; if (st) $('moveMap').textContent += ` · ${st.title}`;
 }
 // A brand-new player hears the chapter's opening first, and then the "how to play" cards
@@ -8482,26 +8513,25 @@ openTutorial = () => {
   const st = story();
   if (!st || sceneSeen(THEME.id + ':intro')) { openTutorialStory(); return; }
   markSeen(THEME.id + ':intro'); stat('escena', { cual: THEME.id + ':intro' });
-  showScene(st.intro, { tag: `Capítulo ${chapterN()}`, title: st.title }, openTutorialStory);
+  showScene(st.intro, { tag: `Barrio ${chapterN()}`, title: st.title }, openTutorialStory);
 };
 
 /* The chapter path (menu ☰ → 🗺️ Capítulos) */
 // A map is a finished chapter only when it has its story; the others show as "coming soon" and the lorry will not go there yet
 const chapterMade = m => !!STORY[m.id] && mapOpen(m);
+// v61: the barrios of the one town. Visited ones are a tap away; the next one opens from the last barrio once its story is done
 function chapterRows() {
-  const hereN = chapterN();
+  const newOne = MAPS.find(m => !WORLD.farms[m.id] && m.id !== THEME.id), canOpen = newOne && newOne === mapOf((S.farm || 0) + 1) && S.mission >= MOVE_AFTER;
   return '<div class="chapters">' + MAPS.map((m, i) => {
-    const n = i + 1, f = WORLD.farms[m.id], here = m.id === THEME.id, made = chapterMade(m) || !!f;
-    const done = sceneSeen(m.id + ':outro') || (S.meta.chapters || 0) >= n || !!WORLD.farms[mapOf(n).id];
-    const st = STORY[m.id], name = st ? st.title : m.name;
-    let state, btn;
-    if (here) { state = 'now'; btn = '<button disabled>Estás aquí</button>'; }
-    else if (f) { state = done ? 'done' : 'open'; btn = `<button data-map="${m.id}">Viajar</button>`; }
-    else if (made) { state = 'locked'; btn = '<button disabled>🔒</button>'; }
-    else { state = 'soon'; btn = '<span class="soon">Próximamente</span>'; }
-    const what = here || f ? `${m.icon} ${m.name} · ${m.mechanic}` : made ? `Termina el capítulo ${n - 1} para abrirlo` : `${m.icon} ${m.mechanic}`;
-    const mark = done ? '✅' : here ? '📍' : f ? m.icon : '🔒';
-    return `<div class="prow chap ${state}"><span class="pi">${mark}</span><span class="pt2"><small>Capítulo ${n}${n < hereN && done ? ' · completado' : ''}</small><b>${name}</b>${what}</span>${btn}</div>`;
+    const n = i + 1, f = WORLD.farms[m.id], here = m.id === THEME.id, made = chapterMade(m) || !!f, st = STORY[m.id];
+    let state, btn, what;
+    if (here) { state = 'now'; btn = '<button disabled>Estás aquí</button>'; what = `${m.icon} ${m.mechanic}`; }
+    else if (f) { state = 'open'; btn = `<button data-map="${m.id}">Ir</button>`; what = `${m.icon} Sigue vendiendo mientras no estás`; }
+    else if (made && m === newOne && canOpen) { state = 'open'; btn = `<button data-openbarrio="1" ${S.coins < barrioCost() ? 'disabled' : ''}>🪙 ${fmt(barrioCost())}</button>`; what = `${m.icon} ${m.mechanic}`; }
+    else if (made) { state = 'locked'; btn = '<button disabled>🔒</button>'; what = m === newOne ? `Termina las misiones de ${MAPS[i - 1].name} para abrirlo` : 'Más adelante'; }
+    else { state = 'soon'; btn = '<span class="soon">Próximamente</span>'; what = `${m.icon} ${m.mechanic}`; }
+    const mark = here ? '📍' : f ? m.icon : m === newOne && canOpen ? '✨' : '🔒';
+    return `<div class="prow chap ${state}"><span class="pi">${mark}</span><span class="pt2"><small>Barrio ${n}</small><b>${st ? st.title : m.name}</b>${what}</span>${btn}</div>`;
   }).join('') + '</div>';
 }
 const padInfoStory = padInfoBase;
@@ -8509,7 +8539,7 @@ padInfoBase = pad => {
   const i = padInfoStory(pad);
   if (pad.kind === 'move') {
     const next = mapOf(chapterN());
-    if (!chapterMade(next) && !WORLD.farms[next.id]) { i.active = false; i.sub = `Capítulo ${chapterN() + 1}: próximamente`; }
+    if (!barrioHub() && !chapterMade(next) && !WORLD.farms[next.id]) { i.active = false; i.sub = 'Próximamente'; }
   }
   return i;
 };
@@ -9223,7 +9253,7 @@ function agoText(t) {
   if (m < 2) return 'ahora mismo'; if (m < 60) return `hace ${Math.round(m)} min`;
   if (m < 1440) return `hace ${Math.round(m / 60)} h`; const d = Math.round(m / 1440); return d === 1 ? 'ayer' : `hace ${d} días`;
 }
-const slotLine = i => `<b>${i.name}</b> · Nivel ${i.level}<br>Capítulo ${i.chapter} · ${i.map.icon} ${i.map.name} · misión ${i.mission}<br>${playTime(i.playT)} jugados${i.t ? ' · ' + agoText(i.t) : ''}`;
+const slotLine = i => `<b>${i.name}</b> · Nivel ${i.level}<br>Barrio ${i.chapter} · ${i.map.icon} ${i.map.name} · misión ${i.mission}<br>${playTime(i.playT)} jugados${i.t ? ' · ' + agoText(i.t) : ''}`;
 
 function renderTitle() {
   const i = slotInfo(SLOT);
@@ -9278,7 +9308,9 @@ if (TITLE_ON) openTitle();
 /* ================= «Mientras no estabas»: coins earned with the game closed, doubled with an ad ================= */
 // 5 % of the normal sales per minute, for up to 8 hours away; only after 5 minutes away and once the shop runs on its own (mission 5)
 const AWAY_RATE = .05, AWAY_MIN_S = 300;
-let awayCoins = (awaySecs >= AWAY_MIN_S && S.mission >= 5) ? Math.round(incomeRef() * awaySecs / 60 * AWAY_RATE) : 0;
+// v61: time spent playing in another barrio of the town pays three times as much: this one kept selling while Sonia built the other
+const awayBarrio = Object.entries(WORLD.farms).find(([id, f]) => id !== THEME.id && (f.t || 0) > (S.t || 0)), awayFrom = awayBarrio && mapById(awayBarrio[0]);
+let awayCoins = (awaySecs >= (awayFrom ? 60 : AWAY_MIN_S) && S.mission >= 5) ? Math.round(incomeRef() * awaySecs / 60 * AWAY_RATE * (awayFrom ? 3 : 1)) : 0;
 function awayTime(s) { const h = Math.floor(s / 3600), m = Math.round(s % 3600 / 60); return h ? `${h} h${m ? ` ${m} min` : ''}` : `${m} min`; }
 function claimAway(mult) {
   const v = awayCoins * mult; awayCoins = 0; $('awayOverlay').hidden = true; last = performance.now();
@@ -9287,7 +9319,7 @@ function claimAway(mult) {
 }
 function showAway() {
   $('awayTitle').textContent = `+${fmt(awayCoins)} monedas`;
-  $('awayText').textContent = `Has estado fuera ${awayTime(awaySecs)}${awaySecs >= 8 * 3600 ? ' (lo máximo que cuenta)' : ''}. Tus cajeras siguieron vendiendo y los talleres trabajando. ¡Vuelve mañana y habrá más!`;
+  $('awayText').textContent = awayFrom ? `Mientras estabas en ${awayFrom.name} (${awayTime(awaySecs)}), ${THEME.name} siguió vendiendo.` : `Has estado fuera ${awayTime(awaySecs)}${awaySecs >= 8 * 3600 ? ' (lo máximo que cuenta)' : ''}. Tus cajeras siguieron vendiendo y los talleres trabajando. ¡Vuelve mañana y habrá más!`;
   $('awayAd').textContent = `📺 Ver anuncio: +${fmt(awayCoins * 2)}`;
   $('awayOk').textContent = `Cobrar +${fmt(awayCoins)}`;
   $('awayOverlay').hidden = false; sfx.bell();
