@@ -702,7 +702,7 @@ body.titleon .overlay:not(#titleOverlay), body.titleon .creator { visibility: hi
 <div class="overlay" id="adOverlay" hidden>
   <div class="adbox" id="adOffer">
     <h3>📺 Anuncios con premio</h3>
-    <p>Elige tu premio: cobrar el doble durante 3 minutos, o que todos tus campos queden listos para cosechar.</p>
+    <p>Elige tu premio: cobrar el doble durante 5 minutos, o que todos tus campos queden listos para cosechar.</p>
     <button id="adWatch">📺 Ver anuncio: ganancias ×2</button>
     <button id="adGrow">🌱 Ver anuncio: todo crece ya</button>
     <button class="ghost" id="adCancel">Ahora no</button>
@@ -1306,8 +1306,8 @@ const MAPS = [];
 const mapOf = n => MAPS[n % MAPS.length];
 const mapById = id => MAPS.find(m => m.id === id);
 // The version goes up with every release; the build (vite.config.js) stamps the date (while developing it says 'en pruebas')
-const GAME_VERSION = '62';
-const BUILD_DATE = '12/11/2026 11:55';
+const GAME_VERSION = '63';
+const BUILD_DATE = '12/11/2026 12:13';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -1703,6 +1703,8 @@ UPGRADES.helper.zoneWorker = 'helper'; UPGRADES.carrier.zoneWorker = 'carrier';
   const worth = () => [...PATCHES, ...PROCS, ...ANIMALS].filter(o => (o.area || 1) === a).reduce((t, o) => t + (o.cost || 0), 0);
   UPGRADES['manager_' + a] = { name: 'Encargado', icon: '🧑‍💼', x: 0, z: 0, max: 1, cost: () => Math.round(Math.max(3000, worth() * 1.5) / 100) * 100, area: a, manager: true };
 });
+// Extra systems show up little by little (12 nov 2026, «too much at once»): from this player level
+const lvlOn = n => (S.meta.level || 1) >= n;
 const managed = a => (S.lv['manager_' + (a || 1)] || 0) > 0;
 
 const fresh = () => ({
@@ -5204,7 +5206,9 @@ function update(dt) {
   ATTRS.forEach(a => {
     if (!S.lv[a.id]) return;
     a.disc.fill.material.opacity = near(a.cash) ? .6 : .3;
-    if (S.tick[a.id] >= 1) collect(a.cash, Math.floor(S.tick[a.id]), a.bills, () => { S.tick[a.id] = 0; });
+    // One collection per visit (12 nov 2026): standing on the ring used to cash in every second. Step off and come back for more
+    const on = near(a.cash); if (!on) a.taken = false;
+    if (!a.taken && S.tick[a.id] >= 1 && collect(a.cash, Math.floor(S.tick[a.id]), a.bills, () => { S.tick[a.id] = 0; })) a.taken = true;
   });
   if (isBuilt('recycler')) {
     collect(REC.cash, S.rec.cash, recBills, () => { S.rec.cash = 0; });
@@ -5503,7 +5507,7 @@ function updateLabels(dt) {
     const f = floats[i]; f.t += dt; place(f.n, toScreen(f.x, f.y, f.z));
     if (f.t > .9) { f.n.remove(); floats.splice(i, 1); }
   }
-  const bb = $('boostBtn');
+  const bb = $('boostBtn'); bb.hidden = !boosted() && !lvlOn(4);
   if (boosted()) { const s = Math.ceil((S.boostUntil - Date.now()) / 1000); bb.textContent = `×2 ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; bb.classList.add('on'); }
   else if (bb.classList.contains('on') || bb.textContent !== '📺 ×2') { bb.textContent = '📺 ×2'; bb.classList.remove('on'); }
 }
@@ -5518,7 +5522,7 @@ $('adWatch').addEventListener('click', () => {
   clearInterval(adTimer);
   adTimer = setInterval(() => {
     n--; $('adCount').textContent = n;
-    if (n <= 0) { clearInterval(adTimer); $('adOverlay').hidden = true; S.boostUntil = Date.now() + 3 * 60 * 1000; stat('anuncio_visto', { sitio: 'x2' }); save(); toast('¡Ganancias ×2 durante 3 minutos!'); sfx.mission(); }
+    if (n <= 0) { clearInterval(adTimer); $('adOverlay').hidden = true; S.boostUntil = Date.now() + 5 * 60 * 1000; stat('anuncio_visto', { sitio: 'x2' }); save(); toast('¡Ganancias ×2 durante 5 minutos!'); sfx.mission(); }
   }, 1000);
 });
 // The vehicle button goes round on foot → tractor → mower, skipping the ones not bought yet
@@ -5734,6 +5738,12 @@ function renderExtras() {
   $('skinBtn').textContent = `👗 Aspecto: ${OUTFITS.filter(skinGot).length}/${OUTFITS.length}${S.meta.skinNew ? ' · ¡nuevo!' : ''}`;
   $('menuBtn').textContent = S.meta.skinNew || S.meta.vskinNew ? '☰ ✨' : '☰';
   $('chestBtn').hidden = !chestReady();
+  // Coming back another day: the chest opens by itself, so the reason to return is seen (12 nov 2026; only 1 in 4 came back)
+  if (chestReady() && (S.meta.chests || 0) > 0 && S.meta.chestAuto !== todayKey() && performance.now() > 5000 && !creatorOn && !document.querySelector('.overlay:not([hidden])') && $('creator').hidden) {
+    S.meta.chestAuto = todayKey(); openPanel('chest'); sfx.bell();
+  }
+  // The first day, after a while playing, say that tomorrow there is a present
+  if (!S.meta.toldTomorrow && S.tut >= 2 && performance.now() > 600000 && !(S.meta.chests > 1)) { S.meta.toldTomorrow = true; toast('🎁 ¡Vuelve mañana! Cada día que entras te espera un cofre, y vale más cada día seguido'); }
   $('starsBtn').textContent = `⭐ Estrellas: ${S.stars}`;
   $('achvBtn').textContent = `🏆 Logros: ${ACHV.filter(a => S.achv[a.id]).length}/${ACHV.length}`;
   const chips = [];
@@ -5830,7 +5840,7 @@ function openPanel(kind) {
     }).join('');
   } else if (kind === 'chest') {
     const v = Math.round(chestValue() * streakMult()), st = S.meta.dayStreak || 1, lost = S.meta.dayStreakLost && S.meta.dayStreakLostDay === todayKey();
-    title = '🎁 Cofre diario'; sub = `Un cofre gratis cada día. Cada día seguido que vuelves, el cofre vale más (hasta ×4 el día 7), y cada 7 días ganas ⭐ 2 estrellas.`;
+    title = (S.meta.chests || 0) > 0 ? '🎁 ¡Has vuelto! Tu cofre de hoy' : '🎁 Cofre diario'; sub = `Un cofre gratis cada día. Cada día seguido que vuelves, el cofre vale más (hasta ×4 el día 7), y cada 7 días ganas ⭐ 2 estrellas.`;
     rows = `<div class="streak">${[1, 2, 3, 4, 5, 6, 7].map(i => { const n = st > 7 ? st - 7 + i : i; return `<span class="${n < st ? 'got' : n === st ? 'now' : ''}"><b>${n % 7 ? '🔥' : '⭐'}</b>Día ${n}</span>`; }).join('')}</div>`
       + (lost ? `<div class="prow"><span class="pi">💔</span><span class="pt2"><b>Salvar tu racha de ${S.meta.dayStreakLost} días</b>Ayer no viniste. Mira un anuncio y sigues por el día ${S.meta.dayStreakLost + 1}</span><button data-streak="1">📺 Salvar</button></div>` : '')
       + `<div class="prow"><span class="pi">🎁</span><span class="pt2"><b>Abrir</b>+${fmt(v)} monedas</span><button data-chest="1">Abrir</button></div>`;
@@ -5858,6 +5868,7 @@ function openChest(times) {
   if (st % 7 === 0) { S.stars += 2; S.meta.starsTotal = (S.meta.starsTotal || 0) + 2; setTimeout(() => toast(`⭐ ¡${st} días seguidos! +2 estrellas`), 1800); }
   addCoins(v); flyCoins(P.x, 1.5, P.z, 12); burst(P.x, 2.2, P.z, '🎁 +' + fmt(v)); sfx.mission(); puff(P.x, 1, P.z, 0xf6c445, 16, 1.5, 3.5);
   toast(`🎁 ¡Cofre abierto! +${fmt(v)} monedas`); save();
+  const nx = Math.min(7, st + 1), tm = 1 + .5 * (nx - 1); setTimeout(() => toast(`📅 Mañana: cofre del día ${st + 1}${(st + 1) % 7 === 0 ? ' con ⭐ 2 estrellas' : ` ×${tm}`}. ¡No lo pierdas!`), 2600);
 }
 function showAd(done, sitio) {
   stat('anuncio_aceptado', { sitio });
@@ -6052,7 +6063,7 @@ function showSummary() {
   $('dayTitle').textContent = d.medal ? `Medalla de ${MEDALS[d.medal].name.toLowerCase()}` : 'Tienda cerrada antes de tiempo';
   $('dayStats').innerHTML = `<span>😊 Clientes atendidos</span><b>${fmt(d.served)}</b><span>😡 Enfadados</span><b>${fmt(d.angry)}</b><span>💵 Ventas del día</span><b>${fmt(d.sales)}</b><span>${d.medal ? MEDALS[d.medal].icon : '🔒'} Premio por medalla</span><b>${d.medal ? '+' + fmt(d.bonus) : 'sin premio'}</b>`;
   $('dayHint').textContent = d.medal === 'gold' ? '¡Día perfecto! Casi nadie se ha enfadado.' : d.medal === 'silver' ? 'Para el oro: que casi nadie se vaya enfadado y no pases del 75% de enfado.' : d.medal ? 'Para la plata: que se enfaden menos de 15 de cada 100 clientes.' : 'Mañana el enfado vuelve a empezar desde cero.';
-  $('dayAd').hidden = !d.sales || d.n % 3 !== 0; // only every third day: it was ignored 9 times out of 10 $('dayAd').textContent = `📺 Anuncio: +${fmt(d.sales + d.bonus)}`;
+  $('dayAd').hidden = true; // off since 12 nov 2026: only 17% took it (PostHog), it was the most ignored ad
   $('dayOverlay').hidden = false;
 }
 function claimSummary(extra) {
@@ -6629,7 +6640,7 @@ function dailyNewDay() {
   }
 }
 function dailyAdd(k, n = 1) {
-  const d = S.meta.daily; if (!d || d.day !== todayKey() || S.tut < 2) return;
+  const d = S.meta.daily; if (!d || d.day !== todayKey() || S.tut < 2 || !lvlOn(8)) return;
   const m = d.list.find(x => x.k === k); if (!m || m.got >= m.goal) return;
   m.got = Math.min(m.goal, m.got + n);
   if (m.got >= m.goal) { sfx.mission(); toast(`✅ Misión del día: ${DAILY_KINDS[k].text(m.goal)}${dailyDone() ? ' · ¡Abre el cofre!' : ''}`); }
@@ -6657,7 +6668,7 @@ function saveStreak() {
 function renderDaily() {
   dailyNewDay(); watchDaily();
   const box = $('daily'), d = S.meta.daily;
-  box.hidden = S.tut < 2 || d.claimed;
+  box.hidden = S.tut < 2 || d.claimed || !lvlOn(8);
   if (box.hidden) return;
   const fold = S.meta.dailyFold ?? true, n = d.list.filter(m => m.got >= m.goal).length, ready = n === 3;
   const h = `<div class="mt"><span class="mk">📅 Misiones del día · ${n}/3</span><span class="dk">🔥 ${S.meta.dayStreak || 1}${fold ? ' ▸' : ' ▾'}</span></div>`
@@ -6729,6 +6740,7 @@ function renderWeek() {
 function weekLabel() {
   const b = $('weekBtn'), n = weekCount(), w = S.meta.weekly, t = w && weekDone() && !w.claimed ? '🗓️ Semana · ¡Cofre! 🎁' : `🗓️ Semana · ${n}/4`;
   if (b._t !== t) { b.textContent = t; b._t = t; }
+  b.hidden = !lvlOn(12);
 }
 function watchWeek() {
   weekState();
@@ -6832,7 +6844,7 @@ renderWorks();
 // The first zone follows the missions (the cashier always first); the other zones go from cheapest to dearest.
 const UPG_ORDER = ['cashier', 'bag', 'boots', 'sign', 'helper', 'carrier', 'dog', 'cashier2', 'workers', 'patrol'];
 // The meadow's broom and sack come first: without them the meadow cannot be cleaned
-const upgRank = id => { if (id === 'broom' || id === 'bin') return -3 + (id === 'bin'); if (id.startsWith('manager')) return 45; const i = UPG_ORDER.indexOf(id); return i >= 0 ? i : id.startsWith('fame') ? 50 : 40; };
+const upgRank = id => { if (id === 'broom' || id === 'bin') return -3 + (id === 'bin'); if (id.startsWith('manager')) return 99; /* the manager is always last in its stall */ const i = UPG_ORDER.indexOf(id); return i >= 0 ? i : id.startsWith('fame') ? 50 : 40; };
 const upgDesc = p => {
   const r = p.ref, sh = r.shop || r.fame;
   if (r.fame) return `Todo lo de ${sh.name} se vende un 15% más caro por nivel`;
@@ -8823,7 +8835,7 @@ function collectFind(onlyId) {
   }
   save();
 }
-function collectRoll() { if (S.mission >= 3 && Math.random() < DROP_CHANCE) collectFind(); }
+function collectRoll() { if (S.mission >= 3 && lvlOn(15) && Math.random() < DROP_CHANCE) collectFind(); }
 function renderAlbums() {
   const bonus = Math.round((S.meta.albumBonus || 0) * 100);
   $('albumTop').textContent = bonus ? `Tus álbumes completos te dan +${bonus} % de monedas para siempre.` : `Salen al cosechar y en el cofre del día. Cada álbum completo da +3 % de monedas para siempre y ⭐ ${ALBUM_STARS}.`;
@@ -9177,7 +9189,7 @@ const HELP = [
   ['🚪', 'Zonas nuevas', 'Las verjas también tienen su círculo con precio. Algunas zonas nuevas están llenas de basura: bárrela andando por encima y vacía el saco en el contenedor 🗑️. Limpia, ya se puede construir.'],
   ['🧭', 'Si no sabes qué hacer', 'Sigue la flecha: te lleva a tu misión (la pastilla de arriba). Si queda fuera de la pantalla, sale una flecha en el borde. El botón 🛒 de la derecha te enseña todo lo que puedes comprar: toca «📍 Ir».'],
   ['😠', 'El enfado', 'Sube cuando los clientes esperan: porque no hay lo que quieren en el mostrador o porque nadie les cobra. Debajo de la barra pone qué lo está subiendo; tócala para verlo entero. Al 100 % pierdes el dinero del día.'],
-  ['🧑‍💼', 'Encargado', 'En el puesto 🛠️ de cada zona, cuando ya tienes lo demás, puedes contratar un encargado: esa zona cobra sola, el dinero va a tu cartera y no se avería ni se ensucia.'],
+  ['🧑‍💼', 'Encargado', 'Es la última mejora del puesto 🛠️ de cada zona: cuando has comprado todo lo demás, puedes contratar un encargado: esa zona cobra sola, el dinero va a tu cartera y no se avería ni se ensucia.'],
   ['🎥', 'La cámara', 'El botón de la cámara cambia entre 4 vistas: normal, cerca, desde arriba y todo el mapa. 🔄 gira la vista.'],
   ['⏸️', 'Pausa', 'El botón ⏸️ para el juego. Si sales de la app, se pausa solo.'],
   ['🎁', 'Volver cada día', 'Cada día hay 3 misiones nuevas con cofre, y el cofre 🎁 de arriba vale más cuantos más días seguidos juegues.'],
