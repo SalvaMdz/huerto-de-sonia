@@ -617,6 +617,8 @@ body.titleon .overlay:not(#titleOverlay), body.titleon .creator { visibility: hi
 .banner { display: none !important; }
 .padlabel:not(.near) .nm { display: none; }
 .hint .hand { margin-right: 4px; }
+/* Survey prize line (12 nov 2026): a written comment earns the unique 🏅 outfit, so it must stand out */
+.survey .surveyprize { background: #fff3c4; border: 2px solid #f0c64a; border-radius: 12px; padding: 6px 10px; font-weight: 800; color: #6b4426; margin: 6px 0; }
 </style>
 
 <div id="game"></div>
@@ -850,10 +852,11 @@ body.titleon .overlay:not(#titleOverlay), body.titleon .creator { visibility: hi
 </div>
 <div class="overlay" id="surveyOverlay" hidden>
   <div class="adbox panel survey">
-    <h3>📋 ¡Nos ayudas con esto?</h3>
-    <p>Eres de los primeros en probar el juego. Son 5 toques y el juego sigue justo donde estabas.</p>
+    <h3 id="surveyTitle">📋 ¡Nos ayudas con esto?</h3>
+    <p id="surveyIntro">Eres de los primeros en probar el juego. Son 5 toques y el juego sigue justo donde estabas.</p>
+    <p class="surveyprize">✍️ Si escribes un comentario abajo, te llevas un traje <b>único</b>: 🏅 Probador de oro</p>
     <div id="surveyQs"></div>
-    <textarea id="surveyText" rows="2" maxlength="800" placeholder="Si quieres: ¿qué cambiarías o añadirías?"></textarea>
+    <textarea id="surveyText" rows="3" maxlength="800" placeholder="✍️ Escribe aquí y gana el traje 🏅 Probador de oro: ¿qué cambiarías o añadirías?"></textarea>
     <button id="surveySend" disabled>Faltan 5 respuestas</button>
   </div>
 </div>
@@ -1027,7 +1030,10 @@ const GFX = (() => {
   const ios = /iPhone|iPad/.test(navigator.userAgent);
   const auto = !phone ? 2 : ios ? 1 : ((navigator.deviceMemory || 4) <= 2 || (navigator.hardwareConcurrency || 4) <= 4) ? 0 : 1;
   const tier = forced !== undefined ? forced : saved !== null ? Math.min(+saved, auto) : auto;
-  return { tier, forced: forced !== undefined, pr: [1.25, 1.5, 2][tier], shadow: [1024, 1536, 2048][tier], shadowEvery: [3, 2, 1][tier], uT: { value: 0 }, uDay: { value: 1 }, uSnow: { value: 0 } };
+  // New look on trial (12 nov 2026): only with ?graficos=nuevos (remembered on this phone; ?graficos=viejos goes back)
+  const gq = new URLSearchParams(location.search).get('graficos'); let v2 = false;
+  try { if (gq === 'nuevos') localStorage.setItem('huerto-graficos', '2'); if (gq === 'viejos') localStorage.removeItem('huerto-graficos'); v2 = localStorage.getItem('huerto-graficos') === '2'; } catch (e) { v2 = gq === 'nuevos'; }
+  return { v2, tier, forced: forced !== undefined, pr: [1.25, 1.5, 2][tier], shadow: [1024, 1536, 2048][tier], shadowEvery: [3, 2, 1][tier], uT: { value: 0 }, uDay: { value: 1 }, uSnow: { value: 0 } };
 })();
 // The look of the game lives here, in a few shader lines shared by every solid thing, so it weighs nothing to download:
 // soft shade where things meet the ground, patchy ground color, drifting cloud shadows, rim light, water, wind and color curve.
@@ -1036,7 +1042,10 @@ float gN(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.-2.*f);
   float a=fract(sin(dot(i,vec2(127.1,311.7)))*43758.5453), b=fract(sin(dot(i+vec2(1.,0.),vec2(127.1,311.7)))*43758.5453),
         c=fract(sin(dot(i+vec2(0.,1.),vec2(127.1,311.7)))*43758.5453), d=fract(sin(dot(i+vec2(1.,1.),vec2(127.1,311.7)))*43758.5453);
   return mix(mix(a,b,f.x),mix(c,d,f.x),f.y); }
-vec3 gGrade(vec3 c){ c*=vec3(.76,.74,.7); c=clamp((c*(2.51*c+.03))/(c*(2.43*c+.59)+.14),0.,1.); float gx=max(0.,c.g-max(c.r,c.b)); c.g-=gx*.2; c.r+=gx*.09; return mix(vec3(dot(c,vec3(.2126,.7152,.0722))),c,1.18); }
+${GFX.v2
+  // New look: softer and less saturated, warm light, shadows lifted a little towards blue instead of going black
+  ? 'vec3 gGrade(vec3 c){ c*=vec3(.78,.76,.72); c=clamp((c*(2.51*c+.03))/(c*(2.43*c+.59)+.14),0.,1.); float gx=max(0.,c.g-max(c.r,c.b)); c.g-=gx*.28; c.r+=gx*.12; float l=dot(c,vec3(.2126,.7152,.0722)); c=mix(vec3(l),c,1.13); c+=vec3(.012,.018,.04)*(1.-smoothstep(0.,.35,l)); c*=vec3(1.02,1.,.97); return c; }'
+  : 'vec3 gGrade(vec3 c){ c*=vec3(.76,.74,.7); c=clamp((c*(2.51*c+.03))/(c*(2.43*c+.59)+.14),0.,1.); float gx=max(0.,c.g-max(c.r,c.b)); c.g-=gx*.2; c.r+=gx*.09; return mix(vec3(dot(c,vec3(.2126,.7152,.0722))),c,1.18); }'}
 `;
 const GFX_SURFACE = `
 #ifdef WATER
@@ -1046,7 +1055,11 @@ const GFX_SURFACE = `
     totalEmissiveRadiance+=vec3(.85,.93,1.)*(pow(l1,7.)*.13+pow(l2,9.)*.07)*gDay*(1.-smoothstep(12.,34.,distance(cameraPosition,vGW))); }
 #else
   if(vGW.y<.14){ float v=(gN(vGW.xz*.13)-.5)*.3+(gN(vGW.xz*.9+7.)-.5)*.14+(gN(vGW.xz*3.4+3.)-.5)*.1; diffuseColor.rgb*=1.+v; diffuseColor.b*=1.-v*.3; }
+#ifdef V2
+  diffuseColor.rgb*=1.-.4*smoothstep(.04,.14,vGW.y)*(1.-smoothstep(.14,1.7,vGW.y));
+#else
   diffuseColor.rgb*=1.-.32*smoothstep(.06,.14,vGW.y)*(1.-smoothstep(.14,1.3,vGW.y));
+#endif
 #ifdef LEAFY
   { float n=gN(vGW.xz*3.1+vGW.y*2.3), k=gN(vGW.xz*7.3-vGW.y*5.); diffuseColor.rgb*=.66+n*.5+k*.24; }
 #endif
@@ -1055,6 +1068,7 @@ const GFX_SURFACE = `
 function gfxHook(shader) {
   shader.uniforms.gT = GFX.uT; shader.uniforms.gDay = GFX.uDay; shader.uniforms.gSnow = GFX.uSnow;
   const std = shader.fragmentShader.includes('<lights_physical_fragment>');
+  if (GFX.v2) shader.fragmentShader = '#define V2\n' + shader.fragmentShader;
   shader.vertexShader = shader.vertexShader
     .replace('#include <common>', '#include <common>\nvarying vec3 vGW; uniform float gT;')
     .replace('#include <project_vertex>', `#if defined(WIND) && defined(USE_INSTANCING)
@@ -1070,7 +1084,7 @@ function gfxHook(shader) {
   const anchor = std ? '#include <lights_physical_fragment>' : '#include <specularmap_fragment>';
   // Fog moves before the color curve so faraway things melt into the sky; in the stock order it comes out too dark
   const extras = std && GFX.tier ? `gl_FragColor.rgb*=1.-.06*gDay*smoothstep(.5,.72,gN(vGW.xz*.035+vec2(gT*.018,gT*.007)));
-    gl_FragColor.rgb+=diffuseColor.rgb*pow(1.-saturate(dot(normal,normalize(vViewPosition))),3.)*.24*gDay;` : '';
+    gl_FragColor.rgb+=${GFX.v2 ? 'mix(diffuseColor.rgb,vec3(1.,.86,.62),.45)*pow(1.-saturate(dot(normal,normalize(vViewPosition))),2.6)*.3*gDay*step(.14,vGW.y)' : 'diffuseColor.rgb*pow(1.-saturate(dot(normal,normalize(vViewPosition))),3.)*.24*gDay'};` : '';
   shader.fragmentShader = shader.fragmentShader
     .replace('#include <common>', '#include <common>\n' + GFX_HEAD)
     .replace(anchor, GFX_SURFACE + `
@@ -1082,6 +1096,9 @@ function gfxHook(shader) {
     .replace('#include <fog_fragment>', '')
     .replace('#include <tonemapping_fragment>', extras + `
       #include <fog_fragment>
+      #ifdef V2
+      gl_FragColor.rgb=mix(gl_FragColor.rgb,vec3(.62,.74,.88),.16*smoothstep(36.,75.,distance(cameraPosition.xz,vGW.xz))*gDay);
+      #endif
       gl_FragColor.rgb=gGrade(gl_FragColor.rgb);`);
 }
 // Per-pixel lit material for everything solid. On low-end phones it becomes per-vertex light, which is much cheaper
@@ -1193,7 +1210,7 @@ const ITEMS = {
 const PATCHES = [
   { id: 'A', crop: 'tulip',      x: -4.4,  z: -2.6,  cols: 6, rows: 6, cost: 0,     regrow: 5,  area: 1 },
   { id: 'B', crop: 'wheat',      x: 4.4,   z: -2.6,  cols: 6, rows: 6, cost: 100,   regrow: 7,  area: 1 },
-  { id: 'C', crop: 'pumpkin',    x: 0,     z: -10.2,  cols: 8, rows: 4, cost: 700,   regrow: 10, area: 1 },
+  { id: 'C', crop: 'pumpkin',    x: 4.8,   z: -10.2,  cols: 6, rows: 5, cost: 700,   regrow: 10, area: 1 },
   { id: 'D', crop: 'sunflower',  x: -4.2,  z: -19.6, cols: 6, rows: 5, cost: 4000,  regrow: 12, area: 2 },
   { id: 'E', crop: 'strawberry', x: 4.2,   z: -19.6, cols: 6, rows: 5, cost: 9000,  regrow: 14, area: 2 },
   { id: 'F', crop: 'apple',      x: 21.05, z: -8.1,  cols: 5, rows: 4, cost: 25000, regrow: 16, area: 3, sector: 0, spacing: 1.25 },
@@ -1306,8 +1323,8 @@ const MAPS = [];
 const mapOf = n => MAPS[n % MAPS.length];
 const mapById = id => MAPS.find(m => m.id === id);
 // The version goes up with every release; the build (vite.config.js) stamps the date (while developing it says 'en pruebas')
-const GAME_VERSION = '63';
-const BUILD_DATE = '12/11/2026 12:13';
+const GAME_VERSION = '64';
+const BUILD_DATE = '12/11/2026 13:30';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -1375,6 +1392,8 @@ const OUTFITS = [
     look: { shirt: 0xf4f4f4, pants: 0xf4f4f4, hat: 'helmet', badge: true, boot: 0xd9dde3 } },
   { id: 'flower',  name: 'Florista',         icon: '🌸', text: 'Vestido rosa y corona de flores', need: 'Mira un anuncio', goal: 1, prog: () => 0, ad: true,
     look: { shirt: 0xf7c6dc, skirt: 0xf06aa8, pants: 'skin', hat: 'flowers', boot: 0xf06aa8 } },
+  { id: 'goldtester', name: 'Probador de oro', icon: '🏅', text: 'Chaqueta dorada y corona: solo para quien nos ayudó con un comentario', need: 'Escribe un comentario en una encuesta', goal: 1, prog: () => (S.meta.goldTester ? 1 : 0),
+    look: { shirt: 0xf6c445, pants: 0x2a2a30, hat: 'crown', badge: true, boot: 0x6b4426 } },
   { id: 'santa',   name: 'Papá Noel',         icon: '🎅', text: 'Traje rojo y gorro para el frío', need: 'Abre todo el calendario de Navidad', goal: 1, prog: () => (S.meta.santa ? 1 : 0),
     look: { shirt: 0xd8262f, pants: 0xd8262f, hat: 'beanie', hatColor: 0xd8262f, boot: 0x2a2a2a } },
 ];
@@ -1978,9 +1997,9 @@ const scene = new T.Scene();
 scene.background = new T.Color(THEME.sky);
 scene.fog = new T.Fog(THEME.sky, 38, 72);
 const camera = new T.PerspectiveCamera(42, 1, 1, 140);
-const LIGHT = { hemi: .7, sun: 1.6 };
-const hemi = new T.HemisphereLight(0xd4eaff, 0xa89a5c, LIGHT.hemi); scene.add(hemi);
-const sun = new T.DirectionalLight(0xffecc8, LIGHT.sun);
+const LIGHT = GFX.v2 ? { hemi: .85, sun: 1.45 } : { hemi: .7, sun: 1.6 };
+const hemi = new T.HemisphereLight(GFX.v2 ? 0xcfe4ff : 0xd4eaff, GFX.v2 ? 0xb8a070 : 0xa89a5c, LIGHT.hemi); scene.add(hemi);
+const sun = new T.DirectionalLight(GFX.v2 ? 0xffe2b0 : 0xffecc8, LIGHT.sun);
 sun.castShadow = true; sun.shadow.mapSize.set(GFX.shadow, GFX.shadow);
 Object.assign(sun.shadow.camera, { left: -17, right: 17, top: 17, bottom: -17, near: 1, far: 60 });
 sun.shadow.bias = -0.0006; sun.shadow.normalBias = .02; sun.shadow.radius = 3;
@@ -2171,6 +2190,11 @@ flat(new T.PlaneGeometry(3.4, 3), M.path, 12.4, .006, 1);
 flat(new T.PlaneGeometry(4, 21.6), M.path, 14.6, .006, -3);
 flat(new T.PlaneGeometry(3.4, 3), M.path, -12.4, .006, -8.5);
 flat(new T.PlaneGeometry(1.8, 14), M.path, -6.75, .006, 15);
+// Paths inside the farm (12 nov 2026): from the square up to the forest gate and across to the lake gate, with a stone edge
+{ const walk = (w, d, x, z, alongZ) => { flat(new T.PlaneGeometry(w, d), M.path, x, .0062, z);
+    const e = alongZ ? [[.14, d, x - w / 2, z], [.14, d, x + w / 2, z]] : [[w, .14, x, z - d / 2], [w, .14, x, z + d / 2]];
+    e.forEach(([ew, ed, ex, ez]) => flat(new T.PlaneGeometry(ew, ed), M.sidewalk, ex, .0066, ez)); };
+  walk(2.6, 13.3, 0, -6.6, true); walk(10.2, 2.4, -6.5, -8.5, false); }
 flat(new T.PlaneGeometry(24.6, 2.6), M.road, 0, .008, 12);
 flat(new T.PlaneGeometry(24.6, .8), M.sidewalk, 0, .009, 10.3);
 flat(new T.PlaneGeometry(24.6, .8), M.sidewalk, 0, .009, 13.7);
@@ -3768,12 +3792,25 @@ if (ROAD) for (let x = -10; x <= 10; x += 5) {
   const pole = mesh(new T.CylinderGeometry(.05, .06, 2, 6), M.dark); pole.position.set(x, 1, 10.3); scene.add(pole);
   const lamp = mesh(new T.SphereGeometry(.16, 8, 6), M.lamp, false); lamp.position.set(x, 2.05, 10.3); scene.add(lamp);
 }
+// Cars on the road (12 nov 2026, rebuilt: they were two boxes): a small car, a van and a little lorry, each with
+// windows, lights, bumpers and wheels with hubcaps, all in one mesh per vehicle. They drive along +x
+const GLASS = 0x9fd4ee, TYRE = 0x2a2a2e, HUB = 0xc9ccd2, CHROME = 0xb8bcc4;
+const wheel = (x, z, r = .19) => [{ geo: new T.CylinderGeometry(r, r, .16, 12).rotateX(Math.PI / 2).translate(x, r, z), color: TYRE }, { geo: new T.CylinderGeometry(r * .5, r * .5, .17, 10).rotateX(Math.PI / 2).translate(x, r, z), color: HUB }];
+const lights = (fx, bx, y, w) => [pBox(.04, .1, .16, fx, y, w, 0xfff4c2), pBox(.04, .1, .16, fx, y, -w, 0xfff4c2), pBox(.04, .1, .14, bx, y, w, 0xe8384a), pBox(.04, .1, .14, bx, y, -w, 0xe8384a)];
+const CAR_KINDS = {
+  car: c => [pBox(1.7, .36, .9, 0, .4, 0, c), pBox(.4, .06, .86, .62, .6, 0, shade(c, .92)), pBox(.92, .36, .82, -.12, .76, 0, c), pBox(.94, .07, .84, -.12, .97, 0, shade(c, .9)),
+    pBox(.04, .28, .74, .35, .77, 0, GLASS), pBox(.04, .26, .72, -.59, .77, 0, GLASS), pBox(.36, .24, .02, .07, .78, .415, GLASS), pBox(.36, .24, .02, -.33, .78, .415, GLASS), pBox(.36, .24, .02, .07, .78, -.415, GLASS), pBox(.36, .24, .02, -.33, .78, -.415, GLASS),
+    pBox(.08, .1, .94, .86, .27, 0, CHROME), pBox(.08, .1, .94, -.86, .27, 0, CHROME), ...lights(.86, -.86, .45, .3), ...wheel(.52, .43), ...wheel(-.52, .43), ...wheel(.52, -.43), ...wheel(-.52, -.43)],
+  van: c => [pBox(1.9, .9, .95, 0, .66, 0, c), pBox(.5, .5, .95, .95, .45, 0, c), pBox(.04, .32, .8, 1.21, .82, 0, GLASS), pBox(1.92, .06, .97, 0, 1.12, 0, shade(c, .88)),
+    pBox(.7, .26, .02, .1, .88, .48, GLASS), pBox(.7, .26, .02, .1, .88, -.48, GLASS), pBox(1.94, .12, .99, 0, .45, 0, 0xfdf6ea), pBox(.08, .1, .99, 1.22, .27, 0, CHROME), pBox(.08, .1, .99, -.97, .27, 0, CHROME),
+    ...lights(1.21, -.97, .5, .32), ...wheel(.78, .46), ...wheel(-.6, .46), ...wheel(.78, -.46), ...wheel(-.6, -.46)],
+  lorry: c => [pBox(.75, .75, .95, .82, .62, 0, c), pBox(.04, .3, .8, 1.2, .82, 0, GLASS), pBox(.3, .26, .02, .9, .84, .48, GLASS), pBox(.3, .26, .02, .9, .84, -.48, GLASS), pBox(.77, .06, .97, .82, 1.02, 0, shade(c, .88)),
+    pBox(1.5, .14, 1, -.35, .36, 0, 0x55504a), pBox(1.4, .95, 1.02, -.4, .92, 0, 0xfdf6ea), pBox(1.42, .08, 1.04, -.4, 1.42, 0, c), pBox(1.42, .08, 1.04, -.4, .48, 0, c),
+    pBox(.08, .1, .99, 1.22, .27, 0, CHROME), ...lights(1.21, -1.12, .5, .32), ...wheel(.82, .46, .21), ...wheel(-.75, .46, .21), ...wheel(.82, -.46, .21), ...wheel(-.75, -.46, .21)],
+};
 const cars = (ROAD ? [0, 1, 2, 3] : []).map(i => {
-  const g = new T.Group(), color = pick([0xd8402f, 0x3f7fd0, 0xf5c518, 0x3fa34d, 0xfdf6ea]);
-  const body = mesh(new T.BoxGeometry(1.6, .42, .85), mat(color)); body.position.y = .38; g.add(body);
-  const cab = mesh(new T.BoxGeometry(.85, .36, .75), mat(color)); cab.position.set(-.1, .76, 0); g.add(cab);
-  const win = mesh(new T.BoxGeometry(.87, .22, .77), M.window); win.position.set(-.1, .78, 0); g.add(win);
-  [[-.5, .43], [.5, .43], [-.5, -.43], [.5, -.43]].forEach(([x, z]) => { const w = mesh(new T.CylinderGeometry(.17, .17, .12, 10), M.tire); w.rotation.x = Math.PI / 2; w.position.set(x, .17, z); g.add(w); });
+  const g = new T.Group(), color = pick([0xd8402f, 0x3f7fd0, 0xf5c518, 0x3fa34d, 0xf08a3a, 0x8a5ad0]), kind = ['car', 'van', 'car', 'lorry'][i];
+  addDetails(g, CAR_KINDS[kind](color));
   const dir = i % 2 ? -1 : 1;
   g.position.set(-14 + i * 7, 0, dir > 0 ? 12.55 : 11.45); g.rotation.y = dir > 0 ? 0 : Math.PI;
   scene.add(g); return { g, v: dir * (2.5 + Math.random() * 1.5) };
@@ -8779,32 +8816,50 @@ const SURVEY = [
   { id: 'fluidez', q: '¿Cómo va en tu móvil?', a: ['Fluido', 'Algún tirón', 'Va mal'] },
   { id: 'volver', q: '¿Seguirías jugando mañana?', a: ['Sí', 'Puede', 'No'] },
 ];
+// The second survey (12 nov 2026), at 50 minutes, asks about what came later. A written comment in either one earns a unique outfit
+const SURVEY2_AT = 50 * 60;
+const SURVEY2 = [
+  { id: 'nota', q: '¿Y ahora, cuánto te gusta?', row: true, a: ['😣', '😕', '😐', '🙂', '😍'] },
+  { id: 'nuevo', q: '¿Qué te ha gustado más de lo que has ido abriendo?', a: ['Nuevas zonas', 'El encargado', 'Las cámaras', 'El cofre de cada día', 'Otros barrios', 'Nada en especial'] },
+  { id: 'mas', q: '¿Qué te haría jugar más cada día?', a: ['Más regalos diarios', 'Más edificios y zonas', 'Eventos especiales', 'Jugar con amigos', 'Una historia', 'Nada'] },
+  { id: 'lio', q: '¿Hay algo que no entiendes?', a: ['Nada, todo claro', 'Las mejoras', 'Qué hacer después', 'El barco', 'El cine', 'Los barrios'] },
+  { id: 'volver', q: '¿Seguirías jugando la semana que viene?', a: ['Sí', 'Puede', 'No'] },
+];
+let surveyN = 1; const surveyQ = () => surveyN === 2 ? SURVEY2 : SURVEY;
 const surveyA = {};
 function renderSurvey() {
-  $('surveyQs').innerHTML = SURVEY.map(s => `<div class="crow"><span>${s.q}</span><div class="opts${s.row ? ' emoji' : ''}">`
+  $('surveyQs').innerHTML = surveyQ().map(s => `<div class="crow"><span>${s.q}</span><div class="opts${s.row ? ' emoji' : ''}">`
     + s.a.map((a, i) => `<button class="opt${surveyA[s.id] === i ? ' on' : ''}" data-q="${s.id}" data-i="${i}">${a}</button>`).join('') + '</div></div>').join('');
-  const left = SURVEY.filter(s => surveyA[s.id] === undefined).length;
+  const left = surveyQ().filter(s => surveyA[s.id] === undefined).length;
   $('surveySend').disabled = left > 0; $('surveySend').textContent = left ? `Faltan ${left} ${left === 1 ? 'respuesta' : 'respuestas'}` : '📨 Enviar y seguir jugando';
 }
 function surveyBlocked() { return creatorOn || S.over || !$('pauseOverlay').hidden || !$('dayOverlay').hidden || !$('tutOverlay').hidden || !$('decOverlay').hidden || !$('sceneOverlay').hidden || !$('feedbackOverlay').hidden || !$('albumOverlay').hidden || !$('xmasOverlay').hidden || $('menu').hidden === false; }
 // Checked a few times per second: as soon as nothing else is open after 20 minutes of play, the survey comes up and cannot be skipped
 function checkSurvey() {
-  if (S.meta.survey || (S.meta.playT || 0) < SURVEY_AT || !$('surveyOverlay').hidden || surveyBlocked()) return;
-  renderSurvey(); $('surveyOverlay').hidden = false; stat('encuesta_ofrecida');
+  const t = S.meta.playT || 0;
+  if (S.meta.survey && !S.meta.survey2 && !S.meta.survey2Told && t >= SURVEY2_AT - 300) { S.meta.survey2Told = 1; toast('📋 En 5 minutos llega una encuesta cortita. ¡Si escribes un comentario ganas un traje único 🏅!'); }
+  const n = !S.meta.survey ? (t >= SURVEY_AT ? 1 : 0) : !S.meta.survey2 && t >= SURVEY2_AT ? 2 : 0;
+  if (!n || !$('surveyOverlay').hidden || surveyBlocked()) return;
+  surveyN = n; Object.keys(surveyA).forEach(k => delete surveyA[k]); $('surveyText').value = '';
+  $('surveyTitle').textContent = n === 2 ? '📋 ¡Última encuesta, prometido!' : '📋 ¡Nos ayudas con esto?';
+  $('surveyIntro').textContent = n === 2 ? 'Llevas casi una hora jugando: tu opinión vale oro. Son 5 toques.' : 'Eres de los primeros en probar el juego. Son 5 toques y el juego sigue justo donde estabas.';
+  renderSurvey(); $('surveyOverlay').hidden = false; stat('encuesta_ofrecida', { numero: n });
 }
 $('surveyQs').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   surveyA[b.dataset.q] = +b.dataset.i; sfx.drop(); renderSurvey();
 });
 $('surveySend').addEventListener('click', () => {
-  if (SURVEY.some(s => surveyA[s.id] === undefined)) return;
-  const answers = {}; SURVEY.forEach(s => { answers[s.id] = s.id === 'nota' ? surveyA.nota + 1 : s.a[surveyA[s.id]]; });
+  const Q = surveyQ(); if (Q.some(s => surveyA[s.id] === undefined)) return;
+  const answers = {}; Q.forEach(s => { answers[s.id] = s.id === 'nota' ? surveyA.nota + 1 : s.a[surveyA[s.id]]; });
   const comment = $('surveyText').value.trim();
-  sendMail(`📋 Encuesta: ${answers.nota}/5 de ${who()}`, SURVEY.map(s => `${s.q} ${answers[s.id]}${s.id === 'nota' ? '/5' : ''}`).join('\n')
+  sendMail(`📋 Encuesta ${surveyN}: ${answers.nota}/5 de ${who()}`, Q.map(s => `${s.q} ${answers[s.id]}${s.id === 'nota' ? '/5' : ''}`).join('\n')
     + `\n\nComentario: ${comment || '(sin comentario)'}\n\n— ${progressText()}`);
-  stat('encuesta', { ...answers, comentario: comment.slice(0, 500) });
-  S.meta.survey = { t: Math.round(S.meta.playT || 0), v: GAME_VERSION }; save();
-  $('surveyOverlay').hidden = true; last = performance.now(); sfx.mission(); toast('¡Gracias por ayudarnos! 💛');
+  stat('encuesta', { ...answers, numero: surveyN, comentario: comment.slice(0, 500) });
+  S.meta[surveyN === 2 ? 'survey2' : 'survey'] = { t: Math.round(S.meta.playT || 0), v: GAME_VERSION };
+  const prize = comment.replace(/\s+/g, ' ').length >= 12 && !S.meta.goldTester; if (prize) S.meta.goldTester = 1;
+  save(); $('surveyOverlay').hidden = true; last = performance.now(); sfx.mission();
+  toast(prize ? '🏅 ¡Gracias! Has ganado el traje único «Probador de oro». Póntelo en ☰ → 👗 Aspecto' : comment ? '¡Gracias por ayudarnos! 💛' : '¡Gracias! 💛 La próxima vez, con un comentario escrito ganas un traje único 🏅');
 });
 
 /* ================= Collections ================= */
@@ -9420,6 +9475,42 @@ if (awayCoins) {
     if (document.querySelector('.overlay:not([hidden])') || !$('creator').hidden || $('loading').offsetParent || helpOpen()) return;
     clearInterval(t); showAway();
   }, 700);
+}
+
+/* ================= New look on trial: cartoon outlines ================= */
+// Only with ?graficos=nuevos (GFX.v2). Each solid thing gets a dark shell drawn inside out and pushed a little along
+// its normals, so it shows as a soft ink line around people, buildings, fences and trees. Flat ground pieces are left alone
+const INK = (() => {
+  if (!GFX.v2) return null;
+  const make = w => { const m = new T.MeshBasicMaterial({ color: 0x3b2a22, side: T.BackSide, fog: true });
+    m.onBeforeCompile = sh => { sh.vertexShader = sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>\ntransformed += normalize(normal) * ${w.toFixed(3)};`); };
+    m.customProgramCacheKey = () => 'ink' + w; return m; };
+  return { thin: make(.009), mid: make(.018), wide: make(.03) };
+})();
+const FLAT_GEO = ['PlaneGeometry', 'RingGeometry', 'CircleGeometry', 'PlaneBufferGeometry', 'RingBufferGeometry', 'CircleBufferGeometry'];
+function inkOn(root) {
+  if (!INK) return root;
+  const list = [];
+  root.traverse(o => {
+    if (!o.isMesh || o.isInstancedMesh || o.userData.ink || o.userData.isInk || !o.geometry || FLAT_GEO.includes(o.geometry.type)) return;
+    const mt = Array.isArray(o.material) ? o.material[0] : o.material;
+    if (!mt || mt.transparent || mt.isSpriteMaterial || mt.isShaderMaterial || mt.side === T.BackSide) return;
+    if (!o.geometry.attributes.normal) return;
+    if (!o.geometry.boundingSphere) o.geometry.computeBoundingSphere();
+    const r = o.geometry.boundingSphere.radius; if (r < .06 || r > 14) return;
+    const box = o.geometry.boundingBox || (o.geometry.computeBoundingBox(), o.geometry.boundingBox);
+    if (box.max.y - box.min.y < .05) return; // flat things on the ground
+    list.push(o);
+  });
+  list.forEach(o => { o.userData.ink = true; const r = o.geometry.boundingSphere.radius, s = new T.Mesh(o.geometry, r < .25 ? INK.thin : r < 1 ? INK.mid : INK.wide); s.userData.isInk = true; s.castShadow = false; s.receiveShadow = false; s.raycast = () => {}; o.add(s); });
+  return root;
+}
+if (INK) {
+  inkOn(scene);
+  const mp = makePerson; makePerson = o => { const p = mp(o); inkOn(p.g); return p; };
+  const ms = makeSonia; makeSonia = id => { const x = ms(id); inkOn(x.g); return x; };
+  // Things built or shown later (shops, workshops, decorations) are picked up every few seconds
+  let inkT = 0; const upd = update; update = dt => { upd(dt); if ((inkT -= dt) <= 0) { inkT = 3; inkOn(scene); } };
 }
 
 /* ================= Tips: each new system explains itself the first time it shows up ================= */
