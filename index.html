@@ -1191,9 +1191,9 @@ const ITEMS = {
 // Areas: 1 farm · 2 forest (north gate) · 3 meadow to clean (east gate) · 4 lake (west gate) · 5 town (south, always open)
 //        6 animal farm (west of the lake) · 7 sawmill woods (east of the meadow) · 8 fair (south of the town) · 9 pools (south of the fair)
 const PATCHES = [
-  { id: 'A', crop: 'tulip',      x: -3.3,  z: -2.6,  cols: 6, rows: 6, cost: 0,     regrow: 5,  area: 1 },
-  { id: 'B', crop: 'wheat',      x: 3.3,   z: -2.6,  cols: 6, rows: 6, cost: 100,   regrow: 7,  area: 1 },
-  { id: 'C', crop: 'pumpkin',    x: 0,     z: -9.2,  cols: 8, rows: 4, cost: 700,   regrow: 10, area: 1 },
+  { id: 'A', crop: 'tulip',      x: -4.4,  z: -2.6,  cols: 6, rows: 6, cost: 0,     regrow: 5,  area: 1 },
+  { id: 'B', crop: 'wheat',      x: 4.4,   z: -2.6,  cols: 6, rows: 6, cost: 100,   regrow: 7,  area: 1 },
+  { id: 'C', crop: 'pumpkin',    x: 0,     z: -10.2,  cols: 8, rows: 4, cost: 700,   regrow: 10, area: 1 },
   { id: 'D', crop: 'sunflower',  x: -4.2,  z: -19.6, cols: 6, rows: 5, cost: 4000,  regrow: 12, area: 2 },
   { id: 'E', crop: 'strawberry', x: 4.2,   z: -19.6, cols: 6, rows: 5, cost: 9000,  regrow: 14, area: 2 },
   { id: 'F', crop: 'apple',      x: 21.05, z: -8.1,  cols: 5, rows: 4, cost: 25000, regrow: 16, area: 3, sector: 0, spacing: 1.25 },
@@ -1204,7 +1204,7 @@ const PATCHES = [
 const PROCS = [
   { id: 'florist', name: 'Floristería',          input: 'tulip',      output: 'bouquet', x: -10.6, z: -2.6,  cost: 200,   time: .8,  body: 0xf7c6dc, roof: 0xd8487a, area: 1 },
   { id: 'mill',    name: 'Molino',               input: 'wheat',      output: 'bread',   x: 10.6,  z: -2.6,  cost: 600,   time: 1.2, body: 0xf3e3c3, roof: 0x9a5a35, area: 1 },
-  { id: 'kitchen', name: 'Cocina',               input: 'pumpkin',    output: 'pie',     x: 10.6,  z: -9.2,  cost: 2000,  time: 1.8, body: 0xfff1d6, roof: 0xd8402f, area: 1 },
+  { id: 'kitchen', name: 'Cocina',               input: 'pumpkin',    output: 'pie',     x: 10.6,  z: -10.2,  cost: 2000,  time: 1.8, body: 0xfff1d6, roof: 0xd8402f, area: 1 },
   { id: 'press',   name: 'Prensa de aceite',     input: 'sunflower',  output: 'oil',     x: -10.6, z: -19.6, cost: 7000,  time: 2.2, body: 0xe9d9a8, roof: 0x5f8f2a, area: 2 },
   { id: 'jam',     name: 'Fábrica de mermelada', input: 'strawberry', output: 'jam',     x: 10.6,  z: -19.6, cost: 15000, time: 2.6, body: 0xfde3e3, roof: 0xb81d3a, area: 2 },
   { id: 'cider',   name: 'Lagar',                input: 'apple',      output: 'juice',   x: 31.9,  z: -8.1,  cost: 45000, time: 3,   body: 0xe8d3b0, roof: 0x7a3f1f, area: 3, sector: 1 },
@@ -1306,8 +1306,8 @@ const MAPS = [];
 const mapOf = n => MAPS[n % MAPS.length];
 const mapById = id => MAPS.find(m => m.id === id);
 // The version goes up with every release; the build (vite.config.js) stamps the date (while developing it says 'en pruebas')
-const GAME_VERSION = '61';
-const BUILD_DATE = '08/11/2026 19:00';
+const GAME_VERSION = '62';
+const BUILD_DATE = '12/11/2026 11:55';
 // Paint jobs for the tractor and the mower: same unlock rules as the outfits (progress, or an ad)
 const VEHICLE_SKINS = [
   { id: 'red',    name: 'Rojo clásico',  icon: '🔴', body: 0xd8402f, mower: 0x3fa34d, hub: 0xf6c445, need: '', goal: 1, prog: () => 1 },
@@ -1499,7 +1499,7 @@ MAPS.push({
           // The lorry does not travel with the tropical island by itself: without this it stood on the watermelon field
           truck: [-12.5, -40],
           'shop:farm': [-1.4, 4.2], 'spawn:farm': [-3, 21.2],
-          A: [-8, 16.6], B: [1.8, 16.6], C: [8.3, 16.6],
+          A: [-8.2, 16.6], B: [0.2, 16.6], C: [8.4, 16.6],
           florist: [9.6, 0, 3], mill: [9.6, 5.2, 3], kitchen: [9.6, 10.4, 3],
           bag: [-5, 2.6], boots: [-7.6, 2.6], sign: [-10.2, 2.6], helper: [-5, 5.4], carrier: [-7.6, 5.4], workers: [-10.2, 5.4],
           cashier: [-5, 8.2], cashier2: [-7.6, 8.2], dog: [-10.2, 8.2], patrol: [-5, 11], move: [-7.6, 11],
@@ -1572,8 +1572,8 @@ MAPS.push({
       pos: {
         'shop:farm': [-11, 3.2], 'spawn:farm': [-1, 29.6], 'shop:forest': [-7.8, -41],
         // Two fields with their workshop right below them, and the third by the kitchen
-        A: [-6.2, -9.6], B: [-13.4, -9.6], C: [10.6, 3.6],
-        florist: [-6.2, -3.4, 0], mill: [-13.4, -3.4, 0], kitchen: [10.6, 9.8, 2],
+        A: [-5.6, -9.6], B: [-14.2, -9.6], C: [10.6, 3.6],
+        florist: [-5.6, -3.4, 0], mill: [-14.2, -3.4, 0], kitchen: [10.6, 9.8, 2],
         move: [-16.2, 26.4], van: [-25.75, 4.6],
         // The neighbourhood behind the cinema's square
         house1: [5.2, 15.2], cafe: [9.4, 15.2], house2: [13.6, 15.2], park: [5.2, 19], house3: [9.4, 19], house4: [13.6, 19],
@@ -1697,6 +1697,13 @@ const zoneCap = (kind, a) => kind === 'helper' ? Math.max(2, PATCHES.filter(p =>
   if (builds().length) UPGRADES['carrier_' + a] = { name: 'Repartidor', icon: '📦', x: 0, z: 0, max: zoneCap('carrier', a) + 3, cost: l => Math.round(cheap(builds()) * .5 * 2.4 ** l), area: a, zoneWorker: 'carrier' };
 });
 UPGRADES.helper.zoneWorker = 'helper'; UPGRADES.carrier.zoneWorker = 'carrier';
+// The zone manager (12 nov 2026, «I want to forget about a zone and work on the others»): once hired, that zone runs itself.
+// Its tills charge on their own, the banknotes go straight to your coins, nothing breaks down there and its pens stay clean
+[...new Set([...PATCHES, ...PROCS, ...ANIMALS].map(o => o.area || 1))].forEach(a => {
+  const worth = () => [...PATCHES, ...PROCS, ...ANIMALS].filter(o => (o.area || 1) === a).reduce((t, o) => t + (o.cost || 0), 0);
+  UPGRADES['manager_' + a] = { name: 'Encargado', icon: '🧑‍💼', x: 0, z: 0, max: 1, cost: () => Math.round(Math.max(3000, worth() * 1.5) / 100) * 100, area: a, manager: true };
+});
+const managed = a => (S.lv['manager_' + (a || 1)] || 0) > 0;
 
 const fresh = () => ({
   coins: 0, earned: 0, lv: Object.fromEntries(Object.keys(UPGRADES).map(k => [k, 0])),
@@ -3897,6 +3904,7 @@ function completePad(pad) {
     S.lv[pad.id]++;
     if (r.zoneWorker || pad.id === 'robots') spawnWorkers();
     if (pad.id === 'dog') spawnDog();
+    if (r.manager) { TROUBLES.filter(t => (t.area || 1) === r.area).forEach(t => endTrouble(t)); }
     if (pad.id === 'tractor') { S.tractorOn = true; S.vehicle = 'tractor'; }
     if (pad.id === 'mower') S.vehicle = 'mower';
     if (pad.id === 'gardener') spawnWorkers();
@@ -3912,7 +3920,7 @@ function completePad(pad) {
       rod: 'Pescas más rápido', fisher: 'Un pescador pesca solo en un muelle',
       mechanic: 'El mecánico arregla solo las atracciones averiadas', animator: `🤡 Más público en la feria: las atracciones venden al ${Math.round(animatorMult() * 100)}%`, mower: '🌿 ¡Cortacésped! Cambia de vehículo con el botón de arriba y pasa por encima de las malas hierbas',
       gardener: '🧑‍🌾 Un jardinero arranca las malas hierbas por ti', patrol: 'Otro policía patrulla las tiendas',
-    }[pad.id] || (r.zoneWorker ? (S.lv[pad.id] > zoneCap(r.zoneWorker, r.area || 1) ? `${r.icon} Tus ${r.zoneWorker === 'helper' ? 'animalitos' : 'repartidores'} de esta zona van más rápido` : `¡Otro ayudante en esta zona: ${r.icon} ${r.name}!`) : r.fame ? `⭐ ${r.fame.name}: todo se vende un ${15 * S.lv[pad.id]}% más caro` : r.shop ? `La cajera ya cobra en ${r.shop.name}` : ''));
+    }[pad.id] || (r.manager ? `🧑‍💼 ¡Encargado contratado! ${zoneName(r.area)} ya funciona sola: cobra, guarda el dinero, repara y limpia` : r.zoneWorker ? (S.lv[pad.id] > zoneCap(r.zoneWorker, r.area || 1) ? `${r.icon} Tus ${r.zoneWorker === 'helper' ? 'animalitos' : 'repartidores'} de esta zona van más rápido` : `¡Otro ayudante en esta zona: ${r.icon} ${r.name}!`) : r.fame ? `⭐ ${r.fame.name}: todo se vende un ${15 * S.lv[pad.id]}% más caro` : r.shop ? `La cajera ya cobra en ${r.shop.name}` : ''));
   } else if (kind === 'patch') {
     S.unlocked.push(r.id);
     plants.forEach(pl => { if (pl.patch === r) { pl.grow = 0; pl.dirty = true; } });
@@ -4426,7 +4434,7 @@ function updateThieves(dt) {
     thiefT -= dt;
     if (thiefT <= 0 && eventBusy()) thiefT = 20;
     else if (thiefT <= 0) {
-      thiefT = Math.max(45, 120 - townCount() * 4) * (.7 + Math.random() * .6) * LAW.thief;
+      thiefT = (SIMPLE ? 300 : Math.max(45, 120 - townCount() * 4)) * (.7 + Math.random() * .6) * LAW.thief;
       const open = SHOPS.filter(s => s.open && customers.some(c => c.shop === s && !c.angry && c.state !== 'leave'));
       if (open.length && thieves.length < 2) {
         const s = pick(open), m = makeThief();
@@ -4915,8 +4923,6 @@ function checkMission() {
 const input = { jx: 0, jz: 0, keys: new Set(), pid: null, ox: 0, oy: 0 };
 const joy = $('joy'), knob = $('knob');
 renderer.domElement.addEventListener('pointerdown', e => {
-  // Free camera: the mouse's right button, or a second finger while the first one walks
-  if (!placing.mode && camDrag.pid === null && (e.button === 2 || (input.pid !== null && e.pointerType === 'touch'))) { startCamDrag(e, renderer.domElement); return; }
   if (e.button === 2 || input.pid !== null || placing.mode) return;
   input.pid = e.pointerId; input.ox = e.clientX; input.oy = e.clientY;
   if (panning()) { try { renderer.domElement.setPointerCapture(e.pointerId); } catch {} return; }
@@ -4946,7 +4952,7 @@ addEventListener('blur', () => input.keys.clear());
 let topView = false, panMode = false;
 const camPan = { x: 0, z: 0 };
 // The 🔄 button turns the camera a quarter turn around the character; the finger and the map drag turn with it
-// Dragging moves it freely, as in an MMO: sideways it turns around the character, up and down it changes the height (camTilt, 0 = normal)
+// The free camera (dragging to turn and tilt) was taken out on 12 nov 2026; camTilt stays at 0
 let camYaw = 0, camYawNow = 0, camTilt = 0, camTiltNow = 0;
 const CAM_TILT_LOW = -.5, CAM_TILT_HIGH = .55;
 const camDrag = { pid: null, x: 0, y: 0, moved: 0, btn: false, skipClick: false };
@@ -4976,18 +4982,31 @@ function setPan(on) {
   $('panBtn').textContent = on ? '✋ Mapa' : '✋'; if (!on) camPan.x = camPan.z = 0;
 }
 $('panBtn').addEventListener('click', () => { setPan(!panMode); sfx.drop(); toast(panMode ? '✋ Arrastra el dedo para mirar el mapa. Pulsa ✋ otra vez para volver a mover al personaje' : `Vuelves a mover a ${who()}`); });
-$('viewBtn').addEventListener('click', () => {
-  topView = !topView; $('viewBtn').textContent = topView ? '🧑‍🌾' : '🗺️'; $('panBtn').hidden = !topView; if (!topView) setPan(false);
-  $('viewBtn').setAttribute('aria-label', topView ? 'Volver a la vista normal' : 'Cambiar a vista desde arriba'); sfx.drop();
-});
-// Dragging the 🔄 button moves the camera with just one finger; a plain tap still turns it
+// Four fixed cameras instead of the free one (12 nov 2026): 🎥 goes through them and the phone remembers the last one.
+// «Todo el mapa» is the old view from above, with ✋ to drag the map
+const CAM_VIEWS = [
+  { id: 'normal', icon: '🎥', name: 'Normal' },
+  { id: 'close', icon: '🧑', name: 'Cerca' },
+  { id: 'face', icon: '😊', name: 'Cara (al pararte te mira)' },
+  { id: 'top', icon: '⬇️', name: 'Desde arriba' },
+  { id: 'far', icon: '🗺️', name: 'Todo el mapa' },
+];
+let camMode = 0;
+try { camMode = Math.max(0, CAM_VIEWS.findIndex(v => v.id === localStorage.getItem('huerto-camara'))); } catch {}
+const camView = () => CAM_VIEWS[camMode].id;
+function setCamMode(i, say) {
+  camMode = (i + CAM_VIEWS.length) % CAM_VIEWS.length; const v = CAM_VIEWS[camMode];
+  topView = v.id === 'far'; $('panBtn').hidden = !topView; if (!topView) setPan(false);
+  $('viewBtn').textContent = v.icon; $('viewBtn').setAttribute('aria-label', 'Cámara: ' + v.name + '. Toca para cambiar');
+  try { localStorage.setItem('huerto-camara', v.id); } catch {}
+  if (say) { sfx.drop(); toast(`${v.icon} Cámara: ${v.name} (${camMode + 1} de ${CAM_VIEWS.length})`); }
+}
+setCamMode(camMode, false);
+$('viewBtn').addEventListener('click', () => setCamMode(camMode + 1, true));
+addEventListener('keydown', e => { if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.code === 'KeyC') setCamMode(camMode + 1, true); });
+// 🔄 turns the camera a quarter turn
 const turnEl = $('turnBtn');
-turnEl.addEventListener('pointerdown', e => { if (camDrag.pid === null) startCamDrag(e, turnEl); });
-turnEl.addEventListener('pointermove', moveCamDrag);
-const turnUp = e => { if (e.pointerId !== camDrag.pid || !camDrag.btn) return; camDrag.skipClick = camDrag.moved > 8; camDrag.pid = null; };
-turnEl.addEventListener('pointerup', turnUp);
-turnEl.addEventListener('pointercancel', turnUp);
-turnEl.addEventListener('click', () => { if (camDrag.skipClick) { camDrag.skipClick = false; return; } turnCam(1); });
+turnEl.addEventListener('click', () => turnCam(1));
 addEventListener('keydown', e => { if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return; if (e.code === 'KeyQ') turnCam(-1); if (e.code === 'KeyE') turnCam(1); });
 
 /* ================= Game logic ================= */
@@ -5179,6 +5198,7 @@ function update(dt) {
   SHOPS.forEach(s => {
     if (!s.open) return;
     s.cashDisc.fill.material.opacity = near(s.cash) ? .6 : .3;
+    if (managed(s.area) && S.shops[s.id].cash > 0) { const v = S.shops[s.id].cash; S.shops[s.id].cash = 0; syncCash(s); addCoins(v); return; } // the manager banks it
     collect(s.cash, S.shops[s.id].cash, s.bills, () => { S.shops[s.id].cash = 0; });
   });
   ATTRS.forEach(a => {
@@ -5225,6 +5245,7 @@ function update(dt) {
   P.workT -= dt;
   const mm = machineOf(S.lv.machine), fishers = fishersOn();
   let fishingAt = null;
+  updateVans(dt);
   BUILDS.forEach(b => {
     if (!isBuilt(b.id)) return;
     const st = pstate(b.id);
@@ -5338,7 +5359,12 @@ function update(dt) {
 
   // Camera
   // The map button lifts the camera high above to see the whole farm at once
-  const portrait = innerWidth / innerHeight < .8; let off = topView ? (portrait ? { y: 46, z: 7 } : { y: 34, z: 5 }) : portrait ? { y: 14.5, z: 13.8 } : { y: 10, z: 9.5 };
+  const portrait = innerWidth / innerHeight < .8, cv = topView ? 'far' : camView();
+  let off = cv === 'far' ? (portrait ? { y: 46, z: 7 } : { y: 34, z: 5 })
+    : cv === 'close' ? (portrait ? { y: 5.2, z: 7.6 } : { y: 4.2, z: 6.4 })
+    : cv === 'face' ? (portrait ? { y: 2.2, z: 4.6 } : { y: 1.9, z: 3.8 })
+    : cv === 'top' ? (portrait ? { y: 27, z: 1.2 } : { y: 21, z: 1 })
+    : portrait ? { y: 14.5, z: 13.8 } : { y: 10, z: 9.5 };
   const k = Math.min(1, dt * 5);
   // While the finger is on the camera it follows closely; otherwise it glides
   const kc = camDrag.pid !== null ? Math.min(1, dt * 16) : k;
@@ -5353,8 +5379,12 @@ function update(dt) {
   camera.position.y += (off.y * wideK - camera.position.y) * kc;
   camera.position.z += (P.z + camPan.z + aimZ + back.z - camera.position.z) * kc;
   // Upright phones show Sonia a little below the middle, so the cards at the top cover the land ahead and not her
-  const ahead = camRot(0, -off.z * wideK - (portrait && !topView ? 2.6 : .4));
-  camera.lookAt(camera.position.x + ahead.x, low * 1.1, camera.position.z + ahead.z);
+  // The close camera looks at the character's chest; the one from above looks straight down at it
+  // The face camera: standing still a moment, the character turns round to look at the camera
+  if (cv === 'face' && P.speed < .2 && !SEA.on) { P.faceIdle = (P.faceIdle || 0) + dt; if (P.faceIdle > .5) { const b = camRot(0, 1); P.face = Math.atan2(b.x, b.z); } } else P.faceIdle = 0;
+  const closeK = cv === 'close' || cv === 'face' ? 1 - wide : 0, lead = cv === 'close' ? .6 : cv === 'face' ? .1 : cv === 'top' ? .3 : portrait && !topView ? 2.6 : .4;
+  const ahead = camRot(0, -off.z * wideK - lead);
+  camera.lookAt(camera.position.x + ahead.x, low * 1.1 + closeK * 1.3, camera.position.z + ahead.z);
   sunFollow(P.x, P.z);
   updateCineCut(dt);
   updateSea(dt);
@@ -5580,7 +5610,7 @@ function updateExtras(dt) {
   if (!moodOn() || !shopOpen()) return;
 
   // Festival: one product pays triple for a while
-  if (EV.left > 0) { EV.left -= dt; if (EV.left <= 0) { EV.kind = null; EV.next = 150 + Math.random() * 90; } }
+  if (EV.left > 0) { EV.left -= dt; if (EV.left <= 0) { EV.kind = null; EV.next = (SIMPLE ? 360 : 150) + Math.random() * (SIMPLE ? 180 : 90); } }
   else { EV.next -= dt; if (EV.next <= 0) startEvent(); }
 
   // Special orders
@@ -5590,10 +5620,11 @@ function updateExtras(dt) {
       addCoins(ORDER.reward); addXP(60); flyCoins(P.x, 1.5, P.z, 10); burst(P.x, 2.2, P.z, '📋 +' + fmt(ORDER.reward)); sfx.mission();
       S.meta.orders = (S.meta.orders || 0) + 1; S.farmOrders = (S.farmOrders || 0) + 1; addMood(-15);
       toast(`📋 ¡Pedido entregado! +${fmt(ORDER.reward)} y el enfado baja un 15%`);
-      ORDER = null; orderNextT = 20;
+      ORDER = null; orderNextT = SIMPLE ? 1e9 : 20; // simple mode: one order a day (the rush hour's end starts the next one)
     } else if (ORDER.left <= 0) {
-      ORDER = null; orderNextT = 30; addMood(25); sfx.angry();
-      toast('📋 Pedido no entregado a tiempo: el enfado sube un 25%');
+      ORDER = null; orderNextT = SIMPLE ? 1e9 : 30;
+      if (SIMPLE) toast('📋 Se acabó el tiempo del pedido. ¡Mañana habrá otro!');
+      else { addMood(25); sfx.angry(); toast('📋 Pedido no entregado a tiempo: el enfado sube un 25%'); }
     }
   } else if (dayPhase().id === 'afternoon') { orderNextT -= dt; if (orderNextT <= 0) { orderNextT = 15; if (!eventBusy()) newOrder(); } }
 }
@@ -6036,7 +6067,7 @@ function newDay() {
   S.dayT = 0; S.dayN = (S.dayN || 1) + 1; S.mood = 0; S.dayPeak = 0; S.dayClosed = false; moodShown = -1;
   S.today = { served: 0, angry: 0, sales: 0 };
   if (S.pendingSum) claimSummary(false);
-  EV.next = 70 + Math.random() * 90;
+  EV.next = (SIMPLE ? 200 : 70) + Math.random() * 90;
   sfx.bell(); toast(`☀️ Día ${S.dayN}: ¡la tienda abre!`); save();
 }
 $('dayOk').addEventListener('click', () => claimSummary(false));
@@ -6801,12 +6832,13 @@ renderWorks();
 // The first zone follows the missions (the cashier always first); the other zones go from cheapest to dearest.
 const UPG_ORDER = ['cashier', 'bag', 'boots', 'sign', 'helper', 'carrier', 'dog', 'cashier2', 'workers', 'patrol'];
 // The meadow's broom and sack come first: without them the meadow cannot be cleaned
-const upgRank = id => { if (id === 'broom' || id === 'bin') return -3 + (id === 'bin'); const i = UPG_ORDER.indexOf(id); return i >= 0 ? i : id.startsWith('fame') ? 50 : 40; };
+const upgRank = id => { if (id === 'broom' || id === 'bin') return -3 + (id === 'bin'); if (id.startsWith('manager')) return 45; const i = UPG_ORDER.indexOf(id); return i >= 0 ? i : id.startsWith('fame') ? 50 : 40; };
 const upgDesc = p => {
   const r = p.ref, sh = r.shop || r.fame;
   if (r.fame) return `Todo lo de ${sh.name} se vende un 15% más caro por nivel`;
   if (r.shop) return p.id.startsWith('cashier2') ? `Cobra sola en la segunda caja de ${sh.name}` : `Cobra sola en la caja de ${sh.name}, así no tienes que cobrar tú`;
   if (r.attr) return 'Vende entradas';
+  if (r.manager) return 'Lleva esta zona por ti: cobra en las cajas, mete los billetes en tu cartera, arregla las averías y limpia los corrales. Así puedes olvidarte de ella';
   if (r.zoneWorker) {
     const zone = r.area || 1, more = S.lv[p.id] < zoneCap(r.zoneWorker, zone), who = r.zoneWorker === 'helper' ? critterOf(zone)[1].toLowerCase() : 'repartidor';
     if (!more) return r.zoneWorker === 'helper' ? `Los animalitos de esta zona cosechan más rápido y llevan más` : 'Los repartidores de esta zona van más rápido y llevan más';
@@ -6815,7 +6847,7 @@ const upgDesc = p => {
   return {
     cashier: 'Cobra sola en la caja 1, así no tienes que cobrar tú', cashier2: 'Cobra sola en la segunda caja',
     bag: 'Llevas más cosas a la vez', boots: `${who()} corre más rápido`, sign: 'Todo se vende más caro y vienen más clientes',
-    water: 'Los cultivos crecen más rápido y el agua de los campos dura más', machine: 'Los talleres y los animales trabajan más rápido', workers: 'Ardillas, repartidores y robots van más rápido',
+    water: 'Los cultivos crecen más rápido', machine: 'Los talleres y los animales trabajan más rápido', workers: 'Ardillas, repartidores y robots van más rápido',
     helper: 'Una ardilla cosecha un campo por ti (una más por nivel)', carrier: 'Lleva los productos de los talleres al mostrador',
     tractor: 'Cosecha mucho de golpe. Se cambia con el botón 🚜', dog: 'Te trae los billetes que dejan los clientes',
     broom: 'Limpias más basura de una pasada', bin: 'El saco de basura aguanta más kilos', belt: 'La cinta de reciclaje va más rápida',
@@ -6837,7 +6869,7 @@ function makeStallMesh(x, z, rot = 0) {
 }
 pads.filter(p => p.kind === 'upg' && !p.ref.attr).reduce((byArea, p) => { const a = p.ref.area || 1; (byArea[a] = byArea[a] || []).push(p); return byArea; }, []).forEach((list, area) => {
   if (!list) return;
-  const base = list.filter(p => !p.ref.zoneWorker).length ? list.filter(p => !p.ref.zoneWorker) : list; // the new zone workers do not move the stall
+  const own = p => !p.ref.zoneWorker && !p.ref.manager, base = list.filter(own).length ? list.filter(own) : list; // the new zone workers do not move the stall
   const cx = base.reduce((s, p) => s + p.x, 0) / base.length, cz = base.reduce((s, p) => s + p.z, 0) / base.length;
   const spot = STALL_SPOTS[area] || base.reduce((a, b) => (a.x - cx) ** 2 + (a.z - cz) ** 2 <= (b.x - cx) ** 2 + (b.z - cz) ** 2 ? a : b);
   const pad = makePad('stall-' + area, spot.x, spot.z, 'stall', { area, name: 'Mejoras', icon: '🛠️' });
@@ -6977,6 +7009,7 @@ function startTrouble() {
   PATCHES.filter(p => unlocked(p.id) && reachable(p) && !troubleAt('patch:' + p.id)).forEach(p => opts.push(['crows', p]));
   PROCS.filter(b => isBuilt(b.id) && reachable(b) && !troubleAt(b.id)).forEach(b => opts.push(['broken', b]));
   ANIMALS.filter(b => isBuilt(b.id) && !b.dock && reachable(b) && !troubleAt(b.id) && builds[b.id].animals.some(a => a.m && !a.bee)).forEach(b => opts.push(['escaped', b]));
+  for (let i = opts.length - 1; i >= 0; i--) if (managed(opts[i][1].area)) opts.splice(i, 1); // a zone with a manager never breaks down
   if (!opts.length) return;
   const [kind, r] = pick(opts), t = { kind, r, area: r.area || 1 };
   if (kind === 'crows') {
@@ -7008,7 +7041,7 @@ function updateTrouble(dt) {
   const zones = Object.keys(AREAS).filter(a => areaOpen(+a)).length;
   if (S.tut >= 3 && S.mission >= 6) {
     troubleT -= dt;
-    if (troubleT <= 0) { if (eventBusy()) troubleT = 20; else { troubleT = (SIMPLE ? 220 : 80) + Math.random() * (SIMPLE ? 120 : 50); startTrouble(); } }
+    if (troubleT <= 0) { if (eventBusy()) troubleT = 20; else { troubleT = (SIMPLE ? 360 : 80) + Math.random() * (SIMPLE ? 180 : 50); startTrouble(); } }
   }
   for (const t of [...TROUBLES]) {
     pulse(t.sign, 1.3); if (t.ring) t.ring.scale.setScalar(t.fix > 0 ? 1 : 1 + .08 * Math.sin(performance.now() / 150));
@@ -7043,7 +7076,7 @@ function updateTrouble(dt) {
 // The customers who would only pay to Sonia (purple hat) were removed in v52: they held up the line and annoyed players
 // v59: Sonia cannot be at every till. After mission 8 a customer left alone at a till pays by itself after a while (SELF_PAY s)
 const SELF_PAY = 8;
-const servedFor = c => c.shop.servedAt[c.till] || (S.mission >= 8 && c.state === 'pay' && (c.selfT || 0) > SELF_PAY);
+const servedFor = c => c.shop.servedAt[c.till] || (c.state === 'pay' && managed(c.shop.area)) || (S.mission >= 8 && c.state === 'pay' && (c.selfT || 0) > SELF_PAY);
 function renderTrouble() {
   // Only the first problem gets a line; the rest are counted, so the side panel stays short
   const all = [...TROUBLES.map(t => `${t.text} · ${zoneName(t.area)}`)];
@@ -7058,7 +7091,9 @@ if (!S.water || typeof S.water !== 'object') S.water = {};
 if (!S.dirt || typeof S.dirt !== 'object') S.dirt = {};
 const choresOn = () => S.tut >= 3 && S.mission >= 5;
 const waterSecs = () => (SIMPLE ? 480 : 210) * (1 + .08 * S.lv.water);
-const waterF = p => choresOn() && (S.water[p.id] ?? 1) <= 0 ? .33 : 1;
+// Watering is off in the simple mode: nobody understood it (12 nov 2026). The code stays for later
+const waterOn = () => !SIMPLE && choresOn();
+const waterF = p => waterOn() && (S.water[p.id] ?? 1) <= 0 ? .33 : 1;
 const penDirty = b => !b.dock && choresOn() && (S.dirt[b.id] || 0) >= 1;
 const choreSigns = {}, cleanRings = {};
 function choreSign(key, icon, x, z, on) {
@@ -7070,12 +7105,13 @@ let choreT = 0, cleanT = 0, cleanPen = null, choreHelp = { water: false, dirt: f
 function updateChores(dt) {
   if (!choresOn()) return;
   const fields = PATCHES.filter(p => unlocked(p.id) && reachable(p));
-  fields.forEach(p => { S.water[p.id] = Math.max(0, (S.water[p.id] ?? 1) - dt / waterSecs()); });
+  if (waterOn()) fields.forEach(p => { S.water[p.id] = Math.max(0, (S.water[p.id] ?? 1) - dt / waterSecs()); });
+  else fields.forEach(p => { S.water[p.id] = 1; choreSign('w' + p.id, '💧', 0, 0, false); });
   const pens = ANIMALS.filter(b => isBuilt(b.id) && !b.dock && reachable(b));
-  pens.forEach(b => { S.dirt[b.id] = Math.min(1, (S.dirt[b.id] || 0) + dt / (SIMPLE ? 480 : 240)); });
+  pens.forEach(b => { S.dirt[b.id] = managed(b.area) ? 0 : Math.min(1, (S.dirt[b.id] || 0) + dt / (SIMPLE ? 480 : 240)); });
   // Watering: walking among a field's plants fills it up
   choreT -= dt;
-  if (choreT <= 0) {
+  if (waterOn() && choreT <= 0) {
     choreT = .2;
     const pl = plants.find(q => (q.x - P.x) ** 2 + (q.z - P.z) ** 2 < .8 && fields.includes(q.patch));
     if (pl && S.water[pl.patch.id] < .9) { S.water[pl.patch.id] = 1; sfx.drop(); puff(P.x, .4, P.z, 0x5aa0e8, 10, 1.2, 2.5); burst(P.x, 1.8, P.z, '💧 ¡Regado!', 'white'); }
@@ -7105,9 +7141,28 @@ function updateChores(dt) {
 // The chip at the top says how many chores are waiting, so they are not forgotten
 function choreChip() {
   if (!choresOn()) return '';
-  const dry = PATCHES.filter(p => unlocked(p.id) && reachable(p) && (S.water[p.id] ?? 1) <= 0).length;
+  const dry = !waterOn() ? 0 : PATCHES.filter(p => unlocked(p.id) && reachable(p) && (S.water[p.id] ?? 1) <= 0).length;
   const dirty = ANIMALS.filter(b => isBuilt(b.id) && !b.dock && reachable(b) && (S.dirt[b.id] || 0) >= 1).length;
   return (dry ? `<span class="chip water">💧 ${dry} ${dry > 1 ? 'campos' : 'campo'} sin agua</span>` : '') + (dirty ? `<span class="chip water">🧹 ${dirty} ${dirty > 1 ? 'corrales sucios' : 'corral sucio'}</span>` : '');
+}
+// Workshops whose raw goods come from another zone (the Valley's popcorn stand needs corn from the animal farm, the ice cream
+// parlour milk from the dairy…) get them by van: from the shop that sells them, or straight from the farm's pile. Nobody had to walk across the map
+const farInput = b => b.input && !PATCHES.some(p => p.crop === b.input && p.area === b.area) && !ANIMALS.some(a => a.output === b.input && a.area === b.area) && !PROCS.some(q => q.output === b.input && q.area === b.area);
+let vanT = 0, vanSaid = false;
+function updateVans(dt) {
+  if ((vanT -= dt) > 0) return; vanT = 2.5;
+  PROCS.forEach(b => {
+    if (!isBuilt(b.id) || !farInput(b) || troubleAt(b.id)) return;
+    const st = pstate(b.id); if (st.in >= 4) return;
+    const src = [...ANIMALS, ...PROCS].find(a => a.output === b.input && isBuilt(a.id) && pstate(a.id).out > 0);
+    const sh = shopFor(b.input), stock = sh && S.shops[sh.id] && S.shops[sh.id].stock;
+    if (src) pstate(src.id).out--;
+    else if (stock && stock[b.input] > 0) { stock[b.input]--; sh.dirty = true; }
+    else return;
+    st.in++;
+    if (Math.hypot(P.x - b.x, P.z - b.z) < 14) burst(b.x, 2.6, b.z, `🚚 ${ITEMS[b.input].icon}`, 'white');
+    if (!vanSaid && !S.meta.tips.van) { vanSaid = S.meta.tips.van = true; toast(`🚚 Una furgoneta lleva sola ${ITEMS[b.input].name.toLowerCase()} ${ITEMS[b.input].icon} a ${b.name.toLowerCase()}: no tienes que cruzar el mapa`); }
+  });
 }
 
 /* ================= Tycoon layer: 😊 morale, ⭐ trust and decision cards (Frostpunk style) ================= */
@@ -8253,8 +8308,9 @@ function seaPanel() {
   if (!p) {
     const yard = YARD.map(u => { const l = S.sea.lv[u.id], c = yardCost(u), max = l >= u.max; return `<div class="prow ${max ? 'done' : ''}"><span class="pi">${u.icon}</span><span class="pt2"><b>${u.name} · Nv ${l}</b>${u.text}</span>${max ? '<button disabled>Máx</button>' : `<button data-yard="${u.id}" ${S.coins < c ? 'disabled' : ''}><span class="coin"></span>${fmt(c)}</button>`}</div>`; }).join('');
     const faro = S.sea.faro ? '' : `<div class="prow"><span class="pi">🗼</span><span class="pt2"><b>Faro</b>Avisa de las tormentas y hacen la mitad de daño</span><button data-faro="1" ${S.coins < FARO_COST ? 'disabled' : ''}><span class="coin"></span>${fmt(FARO_COST)}</button></div>`;
+    const un = unloadInfo(), unload = un.n ? `<div class="prow"><span class="pi">📦</span><span class="pt2"><b>Descargar la bodega</b>${un.farm ? `${un.farm} de la granja van a sus tiendas` : ''}${un.farm && un.sea ? ' · ' : ''}${un.sea ? `${un.sea} del mar se venden en el puerto` : ''}</span><button data-unload="1">${un.coins ? `<span class="coin"></span>+${fmt(un.coins)}` : 'Descargar'}</button></div>` : '';
     return { title: '⚓ Tu muelle', sub: `Bodega ${seaUsed()}/${seaCap()}: ${holdRows()}. Lo que llevas encima se carga solo al pisar el círculo.`,
-      rows: `<div class="prow"><span class="pi">⛵</span><span class="pt2"><b>Salir a navegar</b>Abre el mapa y elige adónde vas</span><button data-chart="1">🗺️ Mapa</button></div>` + yard + faro };
+      rows: unload + `<div class="prow"><span class="pi">⛵</span><span class="pt2"><b>Salir a navegar</b>Abre el mapa y elige adónde vas</span><button data-chart="1">🗺️ Mapa</button></div>` + yard + faro };
   }
   const own = Object.keys(S.sea.hold).filter(k => S.sea.hold[k] > 0 && seaSell(p, k) > 0);
   const sell = own.map(k => { const v = seaSell(p, k), n = S.sea.hold[k]; return `<div class="prow"><span class="pi">${seaThing(k).icon}</span><span class="pt2"><b>${seaThing(k).name} × ${n}</b>Pagan ${fmt(v)} cada uno${priceTag(p, k)}</span><button data-sell="${k}"><span class="coin"></span>+${fmt(v * n)}</button></div>`; }).join('');
@@ -8266,6 +8322,23 @@ function seaPanel() {
   const foot = SEA.land ? '<div class="prow"><span class="pi">⛵</span><span class="pt2"><b>Subir al barco</b>Seguir navegando</span><button data-aboard="1">Subir</button></div>' : `<div class="prow"><span class="pi">🚶</span><span class="pt2"><b>Bajar a la isla</b>Recoge ${COMM[p.wild].name.toLowerCase()} ${COMM[p.wild].icon} y planta huertos de ${COMM[p.crop].name.toLowerCase()} ${COMM[p.crop].icon}</span><button data-ashore="1">Bajar</button></div>`;
   return { title: `${p.icon} ${p.name}`, sub: `${p.text} Bodega ${seaUsed()}/${seaCap()}. También compran: ${wants}.`, rows: foot + order + sell + buy };
 }
+// Back at your own pier the hold can be emptied: farm goods go to the counter of the shop that sells them,
+// and the sea's goods are sold at the port (for less than the islands pay, but nothing gets stuck on board)
+const homePay = k => COMM[k] ? Math.max(1, Math.round(COMM[k].v * priceF())) : 0;
+function unloadInfo() {
+  const h = S.sea.hold; let n = 0, farm = 0, sea = 0, coins = 0;
+  Object.keys(h).forEach(k => { const c = h[k] || 0; if (c <= 0) return; n += c; if (COMM[k]) { sea += c; coins += homePay(k) * c; } else if (shopFor(k)) farm += c; else { sea += c; coins += Math.max(1, Math.round((ITEMS[k] ? ITEMS[k].value : 1) * priceF())) * c; } });
+  return { n, farm, sea, coins };
+}
+function unloadHold() {
+  const h = S.sea.hold, { coins } = unloadInfo(); let farm = [];
+  Object.keys(h).forEach(k => { const c = h[k] || 0; if (c > 0 && !COMM[k] && shopFor(k)) for (let i = 0; i < c; i++) farm.push(k); });
+  Object.keys(h).forEach(k => delete h[k]);
+  if (farm.length) deliverToCounter(farm);
+  if (coins) { addCoins(coins); S.sea.profit += coins; flyCoins(P.x, 1.5, P.z, 10); }
+  sfx.mission(); toast(`📦 ¡Bodega descargada!${farm.length ? ` ${farm.length} cosas a las tiendas.` : ''}${coins ? ` +${fmt(coins)} monedas.` : ''}`);
+  stat('barco', { accion: 'descarga', granja: farm.length, monedas: coins });
+}
 function seaOrder(p) {
   const day = S.dayN || 0; let o = S.sea.orders[p.id];
   if (!o || o.day !== day) { const goods = shipGoods(); if (!goods.length) return null; o = S.sea.orders[p.id] = { k: goods[Math.floor(Math.random() * goods.length)], need: Math.min(seaCap(), 4 + Math.floor(Math.random() * 5)), day, done: false }; }
@@ -8276,6 +8349,7 @@ $('panelList').addEventListener('click', e => {
   const b = e.target.closest('button, [data-aim]'); if (!b || b.disabled) return;
   const d = b.dataset, p = SEA.panelPort, h = S.sea.hold;
   if (d.chart) { sfx.drop(); openSeaMap(); return; }
+  if (d.unload) { unloadHold(); $('coinsTxt').textContent = fmt(S.coins); openSeaPanel(null); save(); return; }
   if (d.aim) { SEA.aim = d.aim; SEA.mapOpen = false; sfx.drop(); if (SEA.on) $('panelOverlay').hidden = true; else setSail(); return; }
   if (d.home) { SEA.mapOpen = false; $('panelOverlay').hidden = true; toast('⚓ Marino te lleva de vuelta a tu muelle'); landHome(); return; }
   if (d.ashore) { goAshore(p); return; }
@@ -9103,7 +9177,8 @@ const HELP = [
   ['🚪', 'Zonas nuevas', 'Las verjas también tienen su círculo con precio. Algunas zonas nuevas están llenas de basura: bárrela andando por encima y vacía el saco en el contenedor 🗑️. Limpia, ya se puede construir.'],
   ['🧭', 'Si no sabes qué hacer', 'Sigue la flecha: te lleva a tu misión (la pastilla de arriba). Si queda fuera de la pantalla, sale una flecha en el borde. El botón 🛒 de la derecha te enseña todo lo que puedes comprar: toca «📍 Ir».'],
   ['😠', 'El enfado', 'Sube cuando los clientes esperan: porque no hay lo que quieren en el mostrador o porque nadie les cobra. Debajo de la barra pone qué lo está subiendo; tócala para verlo entero. Al 100 % pierdes el dinero del día.'],
-  ['🗺️', 'La cámara', '🗺️ enseña la granja desde arriba. 🔄 gira la vista; si lo arrastras, la inclinas.'],
+  ['🧑‍💼', 'Encargado', 'En el puesto 🛠️ de cada zona, cuando ya tienes lo demás, puedes contratar un encargado: esa zona cobra sola, el dinero va a tu cartera y no se avería ni se ensucia.'],
+  ['🎥', 'La cámara', 'El botón de la cámara cambia entre 4 vistas: normal, cerca, desde arriba y todo el mapa. 🔄 gira la vista.'],
   ['⏸️', 'Pausa', 'El botón ⏸️ para el juego. Si sales de la app, se pausa solo.'],
   ['🎁', 'Volver cada día', 'Cada día hay 3 misiones nuevas con cofre, y el cofre 🎁 de arriba vale más cuantos más días seguidos juegues.'],
 ];
@@ -9349,8 +9424,8 @@ const TIPS = [
     { icon: '🗺️', title: 'Abre el mapa y zarpa', text: 'Al pisar el círculo sale el muelle. Abre el mapa, toca una isla y el barco sale. Lo manejas con el dedo.' },
     { icon: '📈', title: 'Compra barato, vende caro', text: 'Cada isla paga distinto y los precios cambian cada día. Baja a las islas: hay cosas que recoger y sitio para tus huertos.' },
   ] },
-  { id: 'cam', line: '🎥 Arrastra 🔄 para girar la vista', when: () => S.mission >= 3, cards: [
-    { icon: '🎥', title: 'Mueve la cámara', text: 'Arrastra el botón 🔄 para girar y subir o bajar la vista, o usa un segundo dedo mientras andas. Un toque en 🔄 la deja recta otra vez.' },
+  { id: 'cam', line: '🎥 Toca la cámara para ver de otra forma', when: () => S.mission >= 3, cards: [
+    { icon: '🎥', title: 'Mueve la cámara', text: 'Toca el botón de la cámara para cambiar entre 4 vistas: normal, cerca, desde arriba y todo el mapa. 🔄 gira la vista.' },
   ] },
   { id: 'film', line: '🎬 Pisa el círculo rosa del plató', when: () => filmHere(), cards: [
     { icon: '🎬', title: 'Vas a dirigir películas', text: 'Pisa el círculo rosa del plató y elige un guion. Después lleva allí lo que pide, y el decorado se irá montando.' },
@@ -9365,8 +9440,7 @@ const TIPS = [
     { icon: '😊', title: 'Ánimo y Confianza', text: 'Arriba ves el 😊 ánimo de tus trabajadores (si está alto van más rápido) y la ⭐ confianza de los vecinos (si está alta vienen más clientes).' },
     { icon: '❓', title: 'Tú decides', text: 'Una vez al día tendrás que tomar una decisión. Cada opción tiene algo bueno y algo malo: piénsalo bien.' },
   ] },
-  { id: 'chores', line: '💧 Pasa por el campo para regarlo', when: () => choresOn(), cards: [
-    { icon: '💧', title: 'Riega los campos', text: 'Cuando sale una gota 💧 encima de un campo, pasa por dentro para regarlo. Si no, crece muy despacio.' },
+  { id: 'chores', line: '🧹 Corral sucio: quédate en su círculo azul', when: () => choresOn() && ANIMALS.some(b => isBuilt(b.id) && !b.dock && (S.dirt[b.id] || 0) >= 1), cards: [
     { icon: '🧹', title: 'Limpia los corrales', text: 'Un corral sucio 🧹 produce la mitad. Para limpiarlo, quédate en el círculo azul que sale a su lado hasta que se llene.' },
   ] },
   { id: 'trouble', line: '🔧 ¡Algo falla! Sigue la flecha', when: () => TROUBLES.length > 0, cards: [
@@ -9389,7 +9463,23 @@ function coachNow() {
   if (S.mission < 8 && cs.some(c => c.state === 'pay' && !servedFor(c)) && !(S.lv.cashier > 0)) return '💵 Ponte en la caja para cobrar';
   if (S.earned <= 25 && fs.cash > 0) return '💰 Coge los billetes del suelo';
   if (coachTip && performance.now() - tipT < 7000) return coachTip;
-  return '';
+  return stuckLine();
+}
+// «I don't know what to do» (the survey's top complaint): after 40 s on the same mission, a line says what is missing,
+// for 8 s every half minute, so it helps without staying on screen
+let stuckM = -1, stuckAt = 0;
+function missionCost() {
+  const m = MISSIONS[S.mission], t = m && m.target && m.target(); if (!t) return null;
+  if (t.stall && t.ref && UPGRADES[t.id]) return upgCost(t);
+  if (t.info && t.info.cost) return t.info.cost - (S.paid[t.id] || 0);
+  return null;
+}
+function stuckLine() {
+  if (S.tut < 2 || SEA.on) return '';
+  const now = performance.now(); if (stuckM !== S.mission) { stuckM = S.mission; stuckAt = now; return ''; }
+  const t = (now - stuckAt) / 1000; if (t < 40 || (t - 40) % 30 > 8) return '';
+  const c = missionCost(); if (c === null || c <= 0) return '';
+  return S.coins < c ? `💰 Te faltan ${fmt(c - S.coins)} monedas: cosecha y vende en el mostrador` : '➡️ ¡Ya puedes! Sigue la flecha amarilla';
 }
 function renderTips() {
   const busy = creatorOn || sceneQueue || !$('creator').hidden || document.querySelector('.overlay:not([hidden])');
